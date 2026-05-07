@@ -116,3 +116,6 @@ May 3-28 - Continuous Development
 - May 27: Documentation and guides
 - May 28: Final month optimizations
 - May 28 (eve): Testing and bug fixes
+
+May commit follow-up notes
+- May 7 (late): Checked camera permission fallback when face login fails.
