@@ -119,3 +119,4 @@ May 3-28 - Continuous Development
 
 May commit follow-up notes
 - May 7 (late): Checked camera permission fallback when face login fails.
+- May 8: Re-tested retry handling after a missed face match.
