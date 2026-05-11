@@ -121,3 +121,4 @@ May commit follow-up notes
 - May 7 (late): Checked camera permission fallback when face login fails.
 - May 8: Re-tested retry handling after a missed face match.
 - May 10 (morning): Tuned landmark confidence thresholds for low-confidence scans.
+- May 10 (evening): Cleaned up the auth handoff after failed face scans.
