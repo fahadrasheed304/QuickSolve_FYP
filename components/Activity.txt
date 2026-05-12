@@ -122,3 +122,4 @@ May commit follow-up notes
 - May 8: Re-tested retry handling after a missed face match.
 - May 10 (morning): Tuned landmark confidence thresholds for low-confidence scans.
 - May 10 (evening): Cleaned up the auth handoff after failed face scans.
+- May 12: Updated failure feedback text so users know when to retry or use fallback login.
