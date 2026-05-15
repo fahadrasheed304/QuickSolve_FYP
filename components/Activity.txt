@@ -124,3 +124,4 @@ May commit follow-up notes
 - May 10 (evening): Cleaned up the auth handoff after failed face scans.
 - May 12: Updated failure feedback text so users know when to retry or use fallback login.
 - May 13: Added clearer logging notes for failed detection and model-load errors.
+- May 15 (morning): Checked low-light cases that were causing unstable face matches.
