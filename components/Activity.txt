@@ -125,3 +125,4 @@ May commit follow-up notes
 - May 12: Updated failure feedback text so users know when to retry or use fallback login.
 - May 13: Added clearer logging notes for failed detection and model-load errors.
 - May 15 (morning): Checked low-light cases that were causing unstable face matches.
+- May 15 (evening): Refined the mobile scan layout around small-screen camera previews.
