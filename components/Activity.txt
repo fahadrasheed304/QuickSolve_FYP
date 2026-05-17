@@ -126,3 +126,4 @@ May commit follow-up notes
 - May 13: Added clearer logging notes for failed detection and model-load errors.
 - May 15 (morning): Checked low-light cases that were causing unstable face matches.
 - May 15 (evening): Refined the mobile scan layout around small-screen camera previews.
+- May 17: Stabilized the loading state before the detector model becomes ready.
