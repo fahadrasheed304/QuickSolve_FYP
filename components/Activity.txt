@@ -128,3 +128,4 @@ May commit follow-up notes
 - May 15 (evening): Refined the mobile scan layout around small-screen camera previews.
 - May 17: Stabilized the loading state before the detector model becomes ready.
 - May 18: Added timeout handling notes for slow camera startup on first load.
+- May 20 (morning): Captured admin diagnostics for failed and skipped face scans.
