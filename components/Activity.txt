@@ -130,3 +130,4 @@ May commit follow-up notes
 - May 18: Added timeout handling notes for slow camera startup on first load.
 - May 20 (morning): Captured admin diagnostics for failed and skipped face scans.
 - May 20 (evening): Tightened validation notes around face verification responses.
+- May 21: Added recovery notes for users who fail face detection twice in a row.
