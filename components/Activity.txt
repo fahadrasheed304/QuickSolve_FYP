@@ -129,3 +129,4 @@ May commit follow-up notes
 - May 17: Stabilized the loading state before the detector model becomes ready.
 - May 18: Added timeout handling notes for slow camera startup on first load.
 - May 20 (morning): Captured admin diagnostics for failed and skipped face scans.
+- May 20 (evening): Tightened validation notes around face verification responses.
