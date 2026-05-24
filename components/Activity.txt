@@ -132,3 +132,4 @@ May commit follow-up notes
 - May 20 (evening): Tightened validation notes around face verification responses.
 - May 21: Added recovery notes for users who fail face detection twice in a row.
 - May 23: Reduced duplicate scan submission notes after repeated camera retries.
+- May 24: Improved model warmup notes before opening the face login camera.
