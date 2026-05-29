@@ -136,3 +136,4 @@ May commit follow-up notes
 - May 26: Tracked fallback login testing results after failed face verification.
 - May 27: Documented remaining edge cases around partial face visibility.
 - May 28 (morning): Polished the activity notes for final face detection review.
+- May 28 (evening): Wrapped up the May face detection fixes and review notes.
