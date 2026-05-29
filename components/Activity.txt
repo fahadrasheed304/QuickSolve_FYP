@@ -137,3 +137,6 @@ May commit follow-up notes
 - May 27: Documented remaining edge cases around partial face visibility.
 - May 28 (morning): Polished the activity notes for final face detection review.
 - May 28 (evening): Wrapped up the May face detection fixes and review notes.
+
+June continuation notes
+- May 29 (morning): Reviewed latest face login issue reports and grouped failure cases.
