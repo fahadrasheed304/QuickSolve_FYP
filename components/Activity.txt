@@ -141,3 +141,4 @@ May commit follow-up notes
 June continuation notes
 - May 29 (morning): Reviewed latest face login issue reports and grouped failure cases.
 - May 29 (evening): Updated retry notes after checking repeated face scan attempts.
+- May 30: Added scan state follow-up notes for cases where the camera stalls.
