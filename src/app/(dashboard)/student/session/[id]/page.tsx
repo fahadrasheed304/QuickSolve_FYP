@@ -127,3 +127,68 @@ export default function SessionPage() {
                     <button key={color} className="w-6 h-6 rounded-full border border-border shadow-sm" style={{ backgroundColor: color }} />
                   ))}
                 </div>
+                              </div>
+              <div className="flex-1 flex items-center justify-center text-text-muted font-bold">
+                Shared Canvas
+              </div>
+            </div>
+          )}
+
+          <div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-lg border border-white/10 bg-[#111c2d]/82 p-3 shadow-2xl backdrop-blur-xl">
+            <button className="flex h-12 w-12 items-center justify-center rounded-lg bg-white/10 text-white transition-colors hover:bg-white/15">
+              <Mic className="w-5 h-5" />
+            </button>
+            <button className="flex h-12 w-12 items-center justify-center rounded-lg bg-white/10 text-white transition-colors hover:bg-white/15">
+              <VideoIcon className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setIsWhiteboard(!isWhiteboard)}
+              className={cn(
+                "flex h-12 w-12 items-center justify-center rounded-lg transition-colors shadow-lg",
+                isWhiteboard ? "bg-primary text-white" : "bg-white/10 hover:bg-white/15 text-white"
+              )}
+            >
+              <MonitorUp className="w-5 h-5" />
+            </button>
+            <div className="mx-1 h-8 w-px bg-white/15" />
+            <button onClick={handleEndSession} className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-600 text-white shadow-lg transition-colors hover:bg-red-700">
+              <PhoneOff className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        <aside className="hidden w-80 shrink-0 flex-col border-l border-border bg-surface text-text-main md:flex">
+          <div className="border-b border-border bg-surface-hover p-4">
+            <h3 className="mb-1 text-lg font-black">Session Info</h3>
+            <p className="mb-1 text-sm font-semibold text-text-muted">Physics / Class 10</p>
+            <p className="mb-4 text-sm font-black text-success">Rs. {price}</p>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-surface-container-high">
+              <div
+                className={cn("h-full transition-all", isEndingSoon ? "bg-red-500" : "bg-premium-gradient")}
+                style={{ width: `${(timeLeftSeconds / (30 * 60)) * 100}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="flex-1 space-y-4 overflow-y-auto bg-surface p-4">
+            <div className="flex justify-start">
+              <div className="max-w-[85%] rounded-lg rounded-tl-sm bg-surface-hover px-4 py-2.5 text-sm font-semibold shadow-sm">
+                Salam, apko detail samaj aagai problem ki?
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <div className="max-w-[85%] rounded-lg rounded-tr-sm bg-primary px-4 py-2.5 text-sm font-semibold leading-relaxed text-white shadow-sm">
+                Walaikumsalam. Yes I have seen the question. I will solve it on the whiteboard now.
+              </div>
+            </div>
+          </div>
+
+          {isEndingSoon && (
+            <div className="border-t border-amber-200 bg-amber-50 p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <Clock className="w-5 h-5 text-amber-600" />
+                <span className="text-sm font-black text-amber-800">Session ending soon</span>
+              </div>
+              <div className="flex gap-2">
+                <select
+                  className="flex-1 rounded-lg border border-amber-200 bg-white px-2 text-sm font-semibold text-text-main"
