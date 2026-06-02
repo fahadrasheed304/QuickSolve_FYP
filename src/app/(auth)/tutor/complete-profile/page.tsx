@@ -1483,3 +1483,67 @@ export default function TutorCompleteProfilePage() {
                               <p className="text-xs font-medium text-text-muted">{doc ? 'Uploaded' : 'Missing'}</p>
                             </div>
                           </div>
+                                                  )
+                      })}
+                      <div className="flex items-center gap-3 rounded-lg border border-border bg-surface-container-low px-3 py-3">
+                        <div className="flex h-12 w-14 items-center justify-center rounded-lg bg-secondary-subtle text-lg font-bold text-secondary-dark">
+                          {degreeCertificates.length}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-text-main">Degree certificates</p>
+                          <p className="text-xs font-medium text-text-muted">Optional uploads</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-warning/30 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+                    <div className="flex gap-3">
+                      <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
+                      <p><strong>Important:</strong> After submission, admin review starts. If approved, you will be invited to the subject proficiency test.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col-reverse gap-3 border-t border-border bg-surface/65 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+              <Button type="button" variant="outline" onClick={handleBack} disabled={step === 1 || submitting} className={step === 1 ? 'invisible' : ''}>
+                <ChevronLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+
+              {step < 5 ? (
+                <Button type="button" onClick={handleNext} disabled={!!uploading}>
+                  Continue
+                  <ChevronRight className="ml-2 h-4 w-4" />
+                </Button>
+              ) : (
+                <Button type="button" onClick={handleSubmit} disabled={submitting}>
+                  {submitting ? 'Submitting...' : 'Submit for Verification'}
+                  {!submitting && <ChevronRight className="ml-2 h-4 w-4" />}
+                </Button>
+              )}
+            </div>
+          </section>
+        </div>
+      </div>
+
+      {previewImage && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm" onClick={() => setPreviewImage(null)}>
+          <div className="relative flex max-h-[90vh] w-full max-w-5xl items-center justify-center" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setPreviewImage(null)}
+              className="absolute -top-12 right-0 rounded-full bg-black/50 p-2 text-white transition-colors hover:text-error"
+              aria-label="Close preview"
+            >
+              <X className="h-8 w-8" />
+            </button>
+            <img src={previewImage} alt="Document preview" className="max-h-[85vh] max-w-full rounded-lg object-contain shadow-2xl" />
+          </div>
+        </div>
+      )}
+    </main>
+  )
+}
