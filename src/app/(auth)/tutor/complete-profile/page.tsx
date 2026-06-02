@@ -642,3 +642,67 @@ export default function TutorCompleteProfilePage() {
       let cnicShouldBlock = false
       let cnicInconclusive = false
       try {
+         setOcrLoading(true)
+        const ocrVariants = await createCnicOcrVariants(file)
+        worker = await Tesseract.createWorker('eng')
+        await worker.setParameters({
+          tessedit_pageseg_mode: Tesseract.PSM.SPARSE_TEXT,
+          tessedit_char_whitelist: '0123456789- ',
+          preserve_interword_spaces: '1',
+          user_defined_dpi: '300',
+        })
+
+        let ocrText = ''
+        let match = getCnicOcrMatch(personalDetails.cnic, ocrText)
+
+        for (const variant of ocrVariants) {
+          const ret = await worker.recognize(variant.source)
+          ocrText = `${ocrText}\n${ret.data.text}`
+          match = getCnicOcrMatch(personalDetails.cnic, ocrText)
+          if (match.matched) break
+        }
+
+        cnicInconclusive = match.inconclusive
+        cnicShouldBlock = match.shouldBlock
+      } catch (err) {
+        console.error('CNIC OCR error:', err)
+        cnicInconclusive = true
+      } finally {
+        if (worker) await worker.terminate()
+        setOcrLoading(false)
+      }
+
+      if (cnicShouldBlock) {
+        setUploading(null)
+        setError('CNIC image does not match the entered CNIC number. Upload blocked. Please upload the front-side CNIC image for the same number.')
+        return
+      }
+
+      if (cnicInconclusive) {
+        notifyWarning('CNIC OCR could not confidently read the number. Upload allowed, but admin will review the CNIC manually.')
+      }
+    }
+
+    if (docType === 'profile_photo') {
+      try {
+        setFaceLoading(true)
+        const faceCheck = await validateProfilePhotoFace(file)
+        if (!faceCheck.valid) {
+          setUploading(null)
+          setError(faceCheck.error)
+          return
+        }
+      } catch (err) {
+        console.error('Profile photo face check error:', err)
+        setUploading(null)
+        setError('Could not verify a clear human face in this profile photo. Please upload another image.')
+        return
+      } finally {
+        setFaceLoading(false)
+      }
+    }
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('documentType', docType)
