@@ -858,3 +858,68 @@ export default function TakeTestPage() {
                 
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-[#006c4a] mt-0.5" />
+                  <div>
+                    <p className="font-medium text-foreground">Passing Score: 80%</p>
+                    <p className="text-sm text-muted-foreground">You need to answer at least 80% correctly to pass.</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5" />
+                  <div>
+                    <p className="font-medium text-foreground">Proctored Test</p>
+                    <p className="text-sm text-muted-foreground">
+                      • Do not switch tabs or windows<br/>
+                      • Do not minimize the browser<br/>
+                      • You will receive a warning if tab switching is detected<br/>
+                      • Test auto-submits after 3 warnings
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-6">
+                <p className="text-sm text-amber-800 dark:text-amber-300">
+                  <strong>Important:</strong> Make sure you have a stable internet connection and are in a quiet environment before starting. Once started, you cannot pause or retake immediately.
+                </p>
+              </div>
+
+              <Button 
+                onClick={startTest} 
+                className="w-full bg-[#006c4a] hover:bg-green-800"
+              >
+                Start Test
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+    )
+  }
+
+  // Results screen
+  if (testFinished && result) {
+    return (
+      <main className="min-h-screen bg-background py-12 px-4">
+        <div className="max-w-2xl mx-auto">
+          <Card>
+            <CardContent className="p-8 text-center">
+              <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                result.passed ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'
+              }`}>
+                {result.passed ? (
+                  <CheckCircle className="w-10 h-10 text-green-600" />
+                ) : (
+                  <AlertTriangle className="w-10 h-10 text-red-600" />
+                )}
+              </div>
+              
+              <h1 className="text-2xl font-bold text-foreground mb-2">
+                {result.passed ? 'Congratulations!' : 'Test Not Passed'}
+              </h1>
+              
+              <p className="text-muted-foreground mb-6">
+                {result.passed 
+                  ? 'You have passed the subject proficiency test.' 
+                  : 'You did not meet the passing score requirement.'}
+              </p>
