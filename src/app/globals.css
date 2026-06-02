@@ -294,3 +294,71 @@ input:disabled {
 .rounded-xl,
 .rounded-2xl,
 .rounded-3xl {
+   border-radius: 8px !important;
+}
+
+.tracking-tight,
+.tracking-tighter {
+  letter-spacing: 0 !important;
+}
+
+/* Legacy Tailwind color harmonization for older pages. */
+.bg-gray-50,
+.bg-slate-50,
+.bg-muted {
+  background-color: var(--color-background) !important;
+}
+
+.bg-white,
+.bg-card {
+  background-color: var(--color-surface) !important;
+}
+
+.bg-gray-100,
+.bg-slate-100 {
+  background-color: var(--color-surface-hover) !important;
+}
+
+.text-gray-900,
+.text-slate-900,
+.text-foreground {
+  color: var(--color-text-main) !important;
+}
+
+.text-gray-700,
+.text-gray-600,
+.text-slate-600 {
+  color: #475467 !important;
+}
+
+.text-gray-500,
+.text-slate-500,
+.text-muted-foreground {
+  color: var(--color-text-muted) !important;
+}
+
+.border-gray-100,
+.border-gray-200,
+.border-slate-200,
+.border-border {
+  border-color: var(--color-border) !important;
+}
+
+.bg-blue-600 {
+  background-color: var(--color-primary) !important;
+}
+
+.hover\:bg-blue-700:hover,
+.hover\:bg-primary-dark:hover {
+  background-color: var(--color-primary-dark) !important;
+}
+
+.text-blue-600 {
+  color: var(--color-primary) !important;
+}
+
+.border-blue-600 {
+  border-color: var(--color-primary) !important;
+}
+
+.bg-blue-50 {
