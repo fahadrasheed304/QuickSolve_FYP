@@ -429,3 +429,70 @@ input:disabled {
   0%, 100% { transform: translate3d(0, 0, 0); }
   50% { transform: translate3d(-10px, -12px, 0); }
 }
+@keyframes drift-panel-slow {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(12px, -8px, 0); }
+}
+
+@keyframes drift-panel-alt {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(-8px, 10px, 0); }
+}
+
+@keyframes sheen {
+  0%, 72% { transform: translateX(-120%); }
+  100% { transform: translateX(120%); }
+}
+
+@keyframes progress-glow {
+  0%, 100% { box-shadow: 0 0 0 rgba(0, 167, 165, 0); }
+  50% { box-shadow: 0 0 22px rgba(0, 167, 165, 0.35); }
+}
+
+.animate-float-soft {
+  animation: float-soft 5.5s ease-in-out infinite;
+}
+
+.qs-drift {
+  animation: drift-panel 7s ease-in-out infinite;
+}
+
+.qs-drift-slow {
+  animation: drift-panel-slow 8.5s ease-in-out infinite;
+}
+
+.qs-drift-alt {
+  animation: drift-panel-alt 7.8s ease-in-out infinite;
+}
+
+.animate-scale-in {
+  animation: scale-in 260ms ease both;
+}
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+}
