@@ -336,3 +336,70 @@ export default function AdminVerificationsPage() {
       console.error('Logout failed:', err)
     }
   }, [router])
+  const filteredTutors = useMemo(() => {
+    const search = searchTerm.trim().toLowerCase()
+
+    return tutors.filter(tutor => {
+      const matchesSearch = !search ||
+        getTutorEmail(tutor).toLowerCase().includes(search) ||
+        getTutorName(tutor).toLowerCase().includes(search)
+
+      const matchesStage = stageFilter === 'all' || tutor.verification_stage === stageFilter
+
+      return matchesSearch && matchesStage
+    })
+  }, [searchTerm, stageFilter, tutors])
+
+  const stageCounts = useMemo(() => {
+    return tutors.reduce<Record<string, number>>((counts, tutor) => {
+      const stage = tutor.verification_stage || 'not_started'
+      counts[stage] = (counts[stage] || 0) + 1
+      counts.all = (counts.all || 0) + 1
+      return counts
+    }, { all: 0 })
+  }, [tutors])
+
+  const queueStats = useMemo(() => {
+    const activeReviewCount = tutors.filter(tutor =>
+      ['submitted', 'pending', 'under_review'].includes(tutor.verification_stage || '')
+    ).length
+    const testCount = tutors.filter(tutor =>
+      ['test_invited', 'test_passed', 'test_failed'].includes(tutor.verification_stage || '')
+    ).length
+
+    return [
+      {
+        label: 'Applications',
+        value: tutors.length,
+        icon: Users,
+        tone: 'border-white/20 bg-white/12 text-white',
+      },
+      {
+        label: 'In review',
+        value: activeReviewCount,
+        icon: ClipboardCheck,
+        tone: 'border-white/20 bg-white/12 text-white',
+      },
+      {
+        label: 'Test flow',
+        value: testCount,
+        icon: Clock3,
+        tone: 'border-white/20 bg-white/12 text-white',
+      },
+      {
+        label: 'Verified',
+        value: stageCounts.verified || 0,
+        icon: CheckCircle2,
+        tone: 'border-white/20 bg-white/12 text-white',
+      },
+    ]
+  }, [stageCounts.verified, tutors])
+
+  const selectedDegrees = selectedTutor?.degrees || []
+  const selectedDocuments = useMemo(
+    () => getCurrentTutorDocuments(selectedTutor?.documents || []),
+    [selectedTutor?.documents]
+  )
+  const selectedSubjects = Array.isArray(selectedTutor?.subjects) ? selectedTutor.subjects : []
+  const selectedStageMeta = getStageMeta(selectedTutor?.verification_stage)
+  const selectedEmail = getTutorEmail(selectedTutor)
