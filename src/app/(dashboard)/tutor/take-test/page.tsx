@@ -725,3 +725,69 @@ export default function TakeTestPage() {
               questionId: q.id,
               answerGiven,
               timeTaken: 30
+               }
+          }),
+          timeTakenSeconds: (testData?.timeLimit || TEST_DURATION) - timeLeft,
+          tabSwitches: tabSwitchesRef.current,
+          warningsGiven: finalWarningCount,
+          testStatus: finalTestStatus,
+          autoSubmitted: autoSubmit,
+        })
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        setResult({ 
+          score: data.result.scorePercentage, 
+          passed: data.result.passed 
+        })
+      } else {
+        setError('We could not submit your test properly. Please contact support if this continues.')
+      }
+    } catch (err) {
+      console.error('Failed to submit test:', err)
+      setError('We could not submit your test right now. Please check your connection and try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+  }
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-[#006c4a] mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading test...</p>
+        </div>
+      </main>
+    )
+  }
+
+  if (error) {
+    return (
+      <main className="min-h-screen bg-background py-12 px-4">
+        <div className="max-w-2xl mx-auto text-center">
+          <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle className="w-8 h-8 text-red-600" />
+          </div>
+          <h1 className="text-2xl font-bold text-foreground mb-2">Cannot Start Test</h1>
+          <p className="text-muted-foreground mb-6">{error}</p>
+          <Button onClick={() => router.push('/tutor/waiting-verification')}>
+            Go Back
+          </Button>
+        </div>
+      </main>
+    )
+  }
+
+  // Verification screen
+  if (!verificationPassed && !testFinished && !testStarted) {
+    return (
+      <main className="min-h-screen bg-background py-12 px-4 flex flex-col items-center justify-center">
+        <Card className="max-w-md w-full"></Card>
