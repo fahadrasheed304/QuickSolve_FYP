@@ -579,3 +579,66 @@ export default function TutorCompleteProfilePage() {
     const yearCompleted = newDegree.yearCompleted || ''
     const institution = isSchool ? (newDegree.institution || '') : boardUniversity
     
+    if (isSchool && !institution) {
+      setError('Please fill all degree fields')
+      return
+    }
+    
+    if (!degreeName || !boardUniversity || !yearCompleted) {
+      setError('Please fill all degree fields')
+      return
+    }
+    
+    const degree: Degree = {
+      id: Date.now().toString(),
+      degreeName,
+      // For uni degrees, institution = boardUniversity (same value)
+      institution,
+      boardUniversity,
+      yearCompleted,
+    }
+    
+    setDegrees([...degrees, degree])
+    setNewDegree({ degreeName: '', institution: '', boardUniversity: '', yearCompleted: '' })
+    setShowDegreeForm(false)
+    setError('')
+  }
+
+  const removeDegree = (id: string) => {
+    setDegrees(degrees.filter(d => d.id !== id))
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, docType: string) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) { setError('File size must be less than 5MB'); return }
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
+    if (!allowedTypes.includes(file.type)) { setError('Only JPG, PNG, WebP, or PDF files allowed'); return }
+
+    setUploading(docType)
+    setError('')
+
+    if (docType === 'cnic_front' && normalizeCnic(personalDetails.cnic).length !== CNIC_LENGTH) {
+      setUploading(null)
+      setError('Enter a valid 13-digit CNIC before uploading the front image')
+      return
+    }
+
+    if (docType === 'cnic_front' && !file.type.startsWith('image/')) {
+      setUploading(null)
+      setError('CNIC front must be an image so we can match it with the entered CNIC number')
+      return
+    }
+
+    if (docType === 'profile_photo' && !file.type.startsWith('image/')) {
+      setUploading(null)
+      setError('Profile photo must be an image with a clear human face')
+      return
+    }
+
+    if (docType === 'cnic_front') {
+      let worker: Awaited<ReturnType<typeof Tesseract.createWorker>> | null = null
+      let cnicShouldBlock = false
+      let cnicInconclusive = false
+      try {
