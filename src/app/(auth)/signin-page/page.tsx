@@ -137,3 +137,73 @@ export default function SigninPage() {
   });
 
   return (
+    
+      <main className="flex min-h-screen w-full bg-background text-text-main overflow-x-hidden">
+        {/* Left Panel: Brand & Value Props (45%) */}
+        <AuthSidebar
+          title={<>Welcome back to<br />your learning<br />community</>}
+          features={[
+            {
+              icon: 'school',
+              title: 'Expert Live Tutoring',
+              description: 'Connect with top-tier tutors for real-time problem solving and academic acceleration.',
+              iconColorClass: 'text-secondary',
+              iconBgClass: 'bg-secondary-subtle'
+            }
+          ]}
+        />
+
+        {/* Right Panel: Form (55%) */}
+        <section className="w-full lg:w-[55%] bg-surface flex items-center justify-center p-6 sm:p-12">
+          <div className="w-full max-w-[480px]">
+            {/* Header */}
+            <header className="mb-8 text-center lg:text-left">
+              <h2 className="text-[32px] font-extrabold tracking-tight text-text-main mb-2">Sign In to QuickSolve</h2>
+              <p className="text-text-muted font-medium">Welcome back! Please enter your details.</p>
+            </header>
+
+            {/* Role Selection */}
+            <div className="mb-6 mt-2">
+              <div className="grid grid-cols-2 gap-3 p-1.5 bg-surface-hover rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => setRole('student')}
+                  className={`flex flex-col items-center justify-center py-3 px-4 rounded-lg transition-all duration-200 ${
+                    role === 'student'
+                      ? 'bg-surface shadow-sm border-2 border-primary text-primary'
+                      : 'text-text-muted hover:text-text-main hover:bg-surface-hover/80'
+                  }`}
+                >
+                  <span className="material-symbols-outlined mb-1" style={{ fontVariationSettings: "'FILL' 1" }}>school</span>
+                  <span className="text-sm font-semibold">Student</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRole('tutor')}
+                  className={`flex flex-col items-center justify-center py-3 px-4 rounded-lg transition-all duration-200 ${
+                    role === 'tutor'
+                      ? 'bg-surface shadow-sm border-2 border-secondary text-secondary'
+                      : 'text-text-muted hover:text-text-main hover:bg-surface-hover/80'
+                  }`}
+                >
+                  <span className="material-symbols-outlined mb-1" style={{ fontVariationSettings: "'FILL' 1" }}>person_raised_hand</span>
+                  <span className="text-sm font-semibold">Tutor</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Google Login */}
+            <GoogleLoginButton onClick={handleGoogleLogin} isLoading={loading} disabled={loading} />
+
+            {/* Divider */}
+            <AuthDivider label="OR" />
+
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md text-sm font-medium">
+                {error}
+              </div>
+            )}
+
+            {/* Signin Form */}
+            <form onSubmit={handleLogin} className="space-y-6" autoComplete="off">
+              {/* Email */}
