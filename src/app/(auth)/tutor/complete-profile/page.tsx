@@ -258,3 +258,66 @@ const createCnicOcrVariants = (file: File): Promise<CnicOcrVariant[]> => {
     img.onload = () => {
       const variants: CnicOcrVariant[] = [{ name: 'original', source: file }]
       const minWidth = 1400
+       const maxWidth = 2200
+      const scale = img.width < minWidth ? minWidth / img.width : img.width > maxWidth ? maxWidth / img.width : 1
+
+      const renderVariant = (crop: CnicCrop, threshold: boolean) => {
+        const sourceX = Math.round(img.width * crop.x)
+        const sourceY = Math.round(img.height * crop.y)
+        const sourceWidth = Math.round(img.width * crop.width)
+        const sourceHeight = Math.round(img.height * crop.height)
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.round(sourceWidth * scale)
+        canvas.height = Math.round(sourceHeight * scale)
+        const ctx = canvas.getContext('2d')
+        if (!ctx) return
+
+        ctx.imageSmoothingEnabled = true
+        ctx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, canvas.width, canvas.height)
+
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+        const data = imageData.data
+
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i], g = data[i + 1], b = data[i + 2]
+          let gray = 0.299 * r + 0.587 * g + 0.114 * b
+          gray = (gray - 128) * 2.55 + 145
+          gray = Math.max(0, Math.min(255, gray))
+          if (threshold) {
+            gray = gray > 150 ? 255 : 0
+          }
+
+          data[i] = gray
+          data[i + 1] = gray
+          data[i + 2] = gray
+        }
+
+        ctx.putImageData(imageData, 0, 0)
+        variants.push({
+          name: `${crop.name}${threshold ? '-threshold' : ''}`,
+          source: canvas.toDataURL('image/png'),
+        })
+      }
+
+      for (const crop of CNIC_OCR_CROPS) {
+        renderVariant(crop, false)
+      }
+
+      renderVariant(CNIC_OCR_CROPS[0], true)
+      renderVariant(CNIC_OCR_CROPS[1], true)
+
+      URL.revokeObjectURL(objectUrl)
+      resolve(variants)
+    }
+    img.onerror = (err) => {
+      URL.revokeObjectURL(objectUrl)
+      reject(err)
+    }
+  })
+}
+
+// Helper to calculate Longest Common Subsequence for robust fuzzy matching
+const getLCSLength = (s1: string, s2: string): number => {
+  const m = s1.length
+  const n = s2.length
+  const dp = Array(m + 1).fill(0).map(() => Array(n + 1).fill(0))
