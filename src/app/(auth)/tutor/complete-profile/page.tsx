@@ -706,3 +706,68 @@ export default function TutorCompleteProfilePage() {
       const formData = new FormData()
       formData.append('file', file)
       formData.append('documentType', docType)
+      const res = await fetch('/api/tutor/upload-document', {
+        method: 'POST',
+        body: formData,
+      })
+      const data = await res.json()
+
+      if (res.ok) {
+        setDocuments(prev => {
+          const nextDoc = {
+            id: data.documentId,
+            documentType: docType,
+            documentUrl: data.documentUrl,
+            fileName: file.name,
+            fileSize: file.size,
+          }
+
+          if (docType === 'degree_certificate') return [...prev, nextDoc]
+          return [...prev.filter(d => d.documentType !== docType), nextDoc]
+        })
+      } else {
+        setError(getApiMessage(data, 'We could not upload this document. Please try another file or try again.'))
+      }
+    } catch (err) {
+      console.error('Document upload error:', err)
+      setError('We could not upload this document right now. Please check your connection and try again.')
+    } finally {
+      setUploading(null)
+      setOcrLoading(false)
+      setFaceLoading(false)
+    }
+  }
+
+  const handleNext = () => {
+    if (step === 1) {
+      if (!personalDetails.city || !personalDetails.cnic) {
+        setError('Please fill all required fields (City, CNIC)')
+        return
+      }
+      if (normalizeCnic(personalDetails.cnic).length !== CNIC_LENGTH) {
+        setError('CNIC must be exactly 13 digits without dashes')
+        return
+      }
+    }
+    if (step === 2 && selectedSubjects.length === 0) {
+      setError('Please select at least one subject')
+      return
+    }
+    if (step === 3 && degrees.length === 0) {
+      setError('Please add at least one degree')
+      return
+    }
+    if (step === 4) {
+      // Check required documents
+      const hasCnicFront = documents.some(d => d.documentType === 'cnic_front')
+      const hasCnicBack = documents.some(d => d.documentType === 'cnic_back')
+      const hasProfilePhoto = documents.some(d => d.documentType === 'profile_photo')
+
+      if (!hasCnicFront || !hasCnicBack) {
+        setError('CNIC front and back images are required')
+        return
+      }
+      if (!hasProfilePhoto) {
+        setError('Profile photo is required')
+        return
+      }
