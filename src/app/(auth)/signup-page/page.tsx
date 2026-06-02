@@ -147,4 +147,81 @@ export default function SignupPagePage() {
             {
               icon: 'auto_graph',
               title: 'For Tutors',
-              description: 'Grow your professional tutoring business with our integrated dashboard and global reach.'s
+              description: 'Grow your professional tutoring business with our integrated dashboard and global reach.'
+                          }
+          ]}
+        />
+
+        {/* Right Panel: Form (55%) */}
+        <section className="w-full lg:w-[55%] bg-surface flex items-center justify-center p-6 sm:p-12">
+          <div className="w-full max-w-[480px]">
+            {/* Header */}
+            <header className="mb-10 text-center lg:text-left">
+              <h2 className="text-3xl font-extrabold tracking-tight text-text-main mb-2">Create your account</h2>
+              <p className="text-text-muted">Already have an account? <Link className="text-primary font-semibold hover:underline" href="/signin-page">Log in</Link></p>
+            </header>
+
+            {/* Role Selector */}
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              <button 
+                type="button"
+                onClick={() => setRole('student')}
+                className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all duration-200 ${role === 'student' ? 'border-primary bg-primary-subtle/50 shadow-sm' : 'border-border hover:border-primary/50 hover:bg-surface-hover bg-surface'}`}
+              >
+                <span className={`material-symbols-outlined mb-2 ${role === 'student' ? 'text-primary' : 'text-text-muted'}`} style={{ fontVariationSettings: "'FILL' 1" }}>person</span>
+                <span className={`text-sm font-bold ${role === 'student' ? 'text-primary' : 'text-text-muted'}`}>Student</span>
+              </button>
+              <button 
+                type="button"
+                onClick={() => setRole('tutor')}
+                className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all duration-200 ${role === 'tutor' ? 'border-secondary bg-secondary-subtle/50 shadow-sm' : 'border-border hover:border-secondary/50 hover:bg-surface-hover bg-surface'}`}
+              >
+                <span className={`material-symbols-outlined mb-2 ${role === 'tutor' ? 'text-secondary' : 'text-text-muted'}`}>history_edu</span>
+                <span className={`text-sm font-bold ${role === 'tutor' ? 'text-secondary' : 'text-text-muted'}`}>Tutor</span>
+              </button>
+            </div>
+
+            {/* Social Logins */}
+            <GoogleLoginButton onClick={handleGoogleLogin} isLoading={loading} disabled={loading} />
+
+            <AuthDivider label="OR" />
+
+            {error && (
+              <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-600">
+                {error}
+              </div>
+            )}
+
+            {/* Signup Form */}
+            <form onSubmit={handleSignup} className="space-y-6" autoComplete="off">
+              {/* Full Name */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-text-muted mb-1.5" htmlFor="fullname">Full Name</label>
+                <input 
+                  required
+                  value={fullname}
+                  onChange={(e) => setFullname(e.target.value.replace(/[^A-Za-z\s]/g, ''))}
+                  className="w-full h-12 px-4 bg-surface-hover border border-border focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none text-text-main rounded-xl" 
+                  name="quicksolve-signup-fullname"
+                  autoComplete="off"
+                  id="fullname" placeholder="Enter full name" type="text" 
+                />
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-text-muted mb-1.5" htmlFor="email">Work or Personal Email</label>
+                <input 
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full h-12 px-4 bg-surface-hover border border-border focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none text-text-main rounded-xl" 
+                  name="quicksolve-signup-email"
+                  autoComplete="off"
+                  id="email" placeholder="Enter email" type="email" 
+                />
+              </div>
+
+              {/* Phone */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-text-muted mb-1.5" htmlFor="phone">Phone Number</label>
