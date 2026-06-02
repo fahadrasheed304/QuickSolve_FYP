@@ -127,3 +127,68 @@ export default function TutorDashboard() {
     } finally {
       setIsUpdatingAvailability(false)
     }
+      }
+
+  const handlePlaceBid = async (problem: OpenProblem) => {
+    setPlacingBidId(problem.id)
+    setBidMessage(null)
+
+    try {
+      const price = Number(bidPrices[problem.id] || problem.offer_price)
+      const res = await fetch('/api/tutor/bids', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          problemId: problem.id,
+          price,
+          durationMin: problem.duration_min,
+        }),
+      })
+      const data = await res.json()
+
+      if (!res.ok) {
+        const message = getApiMessage(data, 'We could not place your bid. Please check the amount and try again.')
+        setBidMessage(message)
+        notifyError(message)
+        return
+      }
+
+      setBidMessage('Bid placed successfully')
+      notifySuccess('Your bid has been sent to the student.')
+      setOpenProblems((current) =>
+        current.map((item) =>
+          item.id === problem.id
+            ? { ...item, bids: [...(item.bids || []), data.bid] }
+            : item
+        )
+      )
+    } finally {
+      setPlacingBidId(null)
+    }
+  }
+
+  const metrics = [
+    { label: 'Total Earnings', value: `Rs. ${totalEarnings.toLocaleString()}`, icon: Wallet, href: '/tutor/wallet', tone: 'bg-success-subtle text-success' },
+    { label: 'Subjects', value: subjects.length, icon: BookOpen, tone: 'bg-primary-subtle text-primary' },
+    { label: 'Sessions Done', value: totalSessions, icon: Users, tone: 'bg-accent-subtle text-accent' },
+    { label: 'Rating', value: profile?.rating ? `${profile.rating}/5` : 'New', icon: Star, tone: 'bg-secondary-subtle text-secondary' },
+  ]
+
+  return (
+    <div className="p-4 md:p-8 pb-20 qs-stagger">
+      <div className="relative z-50 mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <div className="qs-kicker rounded-full px-3 py-1.5">
+            <GraduationCap className="h-4 w-4" />
+            Tutor workspace
+          </div>
+          <h1 className="mt-4 text-4xl font-black text-text-main">Welcome, {displayName}</h1>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {profile?.city && (
+              <span className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-bold text-text-muted shadow-sm">
+                <MapPin className="h-4 w-4 text-primary" />
+                {profile.city}
+              </span>
+            )}
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-bold text-text-muted shadow-sm">
+              <BookOpen className="h-4 w-4 text-secondary" />
