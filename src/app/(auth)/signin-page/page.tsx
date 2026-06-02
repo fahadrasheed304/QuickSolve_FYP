@@ -153,6 +153,7 @@ export default function SigninPage() {
           ]}
         />
 
+
         {/* Right Panel: Form (55%) */}
         <section className="w-full lg:w-[55%] bg-surface flex items-center justify-center p-6 sm:p-12">
           <div className="w-full max-w-[480px]">
@@ -207,72 +208,3 @@ export default function SigninPage() {
             {/* Signin Form */}
             <form onSubmit={handleLogin} className="space-y-6" autoComplete="off">
               {/* Email */}
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-text-muted mb-2" htmlFor="email">Email Address</label>
-                <input 
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full h-12 px-4 bg-surface-hover border border-border focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none text-text-main rounded-xl text-sm" 
-                  id="email" 
-                  name="quicksolve-signin-email"
-                  autoComplete="off"
-                  placeholder="Enter email" 
-                  type="email" 
-                />
-              </div>
-
-              {/* Password */}
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-text-muted" htmlFor="password">Password</label>
-                  <Link href="/forgot-password" className="text-xs font-bold text-primary hover:underline">Forgot Password?</Link>
-                </div>
-                <PasswordInput
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full h-12 px-4 bg-surface-hover border border-border focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none text-text-main rounded-xl text-lg tracking-widest placeholder:tracking-normal placeholder:text-sm"
-                  id="password"
-                  name="quicksolve-signin-password"
-                  autoComplete="new-password"
-                  placeholder="Enter password"
-                />
-              </div>
-
-              {/* Submit Button */}
-              <button 
-                disabled={loading}
-                className="w-full h-12 bg-primary hover:bg-primary-dark disabled:opacity-70 text-white font-bold rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98] mt-2 tracking-widest text-[13px]" 
-                type="submit"
-              >
-                {loading ? "SIGNING IN..." : "SIGN IN"}
-              </button>
-              
-            </form>
-
-            <div className="relative flex items-center mt-10 mb-8">
-              <div className="flex-grow border-t border-border"></div>
-            </div>
-
-            {/* Footer Links */}
-            <div className="text-center">
-              <p className="text-sm text-text-muted font-medium">
-                Don't have an account? <Link className="text-primary font-bold hover:underline ml-1" href={`/signup-page?role=${role}`}>Sign up as {role}</Link>
-              </p>
-            </div>
-
-            <div className="mt-5">
-              <Link
-                href="/admin/signin"
-                className="flex h-11 w-full items-center justify-center rounded-lg border border-primary/25 bg-primary-subtle/40 text-sm font-bold text-primary transition-colors hover:border-primary hover:bg-primary-subtle"
-              >
-                Sign in as Admin
-              </Link>
-            </div>
-          </div>
-        </section>
-      </main>
-    </>
-  );
-}
