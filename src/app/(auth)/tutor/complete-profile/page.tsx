@@ -836,3 +836,68 @@ export default function TutorCompleteProfilePage() {
 
   useEffect(() => {
     const profile = user?.tutorProfile
+        if (!profile) return
+
+    setPersonalDetails(prev => ({
+      city: prev.city || profile.city || '',
+      cnic: prev.cnic || profile.cnic || '',
+      bio: prev.bio || profile.bio || '',
+    }))
+
+    if (selectedSubjects.length === 0 && profile.subjects?.length) {
+      setSelectedSubjects(profile.subjects)
+    }
+  }, [user?.tutorProfile, selectedSubjects.length])
+
+  useEffect(() => {
+    if (!userId) return
+
+    const loadData = async () => {
+      // Load from localStorage only if it belongs to the current user
+      const savedData = localStorage.getItem('tutor_profile_progress')
+      if (savedData) {
+        try {
+          const parsed = JSON.parse(savedData)
+          if (parsed.userId && parsed.userId === userId) {
+            if (parsed.personalDetails) setPersonalDetails(parsed.personalDetails)
+            if (parsed.subjects) setSelectedSubjects(parsed.subjects)
+            if (parsed.degrees) setDegrees(parsed.degrees)
+            if (parsed.documents) setDocuments(parsed.documents)
+            if (parsed.step && parsed.step > 1) setStep(parsed.step)
+          } else {
+            // Different user or old format - clear stale data
+            localStorage.removeItem('tutor_profile_progress')
+          }
+        } catch {
+          localStorage.removeItem('tutor_profile_progress')
+        }
+      }
+      
+      // Also fetch any existing degrees/documents from server
+      try {
+        const [degreesRes, docsRes] = await Promise.all([
+          fetch('/api/tutor/my-degrees'),
+          fetch('/api/tutor/my-documents'),
+        ])
+        
+        if (degreesRes.ok) {
+          const degreesData = await degreesRes.json() as { degrees?: DegreeRow[] }
+          const fetchedDegrees = degreesData.degrees || []
+          if (fetchedDegrees.length > 0) {
+            setDegrees(fetchedDegrees.map((d) => ({
+              id: d.id,
+              degreeName: d.degree_name,
+              institution: d.institution,
+              boardUniversity: d.board_university,
+              yearCompleted: d.year_completed,
+            })))
+          }
+        }
+        
+        if (docsRes.ok) {
+          const docsData = await docsRes.json() as { documents?: DocumentRow[] }
+          const fetchedDocuments = docsData.documents || []
+          if (fetchedDocuments.length > 0) {
+            setDocuments(fetchedDocuments.map((d) => ({
+              id: d.id,
+              documentType: d.document_type,
