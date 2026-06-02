@@ -141,3 +141,75 @@ export default function StudentDashboard() {
                 <Clock3 className="h-4 w-4" />
                 Waiting for tutor bids
               </div>
+                            <h3 className="mt-3 text-2xl font-black text-text-main">Your problem is live</h3>
+            </div>
+            <Link href="/student/post-problem" className="inline-flex h-10 items-center justify-center rounded-lg border border-border bg-surface px-4 text-sm font-bold text-text-muted transition hover:bg-surface-hover hover:text-text-main">
+              Post another
+            </Link>
+          </div>
+
+          <div className="grid gap-3">
+            {activeProblems.map((problem) => (
+              <div key={problem.id} className="rounded-lg border border-border bg-surface p-5">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <div className="mb-3 flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-primary-subtle px-3 py-1 text-xs font-black text-primary">{problem.subject}</span>
+                      <span className="rounded-full bg-secondary-subtle px-3 py-1 text-xs font-black text-secondary-dark">{problem.class}</span>
+                      <span className="rounded-full bg-surface-hover px-3 py-1 text-xs font-bold text-text-muted">{problem.duration_min} min</span>
+                    </div>
+                    <h4 className="text-lg font-black text-text-main">Rs. {Number(problem.offer_price || 0).toLocaleString()} offer</h4>
+                    <p className="mt-2 max-w-2xl text-sm leading-6 text-text-muted">
+                      {problem.details || 'Tutors can now see this request and place bids.'}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 flex-col gap-2 sm:items-end">
+                    <div className="rounded-lg bg-amber-50 px-4 py-3 text-sm font-black text-amber-700">
+                      0 bids yet
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleCancelProblem(problem.id)}
+                      disabled={cancellingProblemId === problem.id}
+                      className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 text-sm font-bold text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                      {cancellingProblemId === problem.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <XCircle className="h-4 w-4" />
+                      )}
+                      Cancel request
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {activeProblems.length === 0 && bids.length === 0 && (
+        <div className="grid gap-4 lg:grid-cols-3">
+          {[
+            ['Upload a clear image', 'A focused photo helps tutors understand the exact problem faster.'],
+            ['Set a realistic budget', 'Higher urgency and longer duration usually attract faster bids.'],
+            ['Accept when ready', 'Your wallet moves funds into escrow when a session starts.'],
+          ].map(([title, text], idx) => (
+            <div key={title} className="qs-card rounded-lg p-5">
+              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-secondary-subtle text-secondary font-black">{idx + 1}</div>
+              <h3 className="font-black text-text-main">{title}</h3>
+              <p className="mt-2 text-sm leading-6 text-text-muted">{text}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <LiveBidsList />
+
+      <Link href="/student/history" className="mt-8 inline-flex items-center gap-2 text-sm font-bold text-primary hover:text-primary-dark">
+        View session history
+        <ArrowRight className="h-4 w-4" />
+      </Link>
+    </div>
+  )
+}
