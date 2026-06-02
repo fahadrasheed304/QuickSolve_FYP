@@ -1224,3 +1224,67 @@ export default function TutorCompleteProfilePage() {
                         <div className={isSchoolDegree(newDegree.degreeName || '') ? '' : 'md:col-span-2'}>
                           <label className={labelClass}>{isSchoolDegree(newDegree.degreeName || '') ? 'Board' : 'University or institution'}</label>
                           {isSchoolDegree(newDegree.degreeName || '') ? (
+                                                        <select
+                              value={newDegree.boardUniversity}
+                              onChange={(e) => setNewDegree({ ...newDegree, boardUniversity: e.target.value })}
+                              className={inputClass}
+                            >
+                              <option value="">Select board...</option>
+                              {PAKISTAN_BOARDS.map(board => (
+                                <option key={board} value={board}>{board}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <input
+                              type="text"
+                              value={newDegree.boardUniversity}
+                              onChange={(e) => {
+                                const value = e.target.value
+                                setNewDegree({ ...newDegree, boardUniversity: value, institution: value })
+                              }}
+                              placeholder="UET Lahore, FAST, LUMS"
+                              className={inputClass}
+                            />
+                          )}
+                        </div>
+
+                        <div>
+                          <label className={labelClass}>Year completed</label>
+                          <select
+                            value={newDegree.yearCompleted}
+                            onChange={(e) => setNewDegree({ ...newDegree, yearCompleted: e.target.value })}
+                            className={inputClass}
+                          >
+                            <option value="">Select year...</option>
+                            {Array.from({ length: 47 }, (_, i) => 2026 - i).map(year => (
+                              <option key={year} value={year}>{year}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                      </div>
+
+                      <div className="mt-5 flex flex-wrap gap-2">
+                        <Button type="button" onClick={addDegree}>
+                          <Plus className="mr-2 h-4 w-4" />
+                          Add degree
+                        </Button>
+                        <Button type="button" onClick={() => setShowDegreeForm(false)} variant="outline">
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowDegreeForm(true)}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-primary/35 bg-primary-subtle/35 px-4 py-5 text-sm font-bold text-primary transition-colors hover:bg-primary-subtle"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add degree
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {step === 4 && (
