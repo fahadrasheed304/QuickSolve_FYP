@@ -395,3 +395,67 @@ export default function TakeTestPage() {
     window.addEventListener('blur', handleBlur)
     return () => window.removeEventListener('blur', handleBlur)
   }, [testStarted, testFinished, handleTabSwitchWarning])
+  useEffect(() => {
+    if (!testStarted || testFinished || !faceTrackingReady || !verificationPassed) return;
+    const faceDetector = faceDetectorRef.current;
+    const faceapi = faceApiRef.current;
+    const referenceDescriptor = referenceFaceDescriptorRef.current;
+
+    let isActive = true;
+    let missingFaceFrames = 0;
+    let identityMismatchFrames = 0;
+    let lookingAwayFrames = 0;
+    let lastFaceAnalysisCheck = 0;
+    let lastIdentityCheck = 0;
+
+    const trackFace = async () => {
+      if (!isActive) return;
+      if (showWarningModal) {
+        // Pause tracking while warning is shown
+        setTimeout(trackFace, 1000);
+        return;
+      }
+      
+      if (videoRef.current && streamRef.current && videoRef.current.readyState === 4) {
+        try {
+          const detections = faceDetector
+            ? await faceDetector.detect(videoRef.current)
+            : null
+          const faceMissing = detections
+            ? detections.length === 0
+            : !hasUsableCameraFrame(videoRef.current)
+          
+          if (faceMissing) {
+            missingFaceFrames++;
+            if (missingFaceFrames > 3) {
+              handleProctoringWarning("No face detected in the camera frame.");
+              missingFaceFrames = 0;
+            }
+          } else {
+            missingFaceFrames = 0; // reset
+          }
+
+          const now = Date.now()
+          if (!faceMissing && faceapi && referenceDescriptor && now - lastFaceAnalysisCheck > FACE_ATTENTION_CHECK_INTERVAL_MS) {
+            lastFaceAnalysisCheck = now
+            const liveFace = await faceapi
+              .detectSingleFace(
+                videoRef.current,
+                new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.45 })
+              )
+              .withFaceLandmarks()
+              .withFaceDescriptor()
+
+            if (liveFace) {
+              if (isLookingAwayFromCamera(liveFace.landmarks)) {
+                lookingAwayFrames++
+                if (lookingAwayFrames >= 2) {
+                  handleProctoringWarning("Please keep your face directed toward the screen during the test.")
+                  lookingAwayFrames = 0
+                }
+              } else {
+                lookingAwayFrames = 0
+              }
+
+              if (now - lastIdentityCheck > IDENTITY_CHECK_INTERVAL_MS) {
+                lastIdentityCheck = now
