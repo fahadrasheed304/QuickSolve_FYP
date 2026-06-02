@@ -184,3 +184,65 @@ export default function PostProblemPage() {
                           : "border-border bg-surface hover:border-primary/40"
                       )}
                     >
+                                          <div className="flex items-center justify-center gap-1 font-black text-sm">
+                        <Clock3 className="h-4 w-4" />
+                        {dur.label}
+                      </div>
+                      <div className="mt-1 text-xs font-bold opacity-80">Rs. {dur.price}</div>
+                      {selectedDuration === dur.value && (
+                        <CheckCircle2 className="absolute right-2 top-2 h-4 w-4 text-primary" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-end justify-between gap-4">
+                  <label className="text-sm font-bold text-text-main">Offer Price</label>
+                  <span className="text-sm font-bold text-primary">Suggested: Rs. {DURATIONS.find(d => d.value === selectedDuration)?.price}</span>
+                </div>
+                <div>
+                  <div className="flex rounded-lg shadow-sm">
+                    <span className="inline-flex items-center rounded-l-lg border border-r-0 border-border bg-surface-hover px-4 text-sm font-bold text-text-muted">
+                      Rs.
+                    </span>
+                    <Input
+                      type="number"
+                      min={200}
+                      max={2000}
+                      value={offerPrice}
+                      onChange={(e) => setOfferPrice(e.target.value)}
+                      className="rounded-l-none text-lg font-black"
+                    />
+                  </div>
+                  <div className="mt-2 flex justify-between text-xs font-semibold text-text-muted">
+                    <p>Tutors may bid higher or lower</p>
+                    <p>Min: 200 / Max: 2000</p>
+                  </div>
+                </div>
+              </div>
+
+              <Button type="submit" disabled={isSubmitting} className="h-14 w-full text-base">
+                {isSubmitting ? 'Posting...' : 'Post Problem'}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Dialog open={showSuccess} onOpenChange={setShowSuccess}>
+        <DialogContent className="sm:max-w-md text-center p-8">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-lg bg-success-subtle">
+            <CheckCircle2 className="h-10 w-10 text-success" />
+          </div>
+          <h2 className="mb-2 text-2xl font-black text-text-main">Problem posted</h2>
+          <p className="mb-8 text-text-muted">Your request is live. Verified tutors can now place bids on it.</p>
+          <Button onClick={() => router.push('/student/dashboard')} className="h-12 w-full">
+            Go to Dashboard
+          </Button>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
