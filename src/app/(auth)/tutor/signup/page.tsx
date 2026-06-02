@@ -201,3 +201,71 @@ export default function TutorSignupPage() {
                       onChange={(e) => setCountryCode(e.target.value)}
                       className="w-[90px] h-11 px-2 bg-surface-container-low border-b-2 border-r-2 border-outline-variant focus:border-primary outline-none text-on-surface rounded-tl-lg text-sm"
                     >
+                                              <option value="+92">+92</option>
+                      <option value="+1">+1</option>
+                      <option value="+44">+44</option>
+                      <option value="+971">+971</option>
+                      <option value="+966">+966</option>
+                      <option value="+61">+61</option>
+                    </select>
+                    <input
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                      className="flex-1 h-11 px-4 bg-surface-container-low border-b-2 border-outline-variant focus:border-primary focus:ring-0 transition-all duration-200 outline-none text-on-surface rounded-tr-lg"
+                      name="quicksolve-tutor-signup-phone"
+                      autoComplete="off"
+                      id="phone" placeholder="Enter phone number" type="tel"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Password */}
+              <div className="space-y-3">
+                <label className="block text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1.5" htmlFor="password">Create Password</label>
+                <PasswordInput
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full h-11 px-4 bg-surface-container-low border-b-2 border-outline-variant focus:border-primary focus:ring-0 transition-all duration-200 outline-none text-on-surface rounded-t-lg"
+                  toggleClassName="hover:bg-surface-container-high"
+                  name="quicksolve-tutor-signup-password"
+                  autoComplete="new-password"
+                  id="password"
+                  placeholder="Enter password"
+                />
+                <div className="h-1 w-full bg-surface-container-high rounded-full overflow-hidden">
+                  <div className={`h-full transition-all duration-300 ${strength === 0 ? 'w-0' : strength === 1 ? 'w-1/3 bg-red-400' : strength === 2 ? 'w-2/3 bg-amber-400' : 'w-full bg-primary'}`}></div>
+                </div>
+              </div>
+
+              {/* Terms */}
+              <div className="flex items-start gap-3">
+                <div className="flex items-center h-5">
+                  <input
+                    checked={terms}
+                    onChange={(e) => setTerms(e.target.checked)}
+                    className="w-4 h-4 text-primary border-outline-variant rounded focus:ring-primary/20"
+                    id="terms" type="checkbox"
+                  />
+                </div>
+                <label className="text-xs text-on-surface-variant leading-relaxed" htmlFor="terms">
+                  I agree to the <Link className="text-primary font-semibold hover:underline" href="/terms">Terms of Service</Link> and <Link className="text-primary font-semibold hover:underline" href="/privacy">Privacy Policy</Link>.
+                </label>
+              </div>
+
+              {/* Submit */}
+              <button
+                disabled={loading}
+                className="w-full h-11 bg-[#006c4a] hover:bg-green-800 disabled:opacity-70 text-white font-bold rounded-lg shadow-lg shadow-green-900/20 transition-all active:scale-[0.98]"
+                type="submit"
+              >
+                {loading ? "CREATING ACCOUNT..." : "APPLY TO TEACH"}
+              </button>
+            </form>
+          </div>
+        </section>
+      </main>
+    </>
+  )
+}
