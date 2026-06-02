@@ -122,3 +122,65 @@ export default function PostProblemPage() {
                   ))}
                 </div>
               </div>
+                            <div className="space-y-3">
+                <label className="text-sm font-bold text-text-main">Problem Image</label>
+                <label
+                  htmlFor="problem-image"
+                  className={cn(
+                    "relative flex min-h-64 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-lg border-2 border-dashed p-6 text-center transition-all",
+                    imageFile ? "border-success bg-success-subtle" : "border-border bg-surface-hover hover:border-primary/40 hover:bg-primary-subtle/40"
+                  )}
+                >
+                  {imageFile ? (
+                    <>
+                      <CheckCircle2 className="mb-3 h-12 w-12 text-success" />
+                      <span className="font-black text-text-main">{imageFile.name}</span>
+                      <span className="mt-1 text-xs font-semibold text-text-muted">{(imageFile.size / 1024 / 1024).toFixed(2)} MB</span>
+                      <span className="mt-4 text-xs font-black text-primary">Click to change</span>
+                    </>
+                  ) : (
+                    <>
+                      <Camera className="mb-4 h-12 w-12 text-text-muted" />
+                      <span className="text-sm font-black text-text-main">Upload a clear problem image</span>
+                      <span className="mt-1 text-xs text-text-muted">JPG, PNG, max 5MB</span>
+                    </>
+                  )}
+                  <input
+                    id="problem-image"
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        setImageFile(e.target.files[0])
+                      }
+                    }}
+                  />
+                </label>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-sm font-bold text-text-main">Additional Details</label>
+                <Textarea
+                  placeholder="Example: I need help with question 5, part b from exercise 3.2..."
+                  className="min-h-[120px] resize-none"
+                  value={details}
+                  onChange={(e) => setDetails(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-sm font-bold text-text-main">Session Duration</label>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {DURATIONS.map((dur) => (
+                    <button
+                      key={dur.value}
+                      type="button"
+                      onClick={() => { setSelectedDuration(dur.value); setOfferPrice(dur.price.toString()) }}
+                      className={cn(
+                        "relative rounded-lg border p-4 text-center transition-all",
+                        selectedDuration === dur.value
+                          ? "border-primary bg-primary-subtle text-primary"
+                          : "border-border bg-surface hover:border-primary/40"
+                      )}
+                    >
