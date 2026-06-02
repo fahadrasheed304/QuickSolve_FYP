@@ -1418,3 +1418,68 @@ export default function TutorCompleteProfilePage() {
               )}
 
               {step === 5 && (
+                                <div className="space-y-5">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="rounded-lg border border-border bg-surface p-4">
+                      <h3 className="mb-3 flex items-center gap-2 font-bold text-text-main"><User className="h-4 w-4 text-primary" /> Personal</h3>
+                      <div className="space-y-2 text-sm">
+                        <p><span className="font-semibold text-text-muted">City:</span> <span className="font-bold text-text-main">{personalDetails.city || 'N/A'}</span></p>
+                        <p><span className="font-semibold text-text-muted">CNIC:</span> <span className="font-bold text-text-main">{personalDetails.cnic || 'N/A'}</span></p>
+                        <p className="leading-6 text-text-main"><span className="block font-semibold text-text-muted">Bio</span>{personalDetails.bio || 'N/A'}</p>
+                      </div>
+                    </div>
+
+                    <div className="rounded-lg border border-border bg-surface p-4">
+                      <h3 className="mb-3 flex items-center gap-2 font-bold text-text-main"><BookOpen className="h-4 w-4 text-secondary-dark" /> Subjects</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedSubjects.map(sub => (
+                          <span key={sub} className="rounded-lg bg-primary-subtle px-3 py-1 text-xs font-bold text-primary-dark">
+                            {sub}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-border bg-surface p-4">
+                    <h3 className="mb-3 flex items-center gap-2 font-bold text-text-main"><GraduationCap className="h-4 w-4 text-accent" /> Education</h3>
+                    <div className="grid gap-2 md:grid-cols-2">
+                      {degrees.map((degree, idx) => (
+                        <div key={degree.id} className="rounded-lg border border-border bg-surface-container-low px-3 py-3 text-sm">
+                          <p className="font-bold text-text-main">{idx + 1}. {degree.degreeName}</p>
+                          <p className="mt-1 text-text-muted">{degree.institution || degree.boardUniversity} / {degree.yearCompleted}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-border bg-surface p-4">
+                    <h3 className="mb-3 flex items-center gap-2 font-bold text-text-main"><FileText className="h-4 w-4 text-primary" /> Documents</h3>
+                    <div className="grid gap-3 md:grid-cols-2">
+                      {['cnic_front', 'cnic_back', 'profile_photo'].map(type => {
+                        const doc = getDocumentByType(type)
+                        return (
+                          <div key={type} className="flex items-center gap-3 rounded-lg border border-border bg-surface-container-low px-3 py-3">
+                            {doc ? (
+                              (doc.documentUrl.match(/\.(jpeg|jpg|gif|png|webp)$/i) || doc.documentUrl.startsWith('data:image') || doc.documentUrl.includes('supabase')) ? (
+                                <img
+                                  src={doc.documentUrl}
+                                  alt={documentLabels[type]}
+                                  className="h-12 w-14 cursor-pointer rounded-lg border border-border object-cover"
+                                  onClick={() => setPreviewImage(doc.documentUrl)}
+                                />
+                              ) : (
+                                <div className="flex h-12 w-14 items-center justify-center rounded-lg border border-border bg-primary-subtle text-primary">
+                                  <FileText className="h-5 w-5" />
+                                </div>
+                              )
+                            ) : (
+                              <div className="flex h-12 w-14 items-center justify-center rounded-lg border border-error/20 bg-red-50 text-error">
+                                <X className="h-5 w-5" />
+                              </div>
+                            )}
+                            <div>
+                              <p className="text-sm font-bold text-text-main">{documentLabels[type]}</p>
+                              <p className="text-xs font-medium text-text-muted">{doc ? 'Uploaded' : 'Missing'}</p>
+                            </div>
+                          </div>
