@@ -321,3 +321,68 @@ const getLCSLength = (s1: string, s2: string): number => {
   const m = s1.length
   const n = s2.length
   const dp = Array(m + 1).fill(0).map(() => Array(n + 1).fill(0))
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (s1[i - 1] === s2[j - 1]) {
+        dp[i][j] = dp[i - 1][j - 1] + 1
+      } else {
+        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1])
+      }
+    }
+  }
+  return dp[m][n]
+}
+
+const getEditDistance = (s1: string, s2: string): number => {
+  const m = s1.length
+  const n = s2.length
+  const dp = Array(m + 1).fill(0).map(() => Array(n + 1).fill(0))
+
+  for (let i = 0; i <= m; i++) dp[i][0] = i
+  for (let j = 0; j <= n; j++) dp[0][j] = j
+
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const cost = s1[i - 1] === s2[j - 1] ? 0 : 1
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + cost
+      )
+    }
+  }
+
+  return dp[m][n]
+}
+
+const normalizeCnic = (value: string) => value.replace(/\D/g, '').slice(0, CNIC_LENGTH)
+
+const normalizeOcrTextForCnic = (text: string) => text
+  .replace(/[OoQ]/g, '0')
+  .replace(/[Ss$]/g, '5')
+  .replace(/[Bb]/g, '8')
+  .replace(/[Il|]/g, '1')
+  .replace(/[Zz]/g, '2')
+  .replace(/[\u2013\u2014_]/g, '-')
+
+const addDigitWindows = (value: string, candidates: Set<string>) => {
+  const digits = value.replace(/\D/g, '')
+  if (digits.length < CNIC_LENGTH) return
+
+  if (digits.length === CNIC_LENGTH) {
+    candidates.add(digits)
+    return
+  }
+
+  for (let i = 0; i <= digits.length - CNIC_LENGTH; i++) {
+    candidates.add(digits.slice(i, i + CNIC_LENGTH))
+  }
+}
+
+const extractCnicCandidates = (ocrText: string): string[] => {
+  const normalizedText = normalizeOcrTextForCnic(ocrText)
+  const candidates = new Set<string>()
+  const formattedCnicPattern = /(?:^|[^\d])(\d{5})[^\d]{0,6}(\d{7})[^\d]{0,6}(\d)(?=$|[^\d])/g
+  const numericChunkPattern = /[0-9][0-9\s\-:./]{8,}[0-9]/g
+
+  for (const match of normalizedText.matchAll(formattedCnicPattern)) {
