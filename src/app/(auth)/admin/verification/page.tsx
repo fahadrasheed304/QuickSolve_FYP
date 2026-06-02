@@ -806,3 +806,69 @@ export default function AdminVerificationsPage() {
                             <p className="text-xs font-black uppercase text-text-muted">Face check</p>
                             <p className="mt-1 text-sm font-bold text-text-main">
                               {selectedTutor.subject_test_passed ? 'Passed' : 'Pending'}
+                               </p>
+                          </div>
+                        </div>
+                      </div>
+                    </section>
+
+                    <section className="qs-panel rounded-lg p-5">
+                      <div className="mb-4 flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-subtle text-accent">
+                          <FileText className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-black text-text-main">Admin notes</h3>
+                          <p className="text-sm text-text-muted">{selectedTutor.notes?.length || 0} notes</p>
+                        </div>
+                      </div>
+
+                      {(selectedTutor.notes?.length ?? 0) > 0 && (
+                        <div className="mb-4 max-h-52 space-y-3 overflow-y-auto pr-1">
+                          {(selectedTutor.notes ?? []).map((note, index) => (
+                            <div key={`${note.created_at}-${index}`} className="rounded-lg border border-border/80 bg-surface/76 p-3">
+                              <p className="text-sm font-semibold leading-6 text-text-main">{note.message}</p>
+                              <p className="mt-2 text-xs font-bold uppercase text-text-muted">{formatDate(note.created_at)}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <textarea
+                        value={noteText}
+                        onChange={(event) => setNoteText(event.target.value)}
+                        rows={4}
+                        className="qs-input w-full resize-y rounded-lg px-3 py-3 text-sm"
+                        placeholder="Admin note for this action"
+                      />
+                    </section>
+
+                    <section className="qs-panel rounded-lg p-5">
+                      <div className="mb-4 flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success-subtle text-success">
+                          <BadgeCheck className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-black text-text-main">Review actions</h3>
+                          <p className="text-sm text-text-muted">{selectedStageMeta.label}</p>
+                        </div>
+                      </div>
+
+                      {isIncompleteSubmission && (
+                        <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs font-semibold leading-5 text-amber-900">
+                          Review actions are locked until degrees are submitted.
+                        </div>
+                      )}
+
+                      <div className="space-y-3">
+                        {['submitted', 'pending'].includes(selectedTutor.verification_stage || '') && (
+                          <Button
+                            type="button"
+                            onClick={() => updateStatus(selectedTutor.user_email, 'under_review', 'pending')}
+                            disabled={isUpdatingSelected || isIncompleteSubmission}
+                            className="w-full justify-start bg-primary hover:bg-primary-dark"
+                          >
+                            {isUpdatingSelected ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
+                            Start review
+                          </Button>
+                        )}
