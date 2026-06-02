@@ -526,3 +526,69 @@ export default function TakeTestPage() {
 
   const startVerification = async () => {
     if (!profilePhotoUrl) {
+         setVerificationError('No profile photo found in your account. Please update your profile.')
+      return
+    }
+    
+    setVerifying(true)
+    setVerificationError('')
+    setVerificationPassed(false)
+    setFaceTrackingReady(false)
+    referenceFaceDescriptorRef.current = null
+    setVerificationStep('Starting camera...')
+    
+    try {
+      const faceDetector = faceDetectorRef.current || getNativeFaceDetector()
+      faceDetectorRef.current = faceDetector
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      streamRef.current = stream
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+        await videoRef.current.play().catch(() => {})
+      }
+      
+      setVerificationStep('Reading live camera frame...')
+      if (!videoRef.current) throw new Error("Video not available")
+      await waitForVideoReady(videoRef.current)
+      await wait(650)
+
+      if (!hasUsableCameraFrame(videoRef.current)) {
+        setVerificationError('Camera is active but the frame is too dark or blank. Please improve lighting and try again.')
+        stopCameraStream()
+        setVerifying(false)
+        return
+      }
+
+      setVerificationStep('Loading face match model...')
+      const faceapi = faceApiRef.current || await loadFaceRecognitionApi()
+      faceApiRef.current = faceapi
+
+      setVerificationStep('Checking profile photo...')
+      const referenceImage = await loadImage(profilePhotoUrl)
+      let profileFaces: DetectedFace[] = []
+      for (const settings of FACE_DETECTOR_SETTINGS) {
+        profileFaces = await faceapi
+          .detectAllFaces(referenceImage, new faceapi.TinyFaceDetectorOptions(settings))
+          .withFaceLandmarks()
+          .withFaceDescriptors()
+        if (profileFaces.length > 0) break
+      }
+
+      if (profileFaces.length === 0) {
+        setVerificationError('Could not detect a clear face in your profile picture. Please upload a better profile photo.')
+        stopCameraStream()
+        setVerifying(false)
+        return
+      }
+
+      if (profileFaces.length > 1) {
+        setVerificationError('Your profile picture must show only one person. Please upload a solo, clear face photo.')
+        stopCameraStream()
+        setVerifying(false)
+        return
+      }
+
+      setVerificationStep('Matching live face...')
+      let bestLiveDescriptor: Float32Array | null = null
+      let bestMatchDistance = Number.POSITIVE_INFINITY
+      let detectedLiveFace = false
