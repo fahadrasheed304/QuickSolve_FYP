@@ -362,3 +362,70 @@ input:disabled {
 }
 
 .bg-blue-50 {
+   background-color: var(--color-primary-subtle) !important;
+}
+
+.bg-\[\#006c4a\],
+.bg-\[\#0A52D1\],
+.bg-\[\#1E5ED7\],
+.bg-\[\#0C58D0\] {
+  background-color: var(--color-primary) !important;
+}
+
+.text-\[\#006c4a\],
+.text-\[\#1E5ED7\],
+.text-\[\#0C58D0\] {
+  color: var(--color-primary) !important;
+}
+
+.border-\[\#006c4a\] {
+  border-color: var(--color-primary) !important;
+}
+
+.text-green-600,
+.text-emerald-600 {
+  color: var(--color-success) !important;
+}
+
+.bg-green-100,
+.bg-emerald-100,
+.bg-emerald-50 {
+  background-color: var(--color-success-subtle) !important;
+}
+
+.bg-amber-50,
+.bg-yellow-100 {
+  background-color: #fff5da !important;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes float-soft {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes drift-panel {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(-10px, -12px, 0); }
+}
