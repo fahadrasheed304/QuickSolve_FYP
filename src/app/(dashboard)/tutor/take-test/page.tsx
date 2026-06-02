@@ -791,3 +791,70 @@ export default function TakeTestPage() {
     return (
       <main className="min-h-screen bg-background py-12 px-4 flex flex-col items-center justify-center">
         <Card className="max-w-md w-full"></Card>
+        <CardContent className="p-8">
+            <h1 className="text-2xl font-bold text-center mb-6">Identity Verification</h1>
+            <p className="text-muted-foreground text-center mb-6 text-sm">
+              Please position your face clearly in the camera before starting the test.
+            </p>
+            
+            <div className="relative aspect-video bg-black rounded-lg overflow-hidden mb-6 flex items-center justify-center">
+              <video 
+                ref={handleVideoRef} 
+                className="w-full h-full object-cover"
+                playsInline 
+                muted 
+              />
+              {!verifying && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                  <span className="text-white text-sm">Camera inactive</span>
+                </div>
+              )}
+            </div>
+
+            {verificationError && (
+              <div className="mb-6 p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-md text-center">
+                {verificationError}
+              </div>
+            )}
+
+            <Button 
+              onClick={startVerification} 
+              disabled={verifying}
+              className="w-full bg-[#006c4a] hover:bg-green-800"
+            >
+              {verifying ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  {verificationStep || 'Verifying Identity...'}
+                </>
+              ) : (
+                'Start Verification'
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      </main>
+    )
+  }
+
+  // Instructions screen
+  if (!testStarted && !testFinished && verificationPassed) {
+    return (
+      <main className="min-h-screen bg-background py-12 px-4">
+        <div className="max-w-2xl mx-auto">
+          <video ref={handleVideoRef} className="hidden" playsInline muted />
+          <Card>
+            <CardContent className="p-8">
+              <h1 className="text-2xl font-bold text-foreground mb-4">Subject Proficiency Test</h1>
+              
+              <div className="space-y-4 mb-6">
+                <div className="flex items-start gap-3">
+                  <Clock className="w-5 h-5 text-[#006c4a] mt-0.5" />
+                  <div>
+                    <p className="font-medium text-foreground">Duration: 20 minutes</p>
+                    <p className="text-sm text-muted-foreground">The timer starts when you begin and cannot be paused.</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 text-[#006c4a] mt-0.5" />
