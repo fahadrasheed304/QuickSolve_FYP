@@ -226,3 +226,71 @@ input:disabled {
 .surface-grid {
   background-image:
     linear-gradient(90deg, rgba(22, 103, 255, 0.08) 1px, transparent 1px),
+     linear-gradient(180deg, rgba(0, 167, 165, 0.08) 1px, transparent 1px);
+  background-size: 34px 34px;
+}
+
+.bg-hero-gradient.surface-grid {
+  background:
+    linear-gradient(90deg, rgba(127, 178, 255, 0.16) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(0, 167, 165, 0.12) 1px, transparent 1px),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, transparent 36%),
+    linear-gradient(135deg, #101d32 0%, #1667ff 48%, #00a7a5 100%) !important;
+  background-size: 34px 34px, 34px 34px, 100% 100%, 100% 100% !important;
+}
+
+.bg-royal-gradient.surface-grid {
+  background:
+    linear-gradient(90deg, rgba(127, 178, 255, 0.16) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(0, 167, 165, 0.12) 1px, transparent 1px),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.10) 0%, transparent 34%),
+    linear-gradient(135deg, #101d32 0%, #1667ff 58%, #00a7a5 100%) !important;
+  background-size: 34px 34px, 34px 34px, 100% 100%, 100% 100% !important;
+}
+
+.mesh-sheen {
+  position: relative;
+  overflow: hidden;
+}
+
+.qs-landing-cta {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, transparent 38%),
+    linear-gradient(135deg, #101d32 0%, #1667ff 52%, #00a7a5 100%) !important;
+}
+
+.qs-landing-cta::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.12) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.10) 1px, transparent 1px);
+  background-size: 34px 34px;
+  opacity: 0.75;
+}
+
+.qs-landing-cta::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(16, 29, 50, 0.82) 0%, rgba(16, 29, 50, 0.44) 52%, rgba(16, 29, 50, 0.18) 100%);
+}
+
+.mesh-sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 0%, rgba(255, 255, 255, 0.28) 42%, transparent 64%);
+  transform: translateX(-120%);
+  animation: sheen 7s ease-in-out infinite;
+}
+
+.rounded-xl,
+.rounded-2xl,
+.rounded-3xl {
