@@ -514,3 +514,68 @@ const validateProfilePhotoFace = async (file: File) => {
       error: 'Face is too small in this photo. Please upload a closer, clearer profile photo.',
     }
   }
+   return { valid: true, error: '' }
+}
+
+export default function TutorCompleteProfilePage() {
+  const router = useRouter()
+  const { user, fetchUser, logout } = useAuthStore()
+  const userId = user?.id
+
+  const [step, setStep] = useState(1)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+  const [ocrLoading, setOcrLoading] = useState(false)
+  const [faceLoading, setFaceLoading] = useState(false)
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (error) {
+      notifyError(error)
+    }
+  }, [error])
+  
+  // Step 1: Personal Details
+  const [personalDetails, setPersonalDetails] = useState({
+    city: '',
+    cnic: '',
+    bio: '',
+  })
+  
+  // Step 2: Subjects
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([])
+  
+  // Step 3: Degrees
+  const [degrees, setDegrees] = useState<Degree[]>([])
+  const [showDegreeForm, setShowDegreeForm] = useState(false)
+  const [newDegree, setNewDegree] = useState<Partial<Degree>>({
+    degreeName: '',
+    institution: '',
+    boardUniversity: '',
+    yearCompleted: '',
+  })
+  
+  // Step 4: Documents
+  const [documents, setDocuments] = useState<Document[]>([])
+  const [uploading, setUploading] = useState<string | null>(null)
+  
+  // Document types required
+  const requiredDocs = [
+    { type: 'cnic_front', label: 'CNIC Front', icon: <FileText className="w-5 h-5" /> },
+    { type: 'cnic_back', label: 'CNIC Back', icon: <FileText className="w-5 h-5" /> },
+    { type: 'profile_photo', label: 'Profile Photo', icon: <Camera className="w-5 h-5" /> },
+  ]
+
+  const toggleSubject = (sub: string) => {
+    setSelectedSubjects(prev =>
+      prev.includes(sub) ? prev.filter(s => s !== sub) : [...prev, sub]
+    )
+  }
+
+  const addDegree = () => {
+    const isSchool = isSchoolDegree(newDegree.degreeName || '')
+    const degreeName = newDegree.degreeName || ''
+    const boardUniversity = newDegree.boardUniversity || ''
+    const yearCompleted = newDegree.yearCompleted || ''
+    const institution = isSchool ? (newDegree.institution || '') : boardUniversity
+    
