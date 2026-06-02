@@ -192,3 +192,68 @@ export default function SessionPage() {
               <div className="flex gap-2">
                 <select
                   className="flex-1 rounded-lg border border-amber-200 bg-white px-2 text-sm font-semibold text-text-main"
+                                   value={extensionTime}
+                  onChange={(e) => {
+                    const time = parseInt(e.target.value)
+                    setExtensionTime(time)
+                    setExtensionAmount(time === 15 ? 125 : time === 30 ? 250 : 375)
+                  }}
+                >
+                  <option value={15}>+15 min (Rs. 125)</option>
+                  <option value={30}>+30 min (Rs. 250)</option>
+                  <option value={45}>+45 min (Rs. 375)</option>
+                </select>
+                <Button onClick={() => setShowExtensionModal(true)} size="sm" className="bg-amber-600 hover:bg-amber-700">Extend</Button>
+              </div>
+            </div>
+          )}
+
+          <div className="border-t border-border bg-surface p-4">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Type your message..."
+                value={chatMessage}
+                onChange={(e) => setChatMessage(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') setChatMessage('') }}
+              />
+              <Button size="icon" onClick={() => setChatMessage('')} className="shrink-0">
+                <Send className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </aside>
+      </main>
+
+      <Dialog open={showExtensionModal} onOpenChange={setShowExtensionModal}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-center text-xl">Extend Session?</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4 text-center">
+            <p className="text-text-muted">Additional {extensionTime} minutes</p>
+            <p className="text-3xl font-black text-text-main">Rs. {extensionAmount}</p>
+            <div className={cn(
+              "rounded-lg border p-3 text-sm font-bold",
+              balance >= extensionAmount ? "bg-success-subtle text-success border-green-200" : "bg-red-50 text-red-700 border-red-200"
+            )}>
+              Current Balance: Rs. {balance}
+            </div>
+            {balance >= extensionAmount ? (
+              <Button onClick={handleRequestExtension} className="h-12 w-full text-base">Confirm & Pay</Button>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-red-600">Insufficient balance. Please recharge wallet.</p>
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1" onClick={() => setShowExtensionModal(false)}>Cancel</Button>
+                  <Button className="flex-1" onClick={() => router.push('/student/wallet')}>Recharge</Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <ReviewModal isOpen={showReview} onClose={() => setShowReview(false)} tutorName={tutorName} />
+    </div>
+  )
+}
