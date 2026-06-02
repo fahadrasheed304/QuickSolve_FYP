@@ -62,3 +62,69 @@ function TutorVerifyEmailForm() {
     }
 
     setLoading(true)
+    setError('')
+
+    try {
+      const res = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp: code })
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        notifySuccess(data.message, "Your email has been verified successfully.")
+        // Check if admin email - redirect to admin panel
+        if (data.isAdmin) {
+          window.location.href = '/admin/verifications'
+          return
+        }
+        window.location.href = '/tutor/complete-profile';
+      } else {
+        showError(getApiMessage(data, "That verification code is not valid. Please check the code and try again."))
+      }
+    } catch (err) {
+      showError("We could not verify the code right now. Please check your connection and try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleResend = async () => {
+    setError('')
+    try {
+      const res = await fetch('/api/auth/resend-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        notifySuccess(data.message, "A new verification code has been sent to your email.")
+      } else {
+        showError(getApiMessage(data, "We could not resend the code. Please wait a moment and try again."))
+      }
+    } catch (err) {
+      showError("We could not resend the code right now. Please check your connection and try again.")
+    }
+  }
+
+  return (
+    <main className="flex min-h-screen w-full bg-surface text-on-surface overflow-x-hidden">
+      {/* Left Panel */}
+      <section className="hidden lg:flex w-[45%] bg-royal-gradient relative flex-col justify-between p-12 overflow-hidden">
+        <div className="z-10">
+          <Link href="/" className="text-2xl font-black tracking-tighter text-white">QuickSolve</Link>
+        </div>
+        <div className="z-10 max-w-lg">
+          <h1 className="text-white text-5xl font-black leading-tight tracking-tight mb-8">
+            Secure your<br />tutor account.
+          </h1>
+          <p className="text-blue-100 text-lg leading-relaxed">
+            We verify every tutor to ensure students connect with trusted, qualified experts only.
+          </p>
+        </div>
+        <div className="z-20 relative">
+          <p className="text-blue-200 text-xs font-medium">© 2026 QuickSolve Inc. All rights reserved.</p>
+        </div>
