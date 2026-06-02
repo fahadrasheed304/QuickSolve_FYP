@@ -62,3 +62,68 @@ export default function TutorDashboard() {
         if (res.ok) {
           const problems = data.problems || []
           setOpenProblems(problems)
+                    setBidPrices((current) =>
+            problems.reduce((acc: Record<string, string>, problem: OpenProblem) => {
+              acc[problem.id] = current[problem.id] || String(problem.offer_price || 400)
+              return acc
+            }, {})
+          )
+        }
+      } finally {
+        if (!cancelled) setIsLoadingProblems(false)
+      }
+    }
+
+    if (user?.role === 'tutor' && user.tutorProfile && !user.tutorProfile.requiresProfileCompletion && isAvailable) {
+      loadOpenProblems()
+      const interval = window.setInterval(loadOpenProblems, 5000)
+      return () => {
+        cancelled = true
+        window.clearInterval(interval)
+      }
+    } else if (!isAvailable) {
+      setOpenProblems([])
+      setBidPrices({})
+    }
+    return () => {
+      cancelled = true
+    }
+  }, [user, isAvailable])
+
+  const handleAvailabilityToggle = async () => {
+    const nextAvailability = !isAvailable
+    setIsUpdatingAvailability(true)
+    setLocalAvailability(nextAvailability)
+    if (!nextAvailability) {
+      setOpenProblems([])
+      setBidPrices({})
+    }
+
+    try {
+      const res = await fetch('/api/tutor/availability', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isAvailable: nextAvailability }),
+      })
+      const data = await res.json()
+
+      if (!res.ok) {
+        setLocalAvailability(isAvailable)
+        const message = getApiMessage(data, 'We could not update your availability. Please try again.')
+        setBidMessage(message)
+        notifyError(message)
+        return
+      }
+
+      setLocalAvailability(Boolean(data.isAvailable))
+      const message = data.isAvailable ? 'You are available for student requests' : 'You are unavailable now'
+      setBidMessage(message)
+      notifySuccess(message)
+    } catch {
+      setLocalAvailability(isAvailable)
+      const message = 'We could not update your availability right now. Please check your connection and try again.'
+      setBidMessage(message)
+      notifyError(message)
+    } finally {
+      setIsUpdatingAvailability(false)
+    }
