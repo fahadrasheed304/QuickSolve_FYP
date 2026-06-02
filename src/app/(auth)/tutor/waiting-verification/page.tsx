@@ -194,3 +194,69 @@ export default function WaitingVerificationPage() {
                   {status?.message || 'Your application is moving through the verification workflow.'}
                 </p>
               </div>
+              <div className="flex flex-col gap-3 sm:flex-row lg:flex-col lg:items-end">
+                <span className={`inline-flex items-center justify-center rounded-lg border bg-white px-4 py-2 text-sm font-black ${currentMeta.tone}`}>
+                  {currentMeta.eyebrow}
+                </span>
+                <Button onClick={handleLogout} className="h-11 border border-white/20 bg-white/10 px-4 text-white hover:bg-white/20">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign out
+                </Button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <section className="mb-5 grid gap-4 md:grid-cols-3">
+          <StatCard icon={Award} label="Degrees" value={status?.stats.degreesCount ?? 0} />
+          <StatCard icon={FileText} label="Documents" value={status?.stats.documentsCount ?? 0} />
+          <StatCard icon={GraduationCap} label="Test Attempts" value={status?.testAttempts ?? 0} />
+        </section>
+
+        <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
+          <section className="qs-panel rounded-lg p-5 sm:p-6">
+            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <div className="qs-kicker rounded-full px-3 py-1.5">Progress</div>
+                <h2 className="mt-3 text-2xl font-black text-text-main">Application timeline</h2>
+              </div>
+              <button
+                type="button"
+                onClick={fetchStatus}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-border bg-surface px-4 text-sm font-bold text-text-muted transition hover:bg-surface-hover hover:text-text-main"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Refresh
+              </button>
+            </div>
+
+            <div className="grid gap-3">
+              {stages.map((step, index) => {
+                const Icon = step.icon
+                const isDone = index < currentIndex
+                const isCurrent = index === currentIndex
+
+                return (
+                  <div
+                    key={step.key}
+                    className={`rounded-lg border p-4 transition ${
+                      isCurrent
+                        ? 'border-primary bg-primary-subtle/60 shadow-lg shadow-primary/10'
+                        : isDone
+                          ? 'border-success/20 bg-success-subtle/45'
+                          : 'border-border bg-surface/76'
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${
+                        isDone
+                          ? 'bg-success text-white'
+                          : isCurrent
+                            ? 'bg-primary text-white'
+                            : 'bg-surface-hover text-text-muted'
+                      }`}>
+                        {isDone ? <CheckCircle2 className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-black text-text-main">{step.label}</h3>
+                        <p className="mt-1 text-sm font-semibold text-text-muted"></p>
