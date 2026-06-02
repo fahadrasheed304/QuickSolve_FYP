@@ -130,3 +130,70 @@ function VerifyEmailForm() {
     <main className="flex min-h-screen w-full bg-surface text-on-surface overflow-x-hidden">
       <AuthSidebar
         title={<>Secure your<br/>account easily.</>}
+        description="We use multi-factor algorithms to ensure that only you have access to your educational progress and bidding wallet."
+        alignCenter={true}
+      />
+
+      {/* Right Panel: OTP Form */}
+      <section className="w-full lg:w-[55%] bg-surface-container-lowest flex items-center justify-center p-6 sm:p-12">
+        <div className="w-full max-w-[480px]">
+          <header className="mb-10 text-center lg:text-left">
+            <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mb-6 lg:mx-0 mx-auto">
+              <span className="material-symbols-outlined text-[28px]" style={{ fontVariationSettings: "'FILL' 1" }}>mark_email_read</span>
+            </div>
+            <h2 className="text-[32px] font-extrabold tracking-tight text-on-surface mb-2">Check your email</h2>
+            <p className="text-on-surface-variant font-medium">
+              We sent a 6-digit verification code to <br/>
+              <span className="font-bold text-on-surface">{email}</span>
+            </p>
+          </header>
+
+          {error && (
+            <div className="mb-6 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md text-sm font-medium">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleVerify} className="space-y-8">
+            <div className="flex justify-between gap-2 max-w-sm mx-auto lg:mx-0">
+              {otp.map((digit, index) => (
+                <input
+                  key={index}
+                  ref={(el) => { inputRefs.current[index] = el }}
+                  type="text"
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handleChange(index, e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(index, e)}
+                  className="w-12 h-14 text-center text-xl font-black bg-surface-container-low border border-outline-variant rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                />
+              ))}
+            </div>
+
+            <button 
+              disabled={loading}
+              className="w-full h-11 bg-primary hover:bg-primary-container disabled:opacity-70 text-on-primary font-bold rounded-lg shadow-lg shadow-primary/20 transition-all active:scale-[0.98]" 
+              type="submit"
+            >
+              {loading ? "VERIFYING..." : "VERIFY EMAIL"}
+            </button>
+          </form>
+
+          <div className="mt-8 text-center lg:text-left">
+            <p className="text-sm text-on-surface-variant font-medium">
+              Didn't receive the email? <button type="button" onClick={handleResend} className="text-primary font-bold hover:underline ml-1">Resend code</button>
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+  )
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-surface">Loading secure verification...</div>}>
+      <VerifyEmailForm />
+    </Suspense>
+  )
+}
