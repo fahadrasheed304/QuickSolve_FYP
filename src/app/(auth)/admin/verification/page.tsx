@@ -537,3 +537,70 @@ export default function AdminVerificationsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-black uppercase text-text-muted">Queue</p>
+                  <h2 className="mt-1 text-xl font-black text-text-main">{filteredTutors.length} applications</h2>
+                </div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-subtle text-primary">
+                  <Users className="h-5 w-5" />
+                </div>
+              </div>
+            </div>
+
+            <div className="max-h-[calc(100vh-318px)] min-h-[420px] overflow-y-auto p-2">
+              {filteredTutors.length > 0 ? (
+                <div className="space-y-2">
+                  {filteredTutors.map(tutor => {
+                    const stageMeta = getStageMeta(tutor.verification_stage)
+                    const tutorName = getTutorName(tutor)
+                    const tutorEmail = getTutorEmail(tutor)
+                    const degreeCount = tutor._degreeCount ?? tutor.degrees?.length ?? 0
+                    const docCount = tutor._docCount ?? getCurrentTutorDocuments(tutor.documents || []).length
+                    const active = selectedTutor?.user_email === tutor.user_email
+                    const opening = detailLoading === tutor.user_email
+
+                    return (
+                      <button
+                        key={tutor.user_email}
+                        type="button"
+                        onClick={() => fetchTutorDetail(tutor.user_email)}
+                        className={`w-full rounded-lg border p-3 text-left transition ${
+                          active
+                            ? 'border-primary bg-primary-subtle shadow-lg shadow-primary/10'
+                            : 'border-transparent bg-surface/68 hover:border-border hover:bg-surface'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-sm font-black ${
+                            active ? 'bg-primary text-white' : 'bg-surface-container-low text-primary'
+                          }`}>
+                            {opening ? <Loader2 className="h-4 w-4 animate-spin" /> : getInitials(tutorName)}
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <h3 className="truncate text-sm font-black text-text-main">{tutorName}</h3>
+                                <p className="mt-0.5 truncate text-xs text-text-muted">{tutorEmail}</p>
+                              </div>
+                              <span className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-black ${stageMeta.badge}`}>
+                                <span className={`h-1.5 w-1.5 rounded-full ${stageMeta.dot}`} />
+                                {stageMeta.label}
+                              </span>
+                            </div>
+
+                            <div className="mt-3 grid grid-cols-3 gap-2 text-[11px] font-bold text-text-muted">
+                              <span className="rounded-md bg-surface-container-low px-2 py-1">{tutor.subjects?.length || 0} subjects</span>
+                              <span className="rounded-md bg-surface-container-low px-2 py-1">{degreeCount} degrees</span>
+                              <span className="rounded-md bg-surface-container-low px-2 py-1">{docCount} docs</span>
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="flex min-h-[360px] flex-col items-center justify-center px-6 text-center">
+                  <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-surface-container-low text-text-muted">
+                    <Search className="h-6 w-6" />
+                  </div>
+                  <p className="font-black text-text-main">No applications found</p>
