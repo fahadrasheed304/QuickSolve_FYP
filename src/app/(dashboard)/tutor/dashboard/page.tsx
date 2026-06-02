@@ -322,3 +322,68 @@ export default function TutorDashboard() {
           )}
         </CardContent>
       </Card>
+      
+      <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
+        <section className="qs-panel rounded-lg p-5">
+          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <div className="qs-kicker rounded-full px-3 py-1.5">
+                <FileText className="h-4 w-4" />
+                Student requests
+              </div>
+              <h3 className="mt-3 text-2xl font-black text-text-main">
+                {isAvailable ? 'Open problems you can bid on' : 'Turn availability on to see requests'}
+              </h3>
+            </div>
+            {bidMessage && (
+              <span className="rounded-lg bg-success-subtle px-3 py-2 text-xs font-black text-success">
+                {bidMessage}
+              </span>
+            )}
+          </div>
+
+          {!isAvailable ? (
+            <div className="rounded-lg border border-border bg-surface p-8 text-center">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-surface-hover text-text-muted">
+                <Clock className="h-6 w-6" />
+              </div>
+              <h4 className="font-black text-text-main">You are unavailable</h4>
+              <p className="mt-2 text-sm text-text-muted">Switch availability on when you want to receive student requests.</p>
+              <Button onClick={handleAvailabilityToggle} disabled={isUpdatingAvailability} className="mt-5">
+                {isUpdatingAvailability && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Go Available
+              </Button>
+            </div>
+          ) : isLoadingProblems ? (
+            <div className="flex min-h-48 items-center justify-center rounded-lg border border-border bg-surface/70">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : openProblems.length === 0 ? (
+            <div className="rounded-lg border border-border bg-surface p-8 text-center">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary-subtle text-primary">
+                <BookOpen className="h-6 w-6" />
+              </div>
+              <h4 className="font-black text-text-main">No matching requests yet</h4>
+              <p className="mt-2 text-sm text-text-muted">New student problems for your subjects will appear here.</p>
+            </div>
+          ) : (
+            <div className="grid gap-3">
+              {openProblems.map((problem) => (
+                <article key={problem.id} className="rounded-lg border border-border bg-surface p-5 shadow-sm">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-3 flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-primary-subtle px-3 py-1 text-xs font-black text-primary">{problem.subject}</span>
+                        <span className="rounded-full bg-secondary-subtle px-3 py-1 text-xs font-black text-secondary-dark">{problem.class}</span>
+                        <span className="rounded-full bg-surface-hover px-3 py-1 text-xs font-bold text-text-muted">{problem.duration_min} min</span>
+                      </div>
+                      <h4 className="text-lg font-black text-text-main">Rs. {Number(problem.offer_price || 0).toLocaleString()} student offer</h4>
+                      <p className="mt-2 line-clamp-2 text-sm leading-6 text-text-muted">
+                        {problem.details || 'Student uploaded a problem and is waiting for tutor bids.'}
+                      </p>
+                      <p className="mt-3 text-xs font-bold text-text-muted">
+                        {(problem.bids || []).length} bid(s) placed
+                      </p>
+                    </div>
+
+                    <div className="w-full shrink-0 md:w-56"></div>
