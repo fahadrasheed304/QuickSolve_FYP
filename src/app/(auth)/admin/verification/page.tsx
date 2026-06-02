@@ -738,3 +738,71 @@ export default function AdminVerificationsPage() {
                       {selectedDocuments.length > 0 ? (
                         <div className="mt-4 grid gap-3 md:grid-cols-2">
                           {selectedDocuments.map((doc, index) => {
+                            const Icon = getDocumentIcon(doc.document_type)
+                            return (
+                              <a
+                                key={`${doc.document_type || 'document'}-${doc.id || index}`}
+                                href={doc.document_url || '#'}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group flex min-w-0 items-center gap-3 rounded-lg border border-border/80 bg-surface/76 p-3 transition hover:border-primary/40 hover:bg-primary-subtle/40"
+                              >
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary-subtle text-primary">
+                                  <Icon className="h-5 w-5" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate text-sm font-black text-text-main" title={doc.file_name || 'Document'}>
+                                    {doc.file_name || 'Document'}
+                                  </p>
+                                  <p className="mt-0.5 text-xs font-semibold text-text-muted">
+                                    {(doc.document_type || 'document').replace(/_/g, ' ')} / {formatDate(doc.uploaded_at)}
+                                  </p>
+                                </div>
+                                <ExternalLink className="h-4 w-4 shrink-0 text-text-muted transition group-hover:text-primary" />
+                              </a>
+                            )
+                          })}
+                        </div>
+                      ) : (
+                        <div className="mt-4 rounded-lg border border-border bg-surface/76 p-5 text-center text-sm font-semibold text-text-muted">
+                          No documents uploaded.
+                        </div>
+                      )}
+                    </section>
+                  </div>
+
+                  <aside className="space-y-5">
+                    <section className="qs-panel rounded-lg p-5">
+                      <div className="mb-4 flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-subtle text-primary">
+                          <UserRound className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-black text-text-main">Profile snapshot</h3>
+                          <p className="text-sm text-text-muted">{selectedSubjects.length} subjects selected</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="rounded-lg border border-border/80 bg-surface/76 p-3">
+                          <p className="text-xs font-black uppercase text-text-muted">Subjects</p>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {selectedSubjects.length > 0 ? selectedSubjects.map(subject => (
+                              <span key={subject} className="rounded-full border border-secondary/20 bg-secondary-subtle px-2.5 py-1 text-xs font-black text-secondary-dark">
+                                {subject}
+                              </span>
+                            )) : (
+                              <span className="text-sm text-text-muted">No subjects added</span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="rounded-lg border border-border/80 bg-surface/76 p-3">
+                            <p className="text-xs font-black uppercase text-text-muted">Status</p>
+                            <p className="mt-1 text-sm font-bold text-text-main">{selectedTutor.verification_status || 'pending'}</p>
+                          </div>
+                          <div className="rounded-lg border border-border/80 bg-surface/76 p-3">
+                            <p className="text-xs font-black uppercase text-text-muted">Face check</p>
+                            <p className="mt-1 text-sm font-bold text-text-main">
+                              {selectedTutor.subject_test_passed ? 'Passed' : 'Pending'}
