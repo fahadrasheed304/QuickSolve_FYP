@@ -387,3 +387,67 @@ export default function TutorDashboard() {
                     </div>
 
                     <div className="w-full shrink-0 md:w-56"></div>
+                     <label className="mb-2 block text-xs font-black uppercase text-text-muted">Your bid</label>
+                      <div className="mb-3 flex rounded-lg shadow-sm">
+                        <span className="inline-flex items-center rounded-l-lg border border-r-0 border-border bg-surface-hover px-3 text-xs font-black text-text-muted">
+                          Rs.
+                        </span>
+                        <Input
+                          type="number"
+                          min={200}
+                          max={2000}
+                          value={bidPrices[problem.id] || ''}
+                          onChange={(event) => setBidPrices((current) => ({ ...current, [problem.id]: event.target.value }))}
+                          className="rounded-l-none font-black"
+                        />
+                      </div>
+                      <Button
+                        className="h-11 w-full"
+                        onClick={() => handlePlaceBid(problem)}
+                        disabled={placingBidId === problem.id}
+                      >
+                        {placingBidId === problem.id ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Send className="mr-2 h-4 w-4" />
+                        )}
+                        Place Bid
+                      </Button>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <aside className="space-y-4">
+          {subjects.length > 0 && (
+            <Card>
+              <CardContent className="p-6">
+                <h3 className="mb-4 text-xl font-black text-text-main">Your Subjects</h3>
+                <div className="flex flex-wrap gap-2">
+                  {subjects.map((sub) => (
+                    <span key={sub} className="rounded-full bg-secondary-subtle px-4 py-2 text-sm font-bold text-secondary-dark">
+                      {sub}
+                    </span>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <div className="qs-card rounded-lg p-5">
+            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary-subtle text-primary">
+              <Zap className="h-5 w-5" />
+            </div>
+            <h3 className="font-black text-text-main">Bid tips</h3>
+            <p className="mt-2 text-sm leading-6 text-text-muted">
+              Keep your price close to the student offer and availability on for faster matching.
+            </p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  )
+}
