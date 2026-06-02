@@ -990,3 +990,69 @@ export default function TakeTestPage() {
               {formatTime(timeLeft)}
             </div>
           </div>
+           </div>
+
+        {/* Progress bar */}
+        <div className="mt-4">
+          <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
+            <span>Question {currentQuestion + 1} of {totalQuestions}</span>
+            <span>{Math.round(answeredProgress)}% answered</span>
+          </div>
+          <div className="h-2 bg-muted rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-[#006c4a] transition-all duration-300"
+              style={{ width: `${answeredProgress}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Question */}
+      <div className="max-w-4xl mx-auto">
+        <Card>
+          <CardContent className="p-8">
+            {currentQ?.subject && (
+              <div className="mb-4 inline-flex items-center rounded-full bg-[#006c4a]/10 px-3 py-1 text-xs font-bold text-[#006c4a]">
+                Subject: {currentQ.subject}
+              </div>
+            )}
+            <h2 className="text-lg font-medium text-foreground mb-6">
+              {currentQ?.question}
+            </h2>
+
+            <div className="space-y-3">
+              {currentQ?.options.map((option, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleAnswer(currentQ.id, idx)}
+                  className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+                    answers[currentQ.id] === idx
+                      ? 'border-[#006c4a] bg-[#006c4a]/10'
+                      : 'border-border hover:border-[#006c4a]/40 hover:bg-muted/50'
+                  }`}
+                >
+                  <span className="font-medium text-foreground">{String.fromCharCode(65 + idx)}.</span>{' '}
+                  <span className="text-foreground">{option}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Navigation */}
+            <div className="flex justify-between mt-8">
+              <Button
+                variant="outline"
+                onClick={() => setCurrentQuestion(prev => Math.max(0, prev - 1))}
+                disabled={currentQuestion === 0}
+              >
+                <ChevronLeft className="w-4 h-4 mr-2" />
+                Previous
+              </Button>
+
+              {currentQuestion < totalQuestions - 1 ? (
+                <Button
+                  onClick={() => setCurrentQuestion(prev => prev + 1)}
+                  className="bg-[#006c4a] hover:bg-green-800"
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4 ml-2" />
+                </Button>
