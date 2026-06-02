@@ -72,3 +72,79 @@ export default function SignupPagePage() {
       });
 
       const data = await res.json();
+      if (res.ok) {
+        notifySuccess(data.message, "We are sending your verification code now.");
+        router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+      } else {
+        showError(getApiMessage(data, "We could not create your account. Please review your details and try again."));
+      }
+    } catch (err) {
+      showError("We could not reach the signup service. Please check your connection and try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = useGoogleLogin({
+    scope: 'email profile openid',
+    onSuccess: async (tokenResponse) => {
+      setError('');
+      setLoading(true);
+      try {
+        const res = await fetch('/api/auth/google', { 
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({ token: tokenResponse.access_token, role: roleRef.current })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          // Check if admin email - redirect to admin panel (overrides everything)
+          if (data.isAdmin) {
+            window.location.href = '/admin/verifications';
+            return;
+          }
+          
+          // Redirect based on role and profile completion
+          if (role === 'tutor') {
+            // If new user OR profile incomplete, go to complete-profile
+            if (data.isNewUser || data.requiresProfileCompletion) {
+              window.location.href = '/tutor/complete-profile'
+            } else {
+              window.location.href = data.verificationStage && data.verificationStage !== 'not_started'
+                ? '/tutor/waiting-verification'
+                : '/tutor/complete-profile'
+            }
+          } else {
+            window.location.href = '/student/dashboard'
+          }
+        } else {
+          showError(getApiMessage(data, "Google signup could not be completed. Please try again."));
+          setLoading(false);
+        }
+      } catch (err) {
+        showError("Google signup is temporarily unavailable. Please try again or use email signup.");
+        setLoading(false);
+      }
+    },
+    onError: () => {
+      showError("Google signup was cancelled or the connection failed.");
+    }
+  });
+
+  return (
+      <main className="flex min-h-screen w-full bg-background text-text-main overflow-x-hidden">
+        {/* Left Panel: Brand & Value Props (45%) */}
+        <AuthSidebar
+          title={<>Unlock your potential with expert guidance.</>}
+          features={[
+            {
+              icon: 'school',
+              title: 'For Students',
+              description: 'Access top-tier tutors across 50+ subjects and solve complex problems in minutes.',
+              iconColorClass: 'text-secondary',
+              iconBgClass: 'bg-secondary-subtle'
+            },
+            {
+              icon: 'auto_graph',
+              title: 'For Tutors',
+              description: 'Grow your professional tutoring business with our integrated dashboard and global reach.'s
