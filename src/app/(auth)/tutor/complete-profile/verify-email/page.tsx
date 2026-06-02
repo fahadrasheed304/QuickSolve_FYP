@@ -128,3 +128,68 @@ function TutorVerifyEmailForm() {
         <div className="z-20 relative">
           <p className="text-blue-200 text-xs font-medium">© 2026 QuickSolve Inc. All rights reserved.</p>
         </div>
+        </section>
+
+      {/* Right Panel: OTP Form */}
+      <section className="w-full lg:w-[55%] bg-surface-container-lowest flex items-center justify-center p-6 sm:p-12">
+        <div className="w-full max-w-[480px]">
+          <header className="mb-10 text-center lg:text-left">
+            <div className="w-12 h-12 bg-[#006c4a]/10 text-[#006c4a] rounded-2xl flex items-center justify-center mb-6 lg:mx-0 mx-auto">
+              <span className="material-symbols-outlined text-[28px]" style={{ fontVariationSettings: "'FILL' 1" }}>mark_email_read</span>
+            </div>
+            <h2 className="text-[32px] font-extrabold tracking-tight text-on-surface mb-2">Check your email</h2>
+            <p className="text-on-surface-variant font-medium">
+              We sent a 6-digit verification code to <br />
+              <span className="font-bold text-on-surface">{email}</span>
+            </p>
+          </header>
+
+          {error && (
+            <div className="mb-6 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md text-sm font-medium">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleVerify} className="space-y-8">
+            <div className="flex justify-between gap-2 max-w-sm mx-auto lg:mx-0">
+              {otp.map((digit, index) => (
+                <input
+                  key={index}
+                  ref={(el) => { inputRefs.current[index] = el }}
+                  type="text"
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handleChange(index, e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(index, e)}
+                  className="w-12 h-14 text-center text-xl font-black bg-surface-container-low border border-outline-variant rounded-xl focus:border-[#006c4a] focus:ring-2 focus:ring-[#006c4a]/20 transition-all outline-none"
+                />
+              ))}
+            </div>
+
+            <button
+              disabled={loading}
+              className="w-full h-11 bg-[#006c4a] hover:bg-green-800 disabled:opacity-70 text-white font-bold rounded-lg shadow-lg shadow-green-900/20 transition-all active:scale-[0.98]"
+              type="submit"
+            >
+              {loading ? "VERIFYING..." : "VERIFY EMAIL"}
+            </button>
+          </form>
+
+          <div className="mt-8 text-center lg:text-left">
+            <p className="text-sm text-on-surface-variant font-medium">
+              Didn't receive the email? <button type="button" onClick={handleResend} className="text-[#006c4a] font-bold hover:underline ml-1">Resend code</button>
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+  )
+}
+
+export default function TutorVerifyEmailPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-surface">Loading secure verification...</div>}>
+      <TutorVerifyEmailForm />
+    </Suspense>
+  )
+}
