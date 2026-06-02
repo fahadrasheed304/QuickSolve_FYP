@@ -194,3 +194,67 @@ const PAKISTAN_BOARDS = [
 // Helper to check if degree is school-level
 const isSchoolDegree = (degreeName: string) => SCHOOL_DEGREES.some(d => degreeName?.includes(d?.split(' ')[0])) || 
   ['Matriculation', 'FSc', 'ICS', 'ICom', 'FA'].some(prefix => degreeName?.startsWith(prefix))
+  interface Degree {
+  id: string
+  degreeName: string
+  institution: string
+  boardUniversity: string
+  yearCompleted: string
+}
+
+interface Document {
+  id: string
+  documentType: string
+  documentUrl: string
+  fileName: string
+  fileSize: number
+}
+
+interface DegreeRow {
+  id: string
+  degree_name: string
+  institution: string
+  board_university: string
+  year_completed: string
+}
+
+interface DocumentRow {
+  id: string
+  document_type: string
+  document_url: string
+  file_name: string
+  file_size: number
+}
+
+const CNIC_LENGTH = 13
+
+type CnicOcrVariant = {
+  name: string
+  source: string | File
+}
+
+type CnicCrop = {
+  name: string
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+const CNIC_OCR_CROPS: CnicCrop[] = [
+  { name: 'full-enhanced', x: 0, y: 0, width: 1, height: 1 },
+  { name: 'lower-text-band', x: 0, y: 0.42, width: 1, height: 0.52 },
+  { name: 'right-number-area', x: 0.32, y: 0.32, width: 0.66, height: 0.55 },
+  { name: 'left-number-area', x: 0, y: 0.34, width: 0.72, height: 0.55 },
+]
+
+// Build several OCR-friendly versions because CNIC photos vary a lot in glare,
+// rotation, contrast, and where the identity number appears.
+const createCnicOcrVariants = (file: File): Promise<CnicOcrVariant[]> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const objectUrl = URL.createObjectURL(file)
+    img.src = objectUrl
+    img.onload = () => {
+      const variants: CnicOcrVariant[] = [{ name: 'original', source: file }]
+      const minWidth = 1400
