@@ -671,3 +671,70 @@ export default function AdminVerificationsPage() {
                       <div>
                         <p className="font-black">Incomplete submission detected</p>
                         <p className="mt-1 text-sm leading-6"></p>
+                         </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_360px]">
+                  <div className="space-y-5">
+                    <section className="qs-panel rounded-lg p-5">
+                      <div className="flex items-center justify-between border-b border-border/80 pb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-subtle text-primary">
+                            <GraduationCap className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-black text-text-main">Academic record</h3>
+                            <p className="text-sm text-text-muted">{selectedDegrees.length} saved degrees</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {selectedDegrees.length > 0 ? (
+                        <div className="mt-4 overflow-x-auto rounded-lg border border-border/80 bg-surface/76">
+                          <table className="w-full min-w-[620px] text-left text-sm">
+                            <thead className="bg-surface-container-low text-xs uppercase text-text-muted">
+                              <tr>
+                                <th className="px-4 py-3 font-black">Degree</th>
+                                <th className="px-4 py-3 font-black">Institution</th>
+                                <th className="px-4 py-3 font-black">Board / University</th>
+                                <th className="px-4 py-3 font-black">Year</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-border/70">
+                              {selectedDegrees.map((degree, index) => (
+                                <tr key={`${degree.degree_name || 'degree'}-${index}`} className="align-top">
+                                  <td className="px-4 py-3 font-bold text-text-main">{degree.degree_name || 'Degree'}</td>
+                                  <td className="px-4 py-3 text-text-muted">{degree.institution || 'Not added'}</td>
+                                  <td className="px-4 py-3 text-text-muted">{degree.board_university || 'Not added'}</td>
+                                  <td className="px-4 py-3 text-text-muted">{degree.year_completed || 'Not added'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-5 text-center text-sm font-semibold text-amber-800">
+                          No degrees were saved. This profile needs resubmission by the tutor.
+                        </div>
+                      )}
+                    </section>
+
+                    <section className="qs-panel rounded-lg p-5">
+                      <div className="flex items-center justify-between border-b border-border/80 pb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary-subtle text-secondary-dark">
+                            <Camera className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-black text-text-main">Documents</h3>
+                            <p className="text-sm text-text-muted">{selectedDocuments.length} current uploads</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {selectedDocuments.length > 0 ? (
+                        <div className="mt-4 grid gap-3 md:grid-cols-2">
+                          {selectedDocuments.map((doc, index) => {
