@@ -192,3 +192,68 @@ export default function TutorDashboard() {
             )}
             <span className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-bold text-text-muted shadow-sm">
               <BookOpen className="h-4 w-4 text-secondary" />
+                            {subjects.length} {subjects.length === 1 ? 'subject' : 'subjects'}
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-bold text-text-muted shadow-sm">
+              <Award className="h-4 w-4 text-accent" />
+              {profile?.highestEducation || 'Qualification pending'}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleAvailabilityToggle}
+            disabled={isUpdatingAvailability}
+            className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 shadow-sm transition hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-70"
+            aria-pressed={isAvailable}
+          >
+            <span className="text-sm font-bold text-text-muted">
+              {isAvailable ? 'Available' : 'Unavailable'}
+            </span>
+            <span className={`flex h-6 w-12 items-center rounded-full px-1 transition-colors ${isAvailable ? 'justify-end bg-success' : 'justify-start bg-surface-container-high'}`}>
+              <span className="h-4 w-4 rounded-full bg-white shadow-sm" />
+            </span>
+          </button>
+
+          <button onClick={logout} className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-bold text-red-600 transition-colors hover:bg-red-100">
+            Logout
+          </button>
+
+          <div className="relative">
+            <button onClick={() => setShowNotifications(!showNotifications)} className="rounded-lg border border-border bg-surface p-2.5 text-text-muted shadow-sm transition-all hover:bg-surface-hover">
+              <Bell className="w-5 h-5" />
+            </button>
+            {showNotifications && (
+              <div className="absolute right-0 mt-2 w-72 rounded-lg border border-border bg-surface shadow-2xl z-50 overflow-hidden animate-scale-in">
+                <div className="border-b border-border p-4 font-bold text-text-main">Notifications</div>
+                <div className="p-6 text-center text-text-muted text-sm">No new notifications.</div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {verificationStatus !== 'verified' && (
+        <Card className="mb-8">
+          <CardContent className="flex flex-col gap-4 p-6 md:flex-row md:items-center">
+            {verificationStatus === 'under_review' ? (
+              <Clock className="h-9 w-9 shrink-0 text-amber-500" />
+            ) : verificationStatus === 'rejected' ? (
+              <AlertCircle className="h-9 w-9 shrink-0 text-red-500" />
+            ) : (
+              <Shield className="h-9 w-9 shrink-0 text-primary" />
+            )}
+            <div className="flex-1">
+              <h3 className="font-black text-text-main">
+                {verificationStatus === 'under_review' ? 'Verification Under Review' :
+                 verificationStatus === 'rejected' ? 'Verification Rejected' :
+                 'Complete Your Verification'}
+              </h3>
+              <p className="mt-1 text-sm text-text-muted">
+                {verificationStatus === 'under_review' ? 'Our team is reviewing your documents. This usually takes 24-48 hours.' :
+                 verificationStatus === 'rejected' ? 'Your documents were not approved. Please re-submit clearer documents.' :
+                 'Upload documents and pass the subject test to start receiving student problems.'}
+              </p>
+            </div>
