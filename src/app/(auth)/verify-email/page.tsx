@@ -63,3 +63,70 @@ function VerifyEmailForm() {
     if (code.length !== 6) {
       showError("Please enter the 6-digit verification code from your email.")
       return
+       }
+
+    setLoading(true)
+    setError('')
+
+    try {
+      const res = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp: code })
+      })
+      
+      const data = await res.json()
+      
+      // Debug: Log the role received
+      console.log('Verify OTP response:', data)
+      console.log('Role received:', data.role, '| Type:', typeof data.role)
+      
+      if (res.ok) {
+        notifySuccess(data.message, "Your email has been verified successfully.")
+        // Check if admin email - redirect to admin panel first
+        if (data.isAdmin) {
+          window.location.href = '/admin/verifications'
+          return
+        }
+        
+        // Redirect based on role
+        if (data.role === 'tutor') {
+          console.log('Redirecting to /tutor/complete-profile')
+          window.location.href = '/tutor/complete-profile'
+        } else {
+          console.log('Redirecting to /student/dashboard (role was:', data.role + ')')
+          window.location.href = '/student/dashboard'
+        }
+      } else {
+        showError(getApiMessage(data, "That verification code is not valid. Please check the code and try again."))
+      }
+    } catch (err) {
+      showError("We could not verify the code right now. Please check your connection and try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleResend = async () => {
+    setError('')
+    try {
+      const res = await fetch('/api/auth/resend-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        notifySuccess(data.message, "A new verification code has been sent to your email.")
+      } else {
+        showError(getApiMessage(data, "We could not resend the code. Please wait a moment and try again."))
+      }
+    } catch (err) {
+      showError("We could not resend the code right now. Please check your connection and try again.")
+    }
+  }
+
+  return (
+    <main className="flex min-h-screen w-full bg-surface text-on-surface overflow-x-hidden">
+      <AuthSidebar
+        title={<>Secure your<br/>account easily.</>}
