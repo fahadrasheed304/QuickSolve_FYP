@@ -872,3 +872,70 @@ export default function AdminVerificationsPage() {
                             Start review
                           </Button>
                         )}
+                                            {['submitted', 'pending', 'under_review'].includes(selectedTutor.verification_stage || '') && (
+                          <Button
+                            type="button"
+                            onClick={() => updateStatus(selectedTutor.user_email, 'test_invited', 'pending')}
+                            disabled={isUpdatingSelected || isIncompleteSubmission}
+                            className="w-full justify-start bg-secondary hover:bg-secondary-dark"
+                          >
+                            {isUpdatingSelected ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
+                            Invite to test
+                          </Button>
+                        )}
+
+                        {selectedTutor.verification_stage === 'test_passed' && (
+                          <Button
+                            type="button"
+                            onClick={() => updateStatus(selectedTutor.user_email, 'verified', 'verified')}
+                            disabled={isUpdatingSelected}
+                            className="w-full justify-start bg-success hover:bg-success"
+                          >
+                            {isUpdatingSelected ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckSquare className="mr-2 h-4 w-4" />}
+                            Approve and verify
+                          </Button>
+                        )}
+
+                        {selectedTutor.verification_stage === 'test_failed' && (
+                          <Button
+                            type="button"
+                            onClick={() => updateStatus(selectedTutor.user_email, 'test_invited', 'pending')}
+                            disabled={isUpdatingSelected}
+                            className="w-full justify-start bg-primary hover:bg-primary-dark"
+                          >
+                            {isUpdatingSelected ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                            Allow retake
+                          </Button>
+                        )}
+
+                        <Button
+                          type="button"
+                          onClick={() => updateStatus(selectedTutor.user_email, 'rejected', 'rejected')}
+                          disabled={isUpdatingSelected}
+                          variant="destructive"
+                          className="w-full justify-start"
+                        >
+                          {isUpdatingSelected ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <XCircle className="mr-2 h-4 w-4" />}
+                          Reject application
+                        </Button>
+                      </div>
+                    </section>
+                  </aside>
+                </div>
+              </div>
+            ) : (
+              <div className="qs-panel flex min-h-[620px] flex-col items-center justify-center rounded-lg px-6 text-center">
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-lg bg-primary-subtle text-primary">
+                  <UserRound className="h-8 w-8" />
+                </div>
+                <h2 className="text-2xl font-black text-text-main">Select an application</h2>
+                <p className="mt-2 text-sm text-text-muted">No application selected.</p>
+              </div>
+            )}
+          </section>
+        </div>
+      </div>
+
+    </main>
+  )
+}
