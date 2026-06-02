@@ -129,3 +129,68 @@ export default function WaitingVerificationPage() {
         router.replace('/tutor/complete-profile')
       } else {
         setError('We could not load your verification status. Please refresh and try again.')
+         }
+    } catch {
+      setError('We could not reach the verification service. Please check your connection and try again.')
+    } finally {
+      setLoading(false)
+    }
+  }, [router])
+
+  useEffect(() => {
+    fetchStatus()
+    const interval = setInterval(fetchStatus, 30000)
+    return () => clearInterval(interval)
+  }, [fetchStatus])
+
+  const currentIndex = getStepIndex(status?.stage || 'pending')
+  const currentMeta = useMemo(() => {
+    return stageMeta[status?.stage || 'pending'] || stageMeta.pending
+  }, [status?.stage])
+
+  if (loading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="qs-panel flex w-full max-w-sm flex-col items-center rounded-lg p-8 text-center">
+          <Loader2 className="mb-4 h-8 w-8 animate-spin text-primary" />
+          <p className="font-bold text-text-main">Loading verification status</p>
+          <p className="mt-1 text-sm text-text-muted">Checking your tutor application.</p>
+        </div>
+      </main>
+    )
+  }
+
+  if (error) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="qs-panel w-full max-w-md rounded-lg p-8 text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-red-50 text-red-600">
+            <RefreshCw className="h-6 w-6" />
+          </div>
+          <h1 className="text-xl font-black text-text-main">Status unavailable</h1>
+          <p className="mt-2 text-sm text-text-muted">{error}</p>
+          <Button onClick={fetchStatus} className="mt-6">
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Retry
+          </Button>
+        </div>
+      </main>
+    )
+  }
+
+  return (
+    <main className="min-h-screen bg-background px-4 py-6 sm:px-6 lg:py-8">
+      <div className="mx-auto max-w-6xl qs-page-enter">
+        <header className="mb-5 overflow-hidden rounded-lg bg-hero-gradient surface-grid text-white shadow-2xl shadow-primary/10">
+          <div className="relative p-6 sm:p-8">
+            <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+              <div className="max-w-3xl">
+                <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-black uppercase">
+                  <Sparkles className="h-4 w-4" />
+                  Tutor verification
+                </div>
+                <h1 className="text-4xl font-black leading-tight sm:text-5xl">{currentMeta.title}</h1>
+                <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-white/72">
+                  {status?.message || 'Your application is moving through the verification workflow.'}
+                </p>
+              </div>
