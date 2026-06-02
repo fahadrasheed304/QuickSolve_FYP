@@ -1288,3 +1288,68 @@ export default function TutorCompleteProfilePage() {
               )}
 
               {step === 4 && (
+                                <div className="space-y-5">
+                  <div className="grid gap-4 md:grid-cols-3">
+                    {requiredDocs.map((doc) => {
+                      const uploadedDoc = getDocumentByType(doc.type)
+                      const isWorking = uploading === doc.type
+                      return (
+                        <div key={doc.type} className={`rounded-lg border bg-surface p-4 transition-all ${
+                          uploadedDoc ? 'border-success/35 bg-success-subtle/45' : 'border-border'
+                        }`}>
+                          <div className="mb-4 flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                              <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+                                uploadedDoc ? 'bg-white text-success' : 'bg-primary-subtle text-primary'
+                              }`}>
+                                {doc.icon}
+                              </div>
+                              <div>
+                                <h3 className="text-sm font-bold text-text-main">{doc.label}</h3>
+                                <p className="text-xs font-medium text-text-muted">
+                                  {doc.type === 'profile_photo' ? 'Clear face image only' : doc.type === 'cnic_front' ? 'Image only' : 'Image or PDF'}
+                                </p>
+                              </div>
+                            </div>
+                            {uploadedDoc && <CheckCircle className="h-5 w-5 text-success" />}
+                          </div>
+
+                          {uploadedDoc ? (
+                            <div className="flex items-center justify-between gap-3">
+                              {(uploadedDoc.documentUrl.match(/\.(jpeg|jpg|gif|png|webp)$/i) || uploadedDoc.documentUrl.startsWith('data:image') || uploadedDoc.documentUrl.includes('supabase')) ? (
+                                <button type="button" onClick={() => setPreviewImage(uploadedDoc.documentUrl)} className="group flex items-center gap-2 text-left">
+                                  <img
+                                    src={uploadedDoc.documentUrl}
+                                    alt={`${doc.label} preview`}
+                                    className="h-12 w-16 rounded-lg border border-border object-cover shadow-sm transition-all group-hover:ring-2 group-hover:ring-primary/35"
+                                  />
+                                  <span className="text-xs font-semibold text-text-muted group-hover:text-primary">Preview</span>
+                                </button>
+                              ) : (
+                                <a
+                                  href={uploadedDoc.documentUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-2 rounded-lg bg-primary-subtle px-3 py-2 text-xs font-bold text-primary"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                  View PDF
+                                </a>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => setDocuments(prev => prev.filter(d => d.id !== uploadedDoc.id))}
+                                className="rounded-lg px-2 py-1 text-xs font-bold text-error transition-colors hover:bg-red-50"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          ) : (
+                            <label className={`block ${uploading ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}>
+                              <input
+                                type="file"
+                                accept={doc.type === 'cnic_front' || doc.type === 'profile_photo' ? 'image/*' : 'image/*,.pdf'}
+                                onChange={(e) => handleFileUpload(e, doc.type)}
+                                className="hidden"
+                                disabled={!!uploading}
+                              />
