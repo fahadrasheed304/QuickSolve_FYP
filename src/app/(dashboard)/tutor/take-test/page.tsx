@@ -197,3 +197,68 @@ const isLookingAwayFromCamera = (landmarks: any) => {
   const rollDegrees = Math.abs(
     Math.atan2(rightEyeCenter.y - leftEyeCenter.y, rightEyeCenter.x - leftEyeCenter.x) * 180 / Math.PI
   )
+   return yawRatio > 0.34 || pitchRatio < 0.28 || pitchRatio > 0.86 || rollDegrees > 20
+}
+
+const MAX_WARNINGS = 3
+const TEST_DURATION = 20 * 60 // 20 minutes in seconds
+const FACE_MATCH_THRESHOLD = 0.62
+const FACE_MATCH_MEDIAN_THRESHOLD = 0.68
+const FACE_MATCH_AVERAGE_THRESHOLD = 0.7
+const FACE_TRACKING_MISMATCH_THRESHOLD = 0.74
+const LIVE_MATCH_SAMPLE_COUNT = 9
+const MIN_LIVE_FACE_SAMPLES = 2
+const FACE_ATTENTION_CHECK_INTERVAL_MS = 2000
+const IDENTITY_CHECK_INTERVAL_MS = 4000
+
+const FACE_DETECTOR_SETTINGS = [
+  { inputSize: 416, scoreThreshold: 0.45 },
+  { inputSize: 608, scoreThreshold: 0.35 },
+  { inputSize: 320, scoreThreshold: 0.25 },
+]
+
+export default function TakeTestPage() {
+  const router = useRouter()
+  const [testData, setTestData] = useState<TestData | null>(null)
+  const [answers, setAnswers] = useState<Record<string, number>>({})
+  const [timeLeft, setTimeLeft] = useState(0)
+  const [currentQuestion, setCurrentQuestion] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [warningCount, setWarningCount] = useState(0)
+  const [testStarted, setTestStarted] = useState(false)
+  const [testFinished, setTestFinished] = useState(false)
+  const [result, setResult] = useState<{score: number; passed: boolean} | null>(null)
+  const [, setTabSwitches] = useState(0)
+  const [warningMessage, setWarningMessage] = useState('')
+  const [showWarningModal, setShowWarningModal] = useState(false)
+
+  useEffect(() => {
+    if (error) {
+      notifyError(error)
+    }
+  }, [error])
+
+  // Face Verification States
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null)
+  const [verificationPassed, setVerificationPassed] = useState(false)
+  const [verifying, setVerifying] = useState(false)
+  const [faceTrackingReady, setFaceTrackingReady] = useState(false)
+  const [verificationStep, setVerificationStep] = useState('')
+  const [verificationError, setVerificationError] = useState('')
+  const faceDetectorRef = useRef<NativeFaceDetector | null>(null)
+  const faceApiRef = useRef<FaceApiModule | null>(null)
+  const referenceFaceDescriptorRef = useRef<Float32Array | null>(null)
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
+  const handleSubmitRef = useRef<((autoSubmit?: boolean) => Promise<void>) | null>(null)
+  const warningCountRef = useRef(0)
+  const tabSwitchesRef = useRef(0)
+  const submitInProgressRef = useRef(false)
+  const lastTabSwitchWarningAtRef = useRef(0)
+  
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
+
+  const handleVideoRef = useCallback((node: HTMLVideoElement | null) => {
+    videoRef.current = node;
+    if (node && streamRef.current && node.srcObject !== streamRef.current) {
