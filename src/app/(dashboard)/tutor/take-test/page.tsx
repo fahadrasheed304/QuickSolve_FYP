@@ -329,3 +329,69 @@ export default function TakeTestPage() {
             : 'We could not reach the test service. Please check your connection and try again.'
           )
         }
+        } finally {
+        window.clearTimeout(timeoutId)
+        if (isMounted) setLoading(false)
+      }
+    }
+    fetchTest()
+
+    return () => {
+      isMounted = false
+      window.clearTimeout(timeoutId)
+      controller.abort()
+    }
+  }, [])
+
+  const handleProctoringWarning = useCallback((reason: string) => {
+    setWarningCount(prev => {
+      const newCount = prev + 1
+      warningCountRef.current = newCount
+      if (newCount >= MAX_WARNINGS) {
+        if (handleSubmitRef.current) handleSubmitRef.current(true)
+      } else {
+        setWarningMessage(reason)
+        setShowWarningModal(true)
+      }
+      return newCount
+    })
+  }, [])
+
+  const handleTabSwitchWarning = useCallback(() => {
+    const now = Date.now()
+    if (now - lastTabSwitchWarningAtRef.current < 1500) return
+
+    lastTabSwitchWarningAtRef.current = now
+    setTabSwitches(prev => {
+      const next = prev + 1
+      tabSwitchesRef.current = next
+      return next
+    })
+    handleProctoringWarning("Tab switching or minimizing the browser detected.")
+  }, [handleProctoringWarning])
+
+  // Proctoring: Tab visibility detection
+  useEffect(() => {
+    if (!testStarted || testFinished) return
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        handleTabSwitchWarning()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [testStarted, testFinished, handleTabSwitchWarning])
+
+  // Proctoring: Window blur detection
+  useEffect(() => {
+    if (!testStarted || testFinished) return
+
+    const handleBlur = () => {
+      handleTabSwitchWarning()
+    }
+
+    window.addEventListener('blur', handleBlur)
+    return () => window.removeEventListener('blur', handleBlur)
+  }, [testStarted, testFinished, handleTabSwitchWarning])
