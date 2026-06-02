@@ -1353,3 +1353,68 @@ export default function TutorCompleteProfilePage() {
                                 className="hidden"
                                 disabled={!!uploading}
                               />
+                                                            <span className="flex items-center justify-center gap-2 rounded-lg border border-border bg-surface-container-low px-3 py-3 text-sm font-bold text-text-main transition-colors hover:border-primary/50 hover:text-primary">
+                                {isWorking ? (
+                                  ocrLoading ? 'Verifying CNIC...' : faceLoading ? 'Checking face...' : 'Uploading...'
+                                ) : (
+                                  <>
+                                    <Upload className="h-4 w-4" />
+                                    Upload
+                                  </>
+                                )}
+                              </span>
+                            </label>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  <div className="rounded-lg border border-border bg-surface p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary-subtle text-secondary-dark">
+                          <Camera className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-text-main">Degree certificates</h3>
+                          <p className="text-sm text-text-muted">Optional, but recommended for a stronger application.</p>
+                        </div>
+                      </div>
+                      <label className={`inline-flex ${uploading ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}>
+                        <input
+                          type="file"
+                          accept="image/*,.pdf"
+                          onChange={(e) => handleFileUpload(e, 'degree_certificate')}
+                          className="hidden"
+                          disabled={!!uploading}
+                        />
+                        <span className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-subtle px-4 py-2 text-sm font-bold text-primary transition-colors hover:bg-primary hover:text-white">
+                          <Plus className="h-4 w-4" />
+                          {uploading === 'degree_certificate' ? 'Uploading...' : 'Add certificate'}
+                        </span>
+                      </label>
+                    </div>
+
+                    {degreeCertificates.length > 0 && (
+                      <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                        {degreeCertificates.map(doc => (
+                          <div key={doc.id} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface-container-low px-3 py-2">
+                            <span className="truncate text-sm font-semibold text-text-main">{doc.fileName}</span>
+                            <button
+                              type="button"
+                              onClick={() => setDocuments(prev => prev.filter(d => d.id !== doc.id))}
+                              className="rounded-lg p-1.5 text-error hover:bg-red-50"
+                              aria-label="Remove certificate"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {step === 5 && (
