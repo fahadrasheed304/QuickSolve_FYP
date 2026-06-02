@@ -133,3 +133,70 @@ const STAGE_META: Record<string, { label: string; badge: string; dot: string }> 
     label: 'Test failed',
     badge: 'border-red-200 bg-red-50 text-red-700',
     dot: 'bg-error',
+    },
+  verified: {
+    label: 'Verified',
+    badge: 'border-success/20 bg-success-subtle text-success',
+    dot: 'bg-success',
+  },
+  rejected: {
+    label: 'Rejected',
+    badge: 'border-red-200 bg-red-50 text-red-700',
+    dot: 'bg-error',
+  },
+  not_started: {
+    label: 'Not started',
+    badge: 'border-border bg-surface-container-low text-text-muted',
+    dot: 'bg-text-muted',
+  },
+}
+
+function formatStage(stage?: string) {
+  return (stage || 'not_started')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, char => char.toUpperCase())
+}
+
+function getStageMeta(stage?: string) {
+  const safeStage = stage || 'not_started'
+  return STAGE_META[safeStage] || {
+    label: formatStage(safeStage),
+    badge: 'border-border bg-surface-container-low text-text-muted',
+    dot: 'bg-text-muted',
+  }
+}
+
+function getTutorName(tutor?: Tutor | null) {
+  return tutor?.fullname || tutor?.users?.fullname || tutor?.email || tutor?.user_email || 'Tutor'
+}
+
+function getTutorEmail(tutor?: Tutor | null) {
+  return tutor?.email || tutor?.users?.email || tutor?.user_email || ''
+}
+
+function getInitials(value: string) {
+  const parts = value.trim().split(/\s+/).filter(Boolean)
+  const first = parts[0]?.[0] || 'T'
+  const second = parts.length > 1 ? parts[1]?.[0] : ''
+  return `${first}${second}`.toUpperCase()
+}
+
+function getDocumentIcon(type?: string | null) {
+  const safeType = type || ''
+  if (safeType.includes('cnic')) return ShieldCheck
+  if (safeType === 'profile_photo') return Camera
+  return FileText
+}
+
+function formatDate(value?: string | null) {
+  if (!value) return 'Recent'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return 'Recent'
+  return date.toLocaleDateString()
+}
+
+export default function AdminVerificationsPage() {
+  const router = useRouter()
+  const [tutors, setTutors] = useState<Tutor[]>([])
+  const [loading, setLoading] = useState(true)
+  const [detailLoading, setDetailLoading] = useState<string | null>(null)
