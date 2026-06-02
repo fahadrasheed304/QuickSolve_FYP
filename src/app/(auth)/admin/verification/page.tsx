@@ -470,3 +470,70 @@ export default function AdminVerificationsPage() {
                 Logout
               </button>
             </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:min-w-[520px]">
+              {queueStats.map(stat => {
+                const Icon = stat.icon
+                return (
+                  <div key={stat.label} className={`rounded-lg border p-3 ${stat.tone}`}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold uppercase text-white/68">{stat.label}</span>
+                      <Icon className="h-4 w-4 text-white/78" />
+                    </div>
+                    <p className="mt-2 text-2xl font-black">{stat.value}</p>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </header>
+
+        <section className="qs-panel mb-5 rounded-lg p-3">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+            <div className="relative min-w-[220px] flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+              <input
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                className="qs-input h-11 w-full rounded-lg px-10 text-sm"
+                placeholder="Search name or email"
+              />
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {STAGES.map(stage => {
+                const active = stageFilter === stage.value
+                return (
+                  <button
+                    key={stage.value}
+                    type="button"
+                    onClick={() => setStageFilter(stage.value)}
+                    className={`inline-flex h-10 items-center gap-2 rounded-lg border px-3 text-xs font-black transition ${
+                      active
+                        ? 'border-primary bg-primary text-white shadow-lg shadow-primary/20'
+                        : 'border-border bg-surface/80 text-text-muted hover:border-primary/40 hover:text-primary'
+                    }`}
+                  >
+                    <span>{stage.label}</span>
+                    <span className={`rounded-full px-2 py-0.5 text-[11px] ${
+                      active ? 'bg-white/18 text-white' : 'bg-surface-container-low text-text-muted'
+                    }`}>
+                      {stageCounts[stage.value] || 0}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+
+            <Button type="button" variant="outline" onClick={fetchTutors} className="xl:ml-auto">
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Refresh
+            </Button>
+          </div>
+        </section>
+
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[390px_minmax(0,1fr)]">
+          <aside className="qs-panel overflow-hidden rounded-lg">
+            <div className="border-b border-border/80 p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-black uppercase text-text-muted">Queue</p>
