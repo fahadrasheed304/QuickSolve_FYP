@@ -1056,3 +1056,69 @@ export default function TakeTestPage() {
                   Next
                   <ChevronRight className="w-4 h-4 ml-2" />
                 </Button>
+                ) : (
+                <Button
+                  onClick={() => handleSubmit(false)}
+                  className="bg-[#006c4a] hover:bg-green-800"
+                >
+                  Submit Test
+                  <CheckCircle className="w-4 h-4 ml-2" />
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Question navigator */}
+        <div className="mt-6 flex flex-wrap gap-2 justify-center">
+          {testData?.questions.map((q, idx) => (
+            <button
+              key={q.id}
+              onClick={() => setCurrentQuestion(idx)}
+              className={`w-10 h-10 rounded-lg text-sm font-medium transition-all ${
+                idx === currentQuestion
+                  ? 'bg-[#006c4a] text-white'
+                  : answers[q.id] !== undefined
+                  ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800'
+                  : 'bg-card text-foreground border border-border hover:border-[#006c4a]/40'
+              }`}
+            >
+              {idx + 1}
+            </button>
+          ))}
+        </div>
+
+        <p className="text-center text-sm text-muted-foreground mt-4">
+          Answered: {answeredCount} / {totalQuestions}
+        </p>
+      </div>
+
+      {/* Warning modal */}
+      {showWarningModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-card border border-border rounded-xl p-6 max-w-md mx-4 shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-bold text-foreground">Warning #{warningCount}</h3>
+            </div>
+            <p className="text-foreground font-medium mb-2 text-red-600">
+              {warningMessage}
+            </p>
+            <p className="text-muted-foreground mb-4 text-sm">
+              This is your {warningCount} of {MAX_WARNINGS} warnings. 
+              After {MAX_WARNINGS} warnings, your test will be automatically submitted.
+            </p>
+            <Button 
+              onClick={() => setShowWarningModal(false)}
+              className="w-full bg-[#006c4a] hover:bg-green-800"
+            >
+              I Understand - Continue Test
+            </Button>
+          </div>
+        </div>
+      )}
+    </main>
+  )
+}
