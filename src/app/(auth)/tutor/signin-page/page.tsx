@@ -77,3 +77,83 @@ export default function TutorSigninPage() {
       setLoading(false)
     }
   }
+    const handleGoogleLogin = useGoogleLogin({
+    scope: 'email profile openid',
+    onSuccess: async (tokenResponse) => {
+      setError('')
+      setLoading(true)
+      try {
+        const res = await fetch('/api/auth/google', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: tokenResponse.access_token, role: 'tutor' })
+        })
+        const data = await res.json()
+        if (res.ok) {
+          // Check if admin email - redirect to admin panel
+          if (data.isAdmin) {
+            window.location.href = '/admin/verifications'
+            return
+          }
+          
+          // If new tutor, redirect to complete-profile
+          if (data.isNewUser) {
+            window.location.href = '/tutor/complete-profile'
+            return
+          }
+          
+          // If needs profile completion
+          if (data.requiresProfileCompletion) {
+            window.location.href = '/tutor/complete-profile'
+            return
+          }
+          
+          if (data.verificationStage === 'verified') {
+            window.location.href = '/tutor/dashboard'
+            return
+          }
+
+          // If profile submitted but pending verification - go to waiting page
+          if (data.verificationStage && data.verificationStage !== 'not_started' && data.verificationStage !== '') {
+            window.location.href = '/tutor/waiting-verification'
+            return
+          }
+          
+          // Otherwise keep the tutor in onboarding.
+          window.location.href = '/tutor/complete-profile'
+        } else {
+          showError(getApiMessage(data, "Google sign in could not be completed. Please try again."))
+          setLoading(false)
+        }
+      } catch (err) {
+        showError("Google sign in is temporarily unavailable. Please try again or use email login.")
+        setLoading(false)
+      }
+    },
+    onError: () => {
+      showError("Google sign in was cancelled or the connection failed.")
+    }
+  })
+
+  return (
+    <>
+      <main className="flex min-h-screen w-full bg-surface text-on-surface overflow-x-hidden">
+        {/* Left Panel */}
+        <AuthSidebar 
+          title={<>Welcome back,<br />expert tutor</>}
+          features={[
+            {
+              icon: 'auto_graph',
+              title: 'Grow Your Business',
+              description: 'Access thousands of students looking for your expertise. Real-time bidding on problems.'
+            }
+          ]}
+        />
+
+        {/* Right Panel: Form */}
+        <section className="w-full lg:w-[55%] bg-surface-container-lowest flex items-center justify-center p-6 sm:p-12">
+          <div className="w-full max-w-[480px]">
+            <header className="mb-8 text-center lg:text-left">
+              <h2 className="text-[32px] font-extrabold tracking-tight text-on-surface mb-2">Tutor Sign In</h2>
+              <p className="text-on-surface-variant font-medium">Welcome back! Enter your details below.</p>
+            </header>
