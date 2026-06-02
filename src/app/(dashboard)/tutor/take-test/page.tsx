@@ -130,3 +130,70 @@ const loadFaceRecognitionApi = async () => {
             : 'We could not reach the test service. Please check your connection and try again.'
           )
         }
+        reject(new Error('Could not load profile photo for verification.'))
+    }
+    image.crossOrigin = 'anonymous'
+    image.src = src
+  })
+}
+
+const hasUsableCameraFrame = (video: HTMLVideoElement) => {
+  if (video.videoWidth === 0 || video.videoHeight === 0) return false
+
+  const canvas = document.createElement('canvas')
+  canvas.width = 96
+  canvas.height = 72
+  const ctx = canvas.getContext('2d', { willReadFrequently: true })
+  if (!ctx) return true
+
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+  const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height)
+  let sum = 0
+  let sumSquares = 0
+  const sampleCount = data.length / 4
+
+  for (let i = 0; i < data.length; i += 4) {
+    const luminance = (data[i] + data[i + 1] + data[i + 2]) / 3
+    sum += luminance
+    sumSquares += luminance * luminance
+  }
+
+  const mean = sum / sampleCount
+  const variance = sumSquares / sampleCount - mean * mean
+  return mean > 12 && variance > 5
+}
+
+const getPointCenter = (points: Array<{ x: number; y: number }>) => {
+  const total = points.reduce(
+    (acc, point) => ({ x: acc.x + point.x, y: acc.y + point.y }),
+    { x: 0, y: 0 }
+  )
+  return { x: total.x / points.length, y: total.y / points.length }
+}
+
+const isLookingAwayFromCamera = (landmarks: any) => {
+  const leftEye = landmarks.getLeftEye?.()
+  const rightEye = landmarks.getRightEye?.()
+  const nose = landmarks.getNose?.()
+  const mouth = landmarks.getMouth?.()
+
+  if (!leftEye?.length || !rightEye?.length || !nose?.length || !mouth?.length) return false
+
+  const leftEyeCenter = getPointCenter(leftEye)
+  const rightEyeCenter = getPointCenter(rightEye)
+  const eyeMidpoint = {
+    x: (leftEyeCenter.x + rightEyeCenter.x) / 2,
+    y: (leftEyeCenter.y + rightEyeCenter.y) / 2,
+  }
+  const mouthCenter = getPointCenter(mouth)
+  const noseTip = nose[3] || nose[Math.floor(nose.length / 2)]
+  const eyeDistance = Math.hypot(rightEyeCenter.x - leftEyeCenter.x, rightEyeCenter.y - leftEyeCenter.y)
+  const faceVerticalSpan = Math.max(1, mouthCenter.y - eyeMidpoint.y)
+
+  if (eyeDistance <= 0) return false
+
+  const yawRatio = Math.abs(noseTip.x - eyeMidpoint.x) / eyeDistance
+  const pitchRatio = (noseTip.y - eyeMidpoint.y) / faceVerticalSpan
+  const rollDegrees = Math.abs(
+    Math.atan2(rightEyeCenter.y - leftEyeCenter.y, rightEyeCenter.x - leftEyeCenter.x) * 180 / Math.PI
+  )
