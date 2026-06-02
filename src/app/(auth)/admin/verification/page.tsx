@@ -604,3 +604,70 @@ export default function AdminVerificationsPage() {
                     <Search className="h-6 w-6" />
                   </div>
                   <p className="font-black text-text-main">No applications found</p>
+                   <p className="mt-1 text-sm text-text-muted">Search returned no applications.</p>
+                </div>
+              )}
+            </div>
+          </aside>
+
+          <section className="min-w-0">
+            {selectedTutor ? (
+              <div className="space-y-5">
+                <div className="qs-panel rounded-lg p-5">
+                  <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="flex min-w-0 items-start gap-4">
+                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-premium-gradient text-xl font-black text-white shadow-lg shadow-primary/20">
+                        {getInitials(selectedName)}
+                      </div>
+                      <div className="min-w-0">
+                        <div className={`mb-2 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-black ${selectedStageMeta.badge}`}>
+                          <span className={`h-2 w-2 rounded-full ${selectedStageMeta.dot}`} />
+                          {selectedStageMeta.label}
+                        </div>
+                        <h2 className="truncate text-2xl font-black text-text-main">{selectedName}</h2>
+                        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm text-text-muted">
+                          <span className="inline-flex min-w-0 items-center gap-2">
+                            <Mail className="h-4 w-4 text-primary" />
+                            <span className="truncate">{selectedEmail}</span>
+                          </span>
+                          <span className="inline-flex items-center gap-2">
+                            <Phone className="h-4 w-4 text-secondary" />
+                            {selectedTutor.phone || 'No phone'}
+                          </span>
+                          <span className="inline-flex items-center gap-2">
+                            <MapPin className="h-4 w-4 text-accent" />
+                            {selectedTutor.city || 'No city'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:w-[460px]">
+                      {[
+                        { label: 'Subjects', value: selectedSubjects.length, icon: BookOpen },
+                        { label: 'Degrees', value: selectedDegrees.length, icon: GraduationCap },
+                        { label: 'Docs', value: selectedDocuments.length, icon: FileText },
+                        { label: 'Attempts', value: selectedTutor.test_attempts || 0, icon: Clock3 },
+                      ].map(metric => {
+                        const Icon = metric.icon
+                        return (
+                          <div key={metric.label} className="rounded-lg border border-border/80 bg-surface/72 p-3">
+                            <div className="flex items-center justify-between text-xs font-bold uppercase text-text-muted">
+                              <span>{metric.label}</span>
+                              <Icon className="h-4 w-4 text-primary" />
+                            </div>
+                            <p className="mt-2 text-2xl font-black text-text-main">{metric.value}</p>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {isIncompleteSubmission && (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
+                      <div>
+                        <p className="font-black">Incomplete submission detected</p>
+                        <p className="mt-1 text-sm leading-6"></p>
