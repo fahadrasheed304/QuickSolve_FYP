@@ -901,3 +901,67 @@ export default function TutorCompleteProfilePage() {
             setDocuments(fetchedDocuments.map((d) => ({
               id: d.id,
               documentType: d.document_type,
+                            documentUrl: d.document_url,
+              fileName: d.file_name,
+              fileSize: d.file_size,
+            })))
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch existing data:', err)
+      }
+    }
+    
+    loadData()
+  }, [userId])
+
+  // Save progress on change - store userId to prevent cross-user data leaks
+  useEffect(() => {
+    if (!userId) return
+    localStorage.setItem('tutor_profile_progress', JSON.stringify({
+      userId,
+      personalDetails,
+      subjects: selectedSubjects,
+      degrees,
+      documents,
+      step,
+    }))
+  }, [personalDetails, selectedSubjects, degrees, documents, step, userId])
+
+  const getDocumentByType = (type: string) => documents.find(d => d.documentType === type)
+  const degreeCertificates = documents.filter(d => d.documentType === 'degree_certificate')
+  const documentLabels: Record<string, string> = {
+    cnic_front: 'CNIC Front',
+    cnic_back: 'CNIC Back',
+    profile_photo: 'Profile Photo',
+  }
+  const steps = [
+    { id: 1, label: 'Personal', title: 'Personal details', caption: 'City, CNIC, and short bio', icon: <User className="h-4 w-4" /> },
+    { id: 2, label: 'Subjects', title: 'Teaching subjects', caption: 'Pick the subjects you can teach', icon: <BookOpen className="h-4 w-4" /> },
+    { id: 3, label: 'Education', title: 'Academic record', caption: 'Add degrees and institutions', icon: <GraduationCap className="h-4 w-4" /> },
+    { id: 4, label: 'Documents', title: 'Identity documents', caption: 'CNIC, profile photo, certificates', icon: <FileText className="h-4 w-4" /> },
+    { id: 5, label: 'Review', title: 'Final review', caption: 'Confirm and submit', icon: <ClipboardCheck className="h-4 w-4" /> },
+  ]
+  const currentStep = steps.find(item => item.id === step) || steps[0]
+  const progressPercent = Math.round((step / steps.length) * 100)
+  const requiredUploadedCount = requiredDocs.filter(doc => getDocumentByType(doc.type)).length
+  const inputClass = 'qs-input w-full rounded-lg px-3 py-2.5 text-sm'
+  const labelClass = 'mb-1.5 block text-sm font-semibold text-text-main'
+
+  return (
+    <main className="min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
+        <header className="mb-6 overflow-hidden rounded-lg border border-border bg-hero-gradient surface-grid px-5 py-5 text-white shadow-xl shadow-primary/10 sm:px-7">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/12 px-3 py-1 text-xs font-bold uppercase text-white ring-1 ring-white/20">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                Tutor verification
+              </span>
+              <h1 className="mt-4 text-2xl font-bold sm:text-3xl">Complete your profile</h1>
+              <p className="mt-2 max-w-xl text-sm leading-6 text-white/78">
+                Welcome, {(user?.fullname || 'Tutor').split(' ')[0]}. Add your teaching details, verify CNIC, and submit a clean application for review.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row lg:flex-col lg:items-end"></div>
