@@ -459,3 +459,70 @@ export default function TakeTestPage() {
 
               if (now - lastIdentityCheck > IDENTITY_CHECK_INTERVAL_MS) {
                 lastIdentityCheck = now
+                const distance = faceapi.euclideanDistance(referenceDescriptor, liveFace.descriptor)
+                if (distance > FACE_TRACKING_MISMATCH_THRESHOLD) {
+                  identityMismatchFrames++
+                  if (identityMismatchFrames >= 2) {
+                    handleProctoringWarning("Camera face does not match the verified profile photo.")
+                    identityMismatchFrames = 0
+                  }
+                } else {
+                  identityMismatchFrames = 0
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.error("Face tracking error:", e);
+        }
+      }
+
+      if (isActive) {
+        setTimeout(trackFace, 1000);
+      }
+    };
+
+    trackFace();
+
+    return () => {
+      isActive = false;
+    };
+  }, [testStarted, testFinished, faceTrackingReady, verificationPassed, showWarningModal, handleProctoringWarning]);
+
+  // Timer
+  useEffect(() => {
+    if (!testStarted || testFinished || timeLeft <= 0) return
+
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          // Time's up - auto submit
+          if (handleSubmitRef.current) handleSubmitRef.current(true)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+  }, [testStarted, testFinished, timeLeft])
+
+  const startTest = () => {
+    if (!verificationPassed || !faceTrackingReady || !referenceFaceDescriptorRef.current) {
+      const message = 'Please complete face verification with the same verified profile photo before starting the test.'
+      setVerificationError(message)
+      notifyError(message)
+      return
+    }
+
+    setTestStarted(true)
+    // Enter fullscreen
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen().catch(() => {})
+    }
+  }
+
+  const startVerification = async () => {
+    if (!profilePhotoUrl) {
