@@ -90,3 +90,71 @@ body {
 }
 
 * {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(22, 103, 255, 0.35) transparent;
+}
+
+button:not(:disabled),
+button:not(:disabled) *,
+[role="button"]:not([aria-disabled="true"]),
+[role="button"]:not([aria-disabled="true"]) *,
+a[href],
+summary,
+label[for],
+select:not(:disabled),
+input[type="button"]:not(:disabled),
+input[type="submit"]:not(:disabled),
+input[type="reset"]:not(:disabled),
+input[type="checkbox"]:not(:disabled),
+input[type="radio"]:not(:disabled),
+input[type="file"]:not(:disabled) {
+  cursor: pointer;
+}
+
+button:disabled,
+[aria-disabled="true"],
+select:disabled,
+input:disabled {
+  cursor: not-allowed;
+}
+
+.text-gradient-primary {
+  background: linear-gradient(135deg, #1667ff 0%, #00a7a5 48%, #ff7a59 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.bg-premium-gradient {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, transparent 34%),
+    linear-gradient(135deg, #1667ff 0%, #00a7a5 54%, #ff7a59 100%) !important;
+}
+
+.bg-hero-gradient {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, transparent 36%),
+    linear-gradient(135deg, #101d32 0%, #1667ff 48%, #00a7a5 100%) !important;
+}
+
+.bg-royal-gradient {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.10) 0%, transparent 34%),
+    linear-gradient(135deg, #101d32 0%, #1667ff 58%, #00a7a5 100%) !important;
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.56);
+}
+
+.glass-card {
+  background: rgba(255, 254, 250, 0.86);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(220, 229, 237, 0.74);
+  box-shadow: 0 18px 60px rgba(23, 32, 51, 0.09);
+}
+
+.qs-card {
