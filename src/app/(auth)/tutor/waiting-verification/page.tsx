@@ -260,3 +260,69 @@ export default function WaitingVerificationPage() {
                       <div className="min-w-0 flex-1">
                         <h3 className="font-black text-text-main">{step.label}</h3>
                         <p className="mt-1 text-sm font-semibold text-text-muted"></p>
+                         {getStepText(step.key, isCurrent, status)}
+                        </p>
+                      </div>
+                      {isCurrent && (
+                        <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-primary shadow-sm">
+                          Current
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </section>
+
+          <aside className="space-y-5">
+            {(status?.canTakeTest || status?.stage === 'test_failed') && (
+              <section className="qs-card rounded-lg p-5">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary-subtle text-primary">
+                  <GraduationCap className="h-6 w-6" />
+                </div>
+                <h2 className="text-xl font-black text-text-main">
+                  {status.canRetakeTest ? 'Retake available' : status.stage === 'test_failed' ? 'Retake locked' : 'Test available'}
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-text-muted">
+                  {status.canRetakeTest
+                    ? `Previous score: ${status.lastTestScore || 0}%. You can retake the subject test.`
+                    : status.stage === 'test_failed'
+                      ? `${status.message}${status.retakeAvailableAt ? ` Available on ${new Date(status.retakeAvailableAt).toLocaleDateString()}.` : ''}`
+                    : 'You are invited to take the subject proficiency test.'}
+                </p>
+                <div className="mt-4 space-y-2 rounded-lg bg-surface-hover p-3 text-sm font-bold text-text-muted">
+                  <p>20 minutes duration</p>
+                  <p>80% passing score</p>
+                  <p>Camera and tab monitoring</p>
+                </div>
+                <Button
+                  onClick={() => router.push('/tutor/take-test')}
+                  disabled={!status.canTakeTest}
+                  className="mt-5 h-11 w-full"
+                >
+                  {status.canTakeTest ? 'Start Test' : 'Retake not available yet'}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </section>
+            )}
+
+            <section className="qs-card rounded-lg p-5">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-secondary-subtle text-secondary">
+                <Clock3 className="h-6 w-6" />
+              </div>
+              <h2 className="text-xl font-black text-text-main">Auto updates</h2>
+              <p className="mt-2 text-sm leading-6 text-text-muted">
+                This page refreshes every 30 seconds while your application is being reviewed.
+              </p>
+            </section>
+
+            {status?.adminNotes && status.adminNotes.length > 0 && (
+              <section className="qs-card rounded-lg p-5">
+                <div className="mb-4 flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 text-amber-700">
+                    <MessageSquare className="h-5 w-5" />
+                  </span>
+                  <h2 className="text-xl font-black text-text-main">Admin notes</h2>
+                </div>
+                <div className="space-y-3"></div>
