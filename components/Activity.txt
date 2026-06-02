@@ -144,3 +144,4 @@ June continuation notes
 - May 30: Added scan state follow-up notes for cases where the camera stalls.
 - June 1 (morning): Clarified camera reset handling before a second face login attempt.
 - June 1 (evening): Recorded fallback test coverage for password login after failed scan.
+- June 2: Refined failed-match notes for unclear face position and lighting problems.
