@@ -659,3 +659,69 @@ export default function TakeTestPage() {
       const strongMatches = matchDistances.filter(distance => distance <= FACE_MATCH_THRESHOLD).length
 
       if (
+         !bestLiveDescriptor ||
+        matchDistances.length < MIN_LIVE_FACE_SAMPLES ||
+        strongMatches < MIN_LIVE_FACE_SAMPLES ||
+        medianDistance > FACE_MATCH_MEDIAN_THRESHOLD ||
+        averageDistance > FACE_MATCH_AVERAGE_THRESHOLD
+      ) {
+        setVerificationError('Face does not match the verified profile photo. Only the tutor who uploaded the profile photo can start this test.')
+        stopCameraStream()
+        setVerifying(false)
+        return
+      }
+
+      referenceFaceDescriptorRef.current = profileFaces[0].descriptor
+      setFaceTrackingReady(true)
+      setVerificationPassed(true)
+      
+    } catch (err: unknown) {
+      console.error('Verification error:', err)
+      setVerificationError(err instanceof Error ? err.message : 'Error accessing camera or performing verification.')
+      stopCameraStream()
+    } finally {
+      setVerifying(false)
+      setVerificationStep('')
+    }
+  }
+
+  const handleAnswer = (questionId: string, optionIndex: number) => {
+    setAnswers(prev => ({ ...prev, [questionId]: optionIndex }))
+  }
+
+  useEffect(() => {
+    handleSubmitRef.current = handleSubmit;
+  });
+
+  const handleSubmit = async (autoSubmit: boolean = false) => {
+    if (submitInProgressRef.current) return
+    submitInProgressRef.current = true
+
+    if (timerRef.current) clearInterval(timerRef.current)
+    setTestFinished(true)
+    
+    stopCameraStream()
+    
+    // Exit fullscreen
+    if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {})
+    }
+
+    setLoading(true)
+
+    // Submit to server
+    try {
+      const finalWarningCount = warningCountRef.current
+      const finalTestStatus = finalWarningCount >= MAX_WARNINGS ? 'cancelled' : 'completed'
+
+      const res = await fetch('/api/tutor/test/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          answers: (testData?.questions || []).map((q) => {
+            const selectedOptionIdx = answers[q.id]
+            const answerGiven = selectedOptionIdx === undefined ? '' : (q.options[selectedOptionIdx] || '')
+            return {
+              questionId: q.id,
+              answerGiven,
+              timeTaken: 30
