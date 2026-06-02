@@ -82,3 +82,88 @@ export function LiveBidsList() {
               <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-success" />
             </span>
             Live bids
+                      </div>
+          <h3 className="mt-3 text-2xl font-black text-text-main">Tutors are ready to help</h3>
+        </div>
+        <div className="flex flex-col gap-2 sm:items-end">
+          <p className="text-sm font-semibold text-text-muted">
+            Problem: {bids[0]?.problemSubject || bids[0]?.tutorSubject} / {bids[0]?.problemClass || 'Class'}
+          </p>
+          <button
+            type="button"
+            onClick={handleCancelRequest}
+            disabled={isCancelling}
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 text-xs font-black text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {isCancelling ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
+            Cancel request
+          </button>
+        </div>
+      </div>
+
+      <div className="grid gap-3">
+        {bids.map((bid) => (
+          <div key={bid.id} className="qs-card rounded-lg p-5 transition-all hover:border-primary/40">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <Avatar className="h-14 w-14 border-2 border-white shadow-sm bg-premium-gradient">
+                <AvatarFallback className="bg-transparent text-white font-black text-lg">{bid.tutorName.charAt(0)}</AvatarFallback>
+              </Avatar>
+
+              <div className="min-w-0 flex-1">
+                <h4 className="text-lg font-black text-text-main">{bid.tutorName}</h4>
+                <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
+                  <span className="flex items-center gap-1 font-bold text-accent">
+                    <Star className="h-3.5 w-3.5 fill-current" />
+                    {bid.tutorRating}
+                  </span>
+                  <span className="text-text-muted">({bid.tutorSessions} sessions)</span>
+                  <span className="h-1 w-1 rounded-full bg-border" />
+                  <span className="text-text-muted">{bid.tutorSubject}</span>
+                </div>
+                <p className="mt-2 flex items-center gap-1.5 text-xs font-bold text-success">
+                  <Clock3 className="h-3.5 w-3.5" />
+                  Usually responds in {bid.responseTimeMin} min
+                </p>
+              </div>
+
+              <div className="w-full sm:w-auto sm:text-right">
+                <div className="mb-3 flex items-center justify-between gap-4 sm:block">
+                  <div className="text-2xl font-black text-text-main">Rs. {bid.price}</div>
+                  <div className="rounded-full bg-surface-hover px-3 py-1 text-xs font-bold text-text-muted sm:mt-1 sm:inline-block">{bid.durationMin} mins</div>
+                </div>
+                <Button
+                  onClick={() => handleAcceptBid(bid)}
+                  disabled={acceptingBidId === bid.id}
+                  className="w-full sm:w-40"
+                >
+                  {acceptingBidId === bid.id && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Accept & Start
+                </Button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <Dialog open={showWalletWarning} onOpenChange={setShowWalletWarning}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <AlertTriangle className="h-6 w-6" />
+              Insufficient Balance
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-text-muted">You do not have enough wallet balance to accept this bid. Please recharge your wallet to proceed.</p>
+          </div>
+          <div className="flex gap-3 justify-end mt-4">
+            <Button variant="ghost" onClick={() => setShowWalletWarning(false)}>Cancel</Button>
+            <Link href="/student/wallet">
+              <Button onClick={() => setShowWalletWarning(false)}>Recharge Wallet</Button>
+            </Link>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
