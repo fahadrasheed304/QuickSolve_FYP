@@ -69,3 +69,76 @@ export function ReviewModal({ isOpen, onClose, tutorName }: ReviewModalProps) {
       console.error("Failed to complete session:", e)
       notifyError("We could not save the session review right now. Please check your connection.")
     } finally {
+              setIsSubmitting(false)
+      onClose()
+      router.push('/student/dashboard')
+      router.refresh()
+    }
+  }
+
+  const getRatingLabel = () => {
+    const val = hoveredRating || rating
+    switch (val) {
+      case 1: return "Poor"
+      case 2: return "Fair"
+      case 3: return "Good"
+      case 4: return "Very Good"
+      case 5: return "Excellent"
+      default: return "Select Rating"
+    }
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md p-0 overflow-hidden">
+        <div className="bg-hero-gradient surface-grid p-6 text-center text-white">
+          <h2 className="mb-1 text-2xl font-black">Session Completed</h2>
+          <p className="text-sm text-white/75">Thank you for using QuickSolve.</p>
+        </div>
+
+        <div className="p-6">
+          <div className="mb-6 flex items-center gap-4 rounded-lg border border-border bg-surface-hover p-4">
+            <Avatar className="h-12 w-12 border-2 border-white shadow-sm bg-premium-gradient">
+              <AvatarFallback className="bg-transparent text-white font-black">{tutorName.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="font-black text-text-main">{tutorName}</p>
+              <p className="text-sm text-text-muted">Physics / Class 10</p>
+            </div>
+          </div>
+
+          <div className="mb-6 text-center">
+            <p className="mb-2 text-sm font-bold text-text-main">How was your session?</p>
+            <div className="mb-2 flex justify-center gap-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onMouseEnter={() => setHoveredRating(star)}
+                  onMouseLeave={() => setHoveredRating(0)}
+                  onClick={() => setRating(star)}
+                  className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  <Star
+                    className={cn(
+                      "h-10 w-10 transition-colors",
+                      (hoveredRating >= star || rating >= star)
+                        ? "fill-amber-500 text-amber-500"
+                        : "fill-surface-hover text-border"
+                    )}
+                  />
+                </button>
+              ))}
+            </div>
+            <p className={cn("text-xs font-black", rating > 0 ? "text-amber-600" : "text-text-muted")}>
+              {getRatingLabel()}
+            </p>
+          </div>
+
+          <div className="mb-6">
+            <p className="mb-2 text-sm font-bold text-text-main">What went well?</p>
+            <div className="flex flex-wrap gap-2">
+              {TAGS.map(tag => (
+                <button
+                  key={tag}
+                  type="button"
