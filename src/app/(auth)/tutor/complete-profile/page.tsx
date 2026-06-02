@@ -964,4 +964,70 @@ export default function TutorCompleteProfilePage() {
               </p>
             </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row lg:flex-col lg:items-end"></div>
+            <div className="flex flex-col gap-3 sm:flex-row lg:flex-col lg:items-end">
+                            <Button
+                type="button"
+                onClick={logout}
+                className="h-11 border border-white/20 bg-white/10 px-4 text-white hover:bg-white/20"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign out
+              </Button>
+
+              <div className="min-w-[220px] rounded-lg border border-white/18 bg-white/10 p-4 backdrop-blur">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-semibold text-white/80">Application progress</span>
+                  <span className="font-bold">{progressPercent}%</span>
+                </div>
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/18">
+                  <div className="h-full rounded-full bg-white transition-all duration-300" style={{ width: `${progressPercent}%` }} />
+                </div>
+                <p className="mt-3 text-xs font-medium text-white/72">Step {step} of {steps.length}: {currentStep.label}</p>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
+          <aside className="lg:sticky lg:top-6 lg:self-start">
+            <div className="qs-panel rounded-lg p-4">
+              <div className="mb-4 flex items-center gap-3 border-b border-border pb-4">
+                <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary-subtle text-primary">
+                  <User className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold text-text-main">{user?.fullname || 'Tutor profile'}</p>
+                  <p className="truncate text-xs text-text-muted">{user?.email || 'Verification draft'}</p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                {steps.map(item => {
+                  const isActive = item.id === step
+                  const isDone = item.id < step
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      disabled={item.id > step}
+                      onClick={() => item.id <= step && setStep(item.id)}
+                      className={`w-full rounded-lg border px-3 py-3 text-left transition-all ${
+                        isActive
+                          ? 'border-primary bg-primary text-white shadow-md shadow-primary/15'
+                          : isDone
+                            ? 'border-secondary/25 bg-secondary-subtle text-secondary-dark'
+                            : 'border-border bg-surface/70 text-text-muted opacity-80'
+                      }`}
+                    >
+                      <span className="flex items-start gap-3">
+                        <span className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
+                          isActive ? 'bg-white/18 text-white' : isDone ? 'bg-white/70 text-secondary-dark' : 'bg-surface-hover text-text-muted'
+                        }`}>
+                          {isDone ? <CheckCircle className="h-4 w-4" /> : item.icon}
+                        </span>
+                        <span>
+                          <span className="block text-sm font-bold">{item.title}</span>
+                          <span className={`mt-0.5 block text-xs ${isActive ? 'text-white/76' : 'text-text-muted'}`}>{item.caption}</span>
+                        </span>
+                      </span>
+            
