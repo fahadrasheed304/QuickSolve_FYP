@@ -230,3 +230,80 @@ export default function WalletPage() {
                 </button>
               ))}
             </div>
+                       {isLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center gap-3 animate-pulse">
+                    <div className="h-10 w-10 shrink-0 rounded-full bg-surface-hover" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 w-3/4 rounded bg-surface-hover" />
+                      <div className="h-3 w-1/2 rounded bg-surface-hover" />
+                    </div>
+                    <div className="h-4 w-16 rounded bg-surface-hover" />
+                  </div>
+                ))}
+              </div>
+            ) : filteredTxs.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-lg bg-surface-hover">
+                  <ArrowDown className="w-7 h-7 text-text-muted" />
+                </div>
+                <p className="mb-1 font-black text-text-main">No transactions yet</p>
+                <p className="text-sm text-text-muted">
+                  {activeTab === 'all'
+                    ? 'Add money to your wallet to get started.'
+                    : `No ${activeTab === 'credit' ? 'added' : activeTab === 'debit' ? 'spent' : activeTab} transactions.`}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {filteredTxs.map((tx) => (
+                  <div key={tx.id} className="flex items-center gap-3 rounded-lg p-3 transition-colors hover:bg-surface-hover">
+                    <div
+                      className={cn(
+                        'flex h-10 w-10 shrink-0 items-center justify-center rounded-full',
+                        tx.type === 'credit' ? 'bg-success-subtle text-success' :
+                        tx.type === 'debit' ? 'bg-red-50 text-red-600' :
+                        'bg-amber-50 text-amber-600'
+                      )}
+                    >
+                      {tx.type === 'credit' && <ArrowDown className="w-5 h-5" />}
+                      {tx.type === 'debit' && <ArrowUp className="w-5 h-5" />}
+                      {tx.type === 'escrow' && <Lock className="w-5 h-5" />}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-black text-text-main">{tx.description}</p>
+                      <div className="mt-0.5 flex items-center gap-2">
+                        <span className="text-xs text-text-muted">{formatDate(tx.date)}</span>
+                        <span
+                          className={cn(
+                            'rounded px-1.5 py-0.5 text-[10px] font-black uppercase',
+                            tx.status === 'completed' ? 'bg-success-subtle text-success' :
+                            tx.status === 'pending' ? 'bg-amber-50 text-amber-700' :
+                            'bg-red-50 text-red-700'
+                          )}
+                        >
+                          {tx.status}
+                        </span>
+                      </div>
+                    </div>
+                    <div
+                      className={cn(
+                        'shrink-0 text-sm font-black',
+                        tx.type === 'credit' ? 'text-success' :
+                        tx.type === 'debit' ? 'text-red-600' :
+                        'text-amber-600'
+                      )}
+                    >
+                      {tx.type === 'credit' ? '+' : '-'} Rs. {tx.amount.toLocaleString()}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}
