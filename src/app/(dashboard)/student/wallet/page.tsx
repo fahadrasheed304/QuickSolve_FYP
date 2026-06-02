@@ -153,3 +153,80 @@ export default function WalletPage() {
 
               <div className="mb-5 space-y-2">
                 {PAYMENT_METHODS.map((m) => (
+                                      <button
+                    key={m.id}
+                    onClick={() => setMethod(m.id)}
+                    className={cn(
+                      'flex w-full items-center rounded-lg border p-4 text-left transition-all',
+                      method === m.id ? m.activeBorder : 'border-border bg-surface hover:bg-surface-hover'
+                    )}
+                  >
+                    <div className={cn('mr-4 flex h-10 w-10 shrink-0 items-center justify-center rounded-full', m.iconBg)}>
+                      {m.icon}
+                    </div>
+                    <div>
+                      <div className="text-sm font-black text-text-main">{m.label}</div>
+                      <div className="text-xs text-text-muted">{m.subtitle}</div>
+                    </div>
+                    {method === m.id && <div className="ml-auto h-4 w-4 rounded-full bg-primary ring-4 ring-primary/20" />}
+                  </button>
+                ))}
+              </div>
+
+              <form onSubmit={handleTopUp} className="space-y-4">
+                <div>
+                  <label className="mb-1.5 block text-sm font-bold text-text-main">
+                    {selectedMethod.inputLabel}
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder={selectedMethod.placeholder}
+                    value={accountInput}
+                    onChange={(e) => setAccountInput(e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-bold text-text-main">Amount (PKR)</label>
+                  <Input
+                    type="number"
+                    min={100}
+                    max={100000}
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    required
+                  />
+                  <p className="mt-1 text-xs text-text-muted">Min: Rs. 100 / Max: Rs. 100,000</p>
+                </div>
+                <Button type="submit" disabled={submitting || isLoading} className="mt-2 h-12 w-full text-base">
+                  {submitting ? (
+                    <span className="flex items-center gap-2">
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Processing...
+                    </span>
+                  ) : (
+                    `Add Rs. ${parseInt(amount || '0').toLocaleString()}`
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
+          <CardContent className="p-6">
+            <h3 className="mb-4 text-xl font-black text-text-main">Transaction History</h3>
+            <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
+              {(['all', 'credit', 'debit', 'escrow'] as TabType[]).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={cn(
+                    'rounded-full px-3 py-1.5 text-sm font-black capitalize whitespace-nowrap transition-all',
+                    activeTab === tab ? 'bg-text-main text-white' : 'bg-surface-hover text-text-muted hover:text-text-main'
+                  )}
+                >
+                  {tab === 'credit' ? 'Added' : tab === 'debit' ? 'Spent' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                </button>
+              ))}
+            </div>
