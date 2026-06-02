@@ -386,3 +386,68 @@ const extractCnicCandidates = (ocrText: string): string[] => {
   const numericChunkPattern = /[0-9][0-9\s\-:./]{8,}[0-9]/g
 
   for (const match of normalizedText.matchAll(formattedCnicPattern)) {
+    candidates.add(`${match[1]}${match[2]}${match[3]}`)
+  }
+
+  for (const match of normalizedText.matchAll(numericChunkPattern)) {
+    addDigitWindows(match[0], candidates)
+  }
+
+  addDigitWindows(normalizedText, candidates)
+
+  return Array.from(candidates)
+}
+
+const hasFormattedCnicCandidate = (ocrText: string) => {
+  const normalizedText = normalizeOcrTextForCnic(ocrText)
+  const formattedCnicPattern = /(?:^|[^\d])(\d{5})[^\d]{0,6}(\d{7})[^\d]{0,6}(\d)(?=$|[^\d])/g
+  return formattedCnicPattern.test(normalizedText)
+}
+
+const getCnicOcrMatch = (expectedCnic: string, ocrText: string) => {
+  const expected = normalizeCnic(expectedCnic)
+  const candidates = extractCnicCandidates(ocrText)
+  const hasClearCnicShape = hasFormattedCnicCandidate(ocrText)
+
+  if (expected.length !== CNIC_LENGTH) {
+    return { matched: false, inconclusive: false, shouldBlock: true, candidates, bestCandidate: '', bestScore: 0, bestDistance: CNIC_LENGTH }
+  }
+
+  let bestCandidate = ''
+  let bestScore = 0
+  let bestDistance = CNIC_LENGTH
+
+  for (const candidate of candidates) {
+    const score = getLCSLength(expected, candidate)
+    const distance = getEditDistance(expected, candidate)
+
+    if (candidate === expected) {
+      return { matched: true, inconclusive: false, shouldBlock: false, candidates, bestCandidate: candidate, bestScore: CNIC_LENGTH, bestDistance: 0 }
+    }
+
+    if (score > bestScore || (score === bestScore && distance < bestDistance)) {
+      bestCandidate = candidate
+      bestScore = score
+      bestDistance = distance
+    }
+  }
+
+  const prefixLikelyMatches = bestCandidate
+    ? getLCSLength(expected.slice(0, 5), bestCandidate.slice(0, 5)) >= 4
+    : false
+  const matched = bestDistance <= 1 || bestScore >= 12 || (bestScore >= 11 && prefixLikelyMatches)
+  const shouldBlock = !matched && hasClearCnicShape && bestScore <= 9
+  const inconclusive = !matched && !shouldBlock
+
+  return { matched, inconclusive, shouldBlock, candidates, bestCandidate, bestScore, bestDistance }
+}
+
+type FaceApiModule = typeof import('@vladmandic/face-api')
+type FaceApiRuntimeModule = FaceApiModule & {
+  tf: {
+    setBackend: (backend: string) => Promise<boolean>
+    ready: () => Promise<void>
+  }
+}
+
+let faceApiLoadPromise: Promise<FaceApiModule> | null = null
