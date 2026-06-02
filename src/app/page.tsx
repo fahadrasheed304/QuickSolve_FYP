@@ -1,16 +1,3 @@
-import React from 'react'
-import Hero from '../components/Hero'
-import Features from '../components/Features'
-
-export default function Page() {
-  return (
-    <>
-      <Hero />
-      <Features />
-    </>
-  )
-}
-<<<<<<< HEAD
 "use client"
 
 import React, { useState } from 'react'
@@ -388,17 +375,5 @@ export default function Home() {
         </div>
       </footer>
     </div>
-=======
-import React from 'react'
-import Hero from '../components/Hero'
-import Features from '../components/Features'
-
-export default function Page() {
-  return (
-    <>
-      <Hero />
-      <Features />
-    </>
->>>>>>> 0c55bfd (feat(ui): add hero section with primary cta)
   )
 }
