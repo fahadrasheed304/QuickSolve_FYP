@@ -269,3 +269,70 @@ export default function AdminVerificationsPage() {
                 verification_status: updatedStatus,
               }
               Add admin verification helpers"
+               : tutor
+        ))
+      } else if (res.status === 401) {
+        router.push('/admin/signin')
+      }
+    } catch (err) {
+      console.error('Failed to fetch tutor detail:', err)
+    } finally {
+      setDetailLoading(null)
+    }
+  }, [router])
+
+  useEffect(() => {
+    fetchTutors()
+  }, [fetchTutors])
+
+  const updateStatus = useCallback(async (tutorEmail: string, newStage: string, newStatus: string) => {
+    setUpdating(tutorEmail)
+
+    try {
+      const res = await fetch('/api/admin/verifications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tutorEmail,
+          newStage,
+          newStatus,
+          notes: noteText,
+        }),
+      })
+
+      if (res.ok) {
+        notifySuccess('Tutor verification status updated.')
+        setTutors(prev => prev.map(tutor =>
+          tutor.user_email === tutorEmail
+            ? { ...tutor, verification_stage: newStage, verification_status: newStatus }
+            : tutor
+        ))
+        setNoteText('')
+
+        if (selectedTutor?.user_email === tutorEmail) {
+          setSelectedTutor(prev => prev ? {
+            ...prev,
+            verification_stage: newStage,
+            verification_status: newStatus,
+          } : null)
+          void fetchTutorDetail(tutorEmail)
+        }
+      } else {
+        const data = await res.json().catch(() => ({ error: 'Failed to update status' })) as { error?: string }
+        notifyError(getApiMessage(data, 'We could not update the tutor status. Please try again.'))
+      }
+    } catch {
+      notifyError('We could not update the tutor status right now. Please check your connection and try again.')
+    } finally {
+      setUpdating(null)
+    }
+  }, [fetchTutorDetail, noteText, selectedTutor?.user_email])
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+      router.push('/admin/signin')
+    } catch (err) {
+      console.error('Logout failed:', err)
+    }
+  }, [router])
