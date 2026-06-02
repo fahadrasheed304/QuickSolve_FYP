@@ -200,3 +200,71 @@ export default function AdminVerificationsPage() {
   const [tutors, setTutors] = useState<Tutor[]>([])
   const [loading, setLoading] = useState(true)
   const [detailLoading, setDetailLoading] = useState<string | null>(null)
+  const [error, setError] = useState('')
+  const [selectedTutor, setSelectedTutor] = useState<Tutor | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [stageFilter, setStageFilter] = useState('all')
+  const [updating, setUpdating] = useState<string | null>(null)
+  const [noteText, setNoteText] = useState('')
+
+  useEffect(() => {
+    if (error) {
+      notifyError(error)
+    }
+  }, [error])
+
+  const fetchTutors = useCallback(async () => {
+    setError('')
+    setLoading(true)
+
+    try {
+      const res = await fetch('/api/admin/verifications', { cache: 'no-store' })
+
+      if (res.ok) {
+        const data = await res.json() as { tutors?: Tutor[] }
+        setTutors(data.tutors || [])
+      } else if (res.status === 401) {
+        router.push('/admin/signin')
+      } else if (res.status === 403) {
+        setError('Admin access is required to view tutor applications.')
+      } else {
+        setError('We could not load tutor applications. Please refresh and try again.')
+      }
+    } catch {
+      setError('We could not reach the admin service. Please check your connection and try again.')
+    } finally {
+      setLoading(false)
+    }
+  }, [router])
+
+  const fetchTutorDetail = useCallback(async (tutorEmail: string) => {
+    setDetailLoading(tutorEmail)
+
+    try {
+      const res = await fetch(`/api/admin/tutor-detail?tutorEmail=${encodeURIComponent(tutorEmail)}`, { cache: 'no-store' })
+
+      if (res.ok) {
+        const data = await res.json() as TutorDetailResponse
+        const cleanDocuments = getCurrentTutorDocuments(data.documents || [])
+        const profile = data.profile || {}
+        const updatedStage = profile.verification_stage || 'under_review'
+        const updatedStatus = profile.verification_status || 'pending'
+
+        setSelectedTutor({
+          ...profile,
+          user_email: profile.user_email || tutorEmail,
+          degrees: data.degrees || [],
+          documents: cleanDocuments,
+          notes: data.notes || [],
+          testResults: data.testResults || [],
+          fullname: data.user?.fullname || profile.fullname || tutorEmail,
+          email: data.user?.email || profile.email || tutorEmail,
+          phone: profile.phone || data.user?.phone || '',
+        } as Tutor)
+        setTutors(prev => prev.map(tutor =>
+          tutor.user_email === tutorEmail
+            ? {
+                ...tutor,
+                verification_stage: updatedStage,
+                verification_status: updatedStatus,
+              }
