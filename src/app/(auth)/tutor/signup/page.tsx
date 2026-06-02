@@ -65,3 +65,71 @@ export default function TutorSignupPage() {
         router.push(`/tutor/verify-email?email=${encodeURIComponent(email)}`)
       } else {
         showError(getApiMessage(data, "We could not create your tutor account. Please review your details and try again."))
+              }
+    } catch (err) {
+      showError("We could not reach the signup service. Please check your connection and try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleGoogleLogin = useGoogleLogin({
+    scope: 'email profile openid',
+    onSuccess: async (tokenResponse) => {
+      setError('')
+      setLoading(true)
+      try {
+        const res = await fetch('/api/auth/google', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: tokenResponse.access_token, role: 'tutor' })
+        })
+        const data = await res.json()
+        if (res.ok) {
+          // Check if admin email - redirect to admin panel
+          if (data.isAdmin) {
+            window.location.href = '/admin/verifications'
+            return
+          }
+          
+          // New tutors OR incomplete profile go to complete-profile
+          if (data.isNewUser || data.requiresProfileCompletion) {
+            window.location.href = '/tutor/complete-profile'
+            return
+          }
+          
+          // If profile submitted but pending verification - go to waiting page
+          if (data.verificationStage && data.verificationStage !== 'not_started' && data.verificationStage !== '') {
+            window.location.href = '/tutor/waiting-verification'
+            return
+          }
+          
+          // Otherwise keep the tutor in onboarding.
+          window.location.href = '/tutor/complete-profile'
+        } else {
+          showError(getApiMessage(data, "Google signup could not be completed. Please try again."))
+          setLoading(false)
+        }
+      } catch (err) {
+        showError("Google signup is temporarily unavailable. Please try again or use email signup.")
+        setLoading(false)
+      }
+    },
+    onError: () => {
+      showError("Google signup was cancelled or the connection failed.")
+    }
+  })
+
+  return (
+      <main className="flex min-h-screen w-full bg-surface text-on-surface overflow-x-hidden">
+        {/* Left Panel: Brand & Value Props */}
+        <AuthSidebar
+          title="Turn your expertise into earnings."
+          features={[
+            {
+              icon: 'auto_graph',
+              title: 'Flexible Schedule',
+              description: 'Set your own hours and work from anywhere. You control your availability.',
+            },
+            {
+              icon: 'payments',
