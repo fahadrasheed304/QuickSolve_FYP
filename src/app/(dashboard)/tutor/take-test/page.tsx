@@ -592,3 +592,70 @@ export default function TakeTestPage() {
       let bestLiveDescriptor: Float32Array | null = null
       let bestMatchDistance = Number.POSITIVE_INFINITY
       let detectedLiveFace = false
+      let multiplePeopleVisible = false
+      let lookingAway = false
+      const matchDistances: number[] = []
+
+      for (let sample = 0; sample < LIVE_MATCH_SAMPLE_COUNT; sample++) {
+        await wait(sample === 0 ? 0 : 550)
+        if (!videoRef.current) break
+
+        let liveFaces: DetectedFace[] = []
+        for (const settings of FACE_DETECTOR_SETTINGS) {
+          liveFaces = await faceapi
+            .detectAllFaces(videoRef.current, new faceapi.TinyFaceDetectorOptions(settings))
+            .withFaceLandmarks()
+            .withFaceDescriptors()
+          if (liveFaces.length > 0) break
+        }
+
+        if (liveFaces.length > 1) {
+          multiplePeopleVisible = true
+          break
+        }
+
+        if (liveFaces.length === 1) {
+          detectedLiveFace = true
+          if (isLookingAwayFromCamera(liveFaces[0].landmarks)) {
+            lookingAway = true
+            continue
+          }
+
+          const distance = faceapi.euclideanDistance(profileFaces[0].descriptor, liveFaces[0].descriptor)
+          matchDistances.push(distance)
+          if (distance < bestMatchDistance) {
+            bestMatchDistance = distance
+            bestLiveDescriptor = liveFaces[0].descriptor
+          }
+        }
+      }
+
+      if (!detectedLiveFace) {
+        setVerificationError('Could not detect a face in the camera. Please ensure good lighting and look directly at the camera.')
+        stopCameraStream()
+        setVerifying(false)
+        return
+      }
+
+      if (lookingAway && matchDistances.length === 0) {
+        setVerificationError('Please look directly at the camera while matching your face.')
+        stopCameraStream()
+        setVerifying(false)
+        return
+      }
+
+      if (multiplePeopleVisible) {
+        setVerificationError('Only one person should be visible during the test.')
+        stopCameraStream()
+        setVerifying(false)
+        return
+      }
+
+      const sortedDistances = [...matchDistances].sort((a, b) => a - b)
+      const medianDistance = sortedDistances[Math.floor(sortedDistances.length / 2)] ?? Number.POSITIVE_INFINITY
+      const averageDistance = matchDistances.length
+        ? matchDistances.reduce((sum, value) => sum + value, 0) / matchDistances.length
+        : Number.POSITIVE_INFINITY
+      const strongMatches = matchDistances.filter(distance => distance <= FACE_MATCH_THRESHOLD).length
+
+      if (
