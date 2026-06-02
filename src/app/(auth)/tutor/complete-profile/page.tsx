@@ -1160,3 +1160,67 @@ export default function TutorCompleteProfilePage() {
                   </div>
                 </div>
               )}
+                            {step === 3 && (
+                <div className="space-y-5">
+                  {degrees.length > 0 && (
+                    <div className="grid gap-3">
+                      {degrees.map((degree) => (
+                        <div key={degree.id} className="rounded-lg border border-border bg-surface px-4 py-4">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="min-w-0">
+                              <h3 className="font-bold text-text-main">{degree.degreeName}</h3>
+                              <p className="mt-1 text-sm text-text-muted">{degree.institution || degree.boardUniversity}</p>
+                              <p className="mt-1 text-xs font-semibold text-text-muted">{degree.boardUniversity} / {degree.yearCompleted}</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeDegree(degree.id)}
+                              className="rounded-lg p-2 text-error transition-colors hover:bg-red-50"
+                              aria-label="Remove degree"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {showDegreeForm ? (
+                    <div className="rounded-lg border border-border bg-surface-container-low/70 p-4">
+                      <div className="mb-4 flex items-center gap-2">
+                        <GraduationCap className="h-5 w-5 text-primary" />
+                        <h3 className="font-bold text-text-main">Add degree</h3>
+                      </div>
+
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="md:col-span-2">
+                          <label className={labelClass}>Degree name</label>
+                          <select
+                            value={newDegree.degreeName}
+                            onChange={(e) => setNewDegree({ ...newDegree, degreeName: e.target.value })}
+                            className={inputClass}
+                          >
+                            <option value="">Select degree...</option>
+                            {DEGREE_NAMES.map(name => (
+                              <option key={name} value={name}>{name}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {isSchoolDegree(newDegree.degreeName || '') && (
+                          <div className="md:col-span-2">
+                            <label className={labelClass}>Institution or school</label>
+                            <input
+                              type="text"
+                              value={newDegree.institution}
+                              onChange={(e) => setNewDegree({ ...newDegree, institution: e.target.value })}
+                              placeholder="Govt. College Lahore"
+                              className={inputClass}
+                            />
+                          </div>
+                        )}
+
+                        <div className={isSchoolDegree(newDegree.degreeName || '') ? '' : 'md:col-span-2'}>
+                          <label className={labelClass}>{isSchoolDegree(newDegree.degreeName || '') ? 'Board' : 'University or institution'}</label>
+                          {isSchoolDegree(newDegree.degreeName || '') ? (
