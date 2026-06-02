@@ -70,3 +70,75 @@ export function ActivityTracker() {
   // Countdown timer for warning dialog
   useEffect(() => {
     if (!showWarning) return
+    
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          logout()
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [showWarning, logout])
+
+  const handleStayLoggedIn = () => {
+    handleActivity()
+    setShowWarning(false)
+    setTimeLeft(60)
+  }
+
+  // Only render if user is logged in
+  if (!user) return null
+
+  return (
+    <Dialog open={showWarning} onOpenChange={setShowWarning}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-amber-600">
+            <AlertTriangle className="w-6 h-6" />
+            Session Expiring Soon
+          </DialogTitle>
+        </DialogHeader>
+        
+        <div className="py-4">
+          <div className="flex items-center justify-center mb-6">
+            <div className="relative">
+              <div className="w-20 h-20 rounded-full border-4 border-amber-200 flex items-center justify-center">
+                <Clock className="w-8 h-8 text-amber-600" />
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-amber-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                {timeLeft}
+              </div>
+            </div>
+          </div>
+          
+          <p className="text-center text-gray-600 mb-2">
+            You have been inactive for a while.
+          </p>
+          <p className="text-center text-sm text-gray-500">
+            Your session will expire in <span className="font-bold text-amber-600">{timeLeft} seconds</span> due to inactivity.
+          </p>
+        </div>
+
+        <div className="flex gap-3">
+          <Button 
+            variant="outline" 
+            onClick={logout}
+            className="flex-1"
+          >
+            Logout Now
+          </Button>
+          <Button 
+            onClick={handleStayLoggedIn}
+            className="flex-1 bg-amber-600 hover:bg-amber-700"
+          >
+            Stay Logged In
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
