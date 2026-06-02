@@ -257,3 +257,68 @@ export default function TutorDashboard() {
                  'Upload documents and pass the subject test to start receiving student problems.'}
               </p>
             </div>
+                        {(verificationStatus === 'pending' || verificationStatus === 'not_started') && (
+              <Link href="/tutor/complete-profile">
+                <Button>Start Verification</Button>
+              </Link>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {metrics.map((metric) => {
+          const Icon = metric.icon
+          const card = (
+            <Card className="h-full">
+              <CardContent className="flex items-center gap-4 p-5">
+                <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg ${metric.tone}`}>
+                  <Icon className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-text-muted">{metric.label}</p>
+                  <h3 className="text-2xl font-black text-text-main">{metric.value}</h3>
+                </div>
+              </CardContent>
+            </Card>
+          )
+          return metric.href ? <Link key={metric.label} href={metric.href}>{card}</Link> : <div key={metric.label}>{card}</div>
+        })}
+      </div>
+
+      <Card className="mesh-sheen mb-8 overflow-hidden border-transparent bg-hero-gradient text-white shadow-2xl">
+        <CardContent className="grid gap-8 p-8 md:grid-cols-[1fr_auto] md:items-center">
+          <div>
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-black uppercase">
+              <Zap className="h-4 w-4 text-amber-200" />
+              {verificationStatus === 'verified' ? 'Ready to teach' : 'Verification path'}
+            </div>
+            <h2 className="text-3xl font-black">
+              {verificationStatus === 'verified'
+                ? isAvailable ? 'You are visible to students' : 'You are currently unavailable'
+                : 'Get verified to start earning'}
+            </h2>
+            <p className="mt-3 max-w-2xl text-white/75">
+              {verificationStatus === 'verified'
+                ? isAvailable
+                  ? 'Keep availability on to receive live problem bids from students.'
+                  : 'Turn availability on when you want to see student requests and place bids.'
+                : 'Complete your profile, upload documents, and pass the subject test.'}
+            </p>
+          </div>
+          {verificationStatus === 'verified' ? (
+            <div className="rounded-lg border border-white/15 bg-white/10 p-6 text-center">
+              <CheckCircle className="mx-auto mb-3 h-12 w-12 text-success-subtle" />
+              <p className="text-lg font-black">Verified Tutor</p>
+              <p className="mt-1 text-sm text-white/65">Students can book you</p>
+            </div>
+          ) : (
+            <Link href="/tutor/complete-profile">
+              <Button className="h-14 w-full bg-white text-primary hover:bg-surface-hover md:w-64">
+                <Shield className="mr-2 h-5 w-5" />
+                Start Verification
+              </Button>
+            </Link>
+          )}
+        </CardContent>
+      </Card>
