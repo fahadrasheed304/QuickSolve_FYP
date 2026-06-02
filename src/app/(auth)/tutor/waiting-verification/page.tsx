@@ -326,3 +326,68 @@ export default function WaitingVerificationPage() {
                   <h2 className="text-xl font-black text-text-main">Admin notes</h2>
                 </div>
                 <div className="space-y-3"></div>
+                {status.adminNotes.map((note, index) => (
+                    <div key={`${note}-${index}`} className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm font-semibold leading-6 text-amber-900">
+                      {note}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+          </aside>
+        </div>
+      </div>
+    </main>
+  )
+}
+
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ElementType
+  label: string
+  value: number
+}) {
+  return (
+    <div className="qs-card rounded-lg p-5">
+      <div className="flex items-center gap-4">
+        <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary-subtle text-primary">
+          <Icon className="h-6 w-6" />
+        </span>
+        <div>
+          <p className="text-sm font-bold text-text-muted">{label}</p>
+          <p className="text-3xl font-black text-text-main">{value}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function getStepIndex(stage: string): number {
+  const indexByStage: Record<string, number> = {
+    submitted: 0,
+    pending: 0,
+    under_review: 1,
+    test_invited: 2,
+    test_scheduled: 2,
+    test_failed: 2,
+    test_passed: 3,
+    verified: 4,
+    rejected: 1,
+  }
+  return indexByStage[stage] ?? 0
+}
+
+function getStepText(step: string, isCurrent: boolean, status: VerificationStatus | null) {
+  if (step === 'submitted') return isCurrent ? 'Your profile is in the verification queue.' : 'Profile submitted successfully.'
+  if (step === 'under_review') return isCurrent ? 'Admin is reviewing your profile, degrees, and documents.' : 'Document review step.'
+  if (step === 'test_invited') return isCurrent ? 'Your subject test is ready when invited.' : 'Subject proficiency test.'
+  if (step === 'test_passed') {
+    if (status?.testPassed) return `Passed with ${status.lastTestScore || 0}%.`
+    return 'Pass the subject test to move forward.'
+  }
+  if (step === 'verified') return 'Tutor dashboard unlocks after final approval.'
+  return 'Pending'
+}
