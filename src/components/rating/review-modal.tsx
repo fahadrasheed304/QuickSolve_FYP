@@ -142,3 +142,75 @@ export function ReviewModal({ isOpen, onClose, tutorName }: ReviewModalProps) {
                 <button
                   key={tag}
                   type="button"
+                                    onClick={() => toggleTag(tag)}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-xs font-bold transition-all",
+                    selectedTags.includes(tag)
+                      ? "border-primary bg-primary text-white"
+                      : "border-border bg-surface text-text-muted hover:border-primary/40 hover:bg-surface-hover"
+                  )}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <Textarea
+              placeholder="Any additional feedback? (Optional)"
+              value={feedback}
+              onChange={(e) => setFeedback(e.target.value)}
+              className="h-20 resize-none"
+            />
+          </div>
+
+          <div className="mb-6 border-t border-border pt-4">
+            <label className="group flex cursor-pointer items-start gap-2">
+              <div className="flex h-5 items-center">
+                <input
+                  type="checkbox"
+                  checked={hasDispute}
+                  onChange={(e) => setHasDispute(e.target.checked)}
+                  className="h-4 w-4 rounded border-border text-amber-600 focus:ring-amber-500"
+                />
+              </div>
+              <div className="flex-1 text-sm">
+                <span className="font-bold text-text-muted group-hover:text-text-main transition-colors">
+                  I had issues with this session
+                </span>
+                {hasDispute && (
+                  <div className="mt-3">
+                    <select
+                      value={disputeReason}
+                      onChange={(e) => setDisputeReason(e.target.value)}
+                      className="qs-input w-full rounded-lg p-2 text-sm"
+                    >
+                      <option value="" disabled>Select reason...</option>
+                      {DISPUTE_REASONS.map(reason => (
+                        <option key={reason} value={reason}>{reason}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+            </label>
+          </div>
+
+          <Button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className={cn("h-12 w-full text-base", (hasDispute || (rating > 0 && rating < 3)) && "bg-amber-600 hover:bg-amber-700")}
+          >
+            {isSubmitting ? "Processing..." : (hasDispute || (rating > 0 && rating < 3)) ? (
+              <>
+                <Flag className="mr-2 h-5 w-5" />
+                Submit & Report Issue
+              </>
+            ) : "Submit Review"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
