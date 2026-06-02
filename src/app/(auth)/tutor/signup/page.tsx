@@ -133,3 +133,71 @@ export default function TutorSignupPage() {
             },
             {
               icon: 'payments',
+                            iconColorClass: 'text-secondary-container',
+              iconBgClass: 'bg-secondary-container/20',
+              title: 'Competitive Earnings',
+              description: 'Earn top PKR rates per session with automated billing and instant payouts.',
+            },
+            {
+              icon: 'verified',
+              title: 'Verified Badge',
+              description: 'Complete our verification process and stand out as a trusted, top-rated tutor.',
+            }
+          ]}
+        />
+        {/* Right Panel: Form */}
+        <section className="w-full lg:w-[55%] bg-surface-container-lowest flex items-center justify-center p-6 sm:p-12 overflow-y-auto">
+          <div className="w-full max-w-[480px] py-4">
+            <header className="mb-8 text-center lg:text-left">
+              <h2 className="text-3xl font-extrabold tracking-tight text-on-surface mb-2">Become a Tutor</h2>
+              <p className="text-on-surface-variant">Already have an account? <Link className="text-primary font-semibold hover:underline" href="/tutor/signin">Log in</Link></p>
+            </header>
+
+            {/* Google Login */}
+            <GoogleLoginButton onClick={handleGoogleLogin} disabled={loading} isLoading={loading} />
+
+            <AuthDivider label="OR" />
+
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md text-sm font-medium">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleSignup} className="space-y-5" autoComplete="off">
+              {/* Full Name */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1.5" htmlFor="fullname">Full Name</label>
+                <input
+                  required
+                  value={fullname}
+                  onChange={(e) => setFullname(e.target.value.replace(/[^A-Za-z\s]/g, ''))}
+                  className="w-full h-11 px-4 bg-surface-container-low border-b-2 border-outline-variant focus:border-primary focus:ring-0 transition-all duration-200 outline-none text-on-surface rounded-t-lg"
+                  name="quicksolve-tutor-signup-fullname"
+                  autoComplete="off"
+                  id="fullname" placeholder="Enter full name" type="text"
+                />
+              </div>
+
+              {/* Email + Phone Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1.5" htmlFor="email">Email</label>
+                  <input
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full h-11 px-4 bg-surface-container-low border-b-2 border-outline-variant focus:border-primary focus:ring-0 transition-all duration-200 outline-none text-on-surface rounded-t-lg"
+                    name="quicksolve-tutor-signup-email"
+                    autoComplete="off"
+                    id="email" placeholder="Enter email" type="email"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1.5" htmlFor="phone">Phone (WhatsApp)</label>
+                  <div className="flex">
+                    <select
+                      value={countryCode}
+                      onChange={(e) => setCountryCode(e.target.value)}
+                      className="w-[90px] h-11 px-2 bg-surface-container-low border-b-2 border-r-2 border-outline-variant focus:border-primary outline-none text-on-surface rounded-tl-lg text-sm"
+                    >
