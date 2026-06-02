@@ -59,3 +59,66 @@ export default function PostProblemPage() {
       notifySuccess('Your problem has been posted. Tutors can now place bids.')
       setShowSuccess(true)
     } else {
+              notifyError('We could not post your problem. Please check your details and try again.')
+    }
+  }
+
+  return (
+    <div className="min-h-screen px-4 py-6 md:px-8 md:py-10">
+      <div className="mx-auto max-w-4xl qs-page-enter">
+        <Link href="/student/dashboard" className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-text-muted hover:text-primary">
+          <ArrowLeft className="h-4 w-4" />
+          Back to Dashboard
+        </Link>
+
+        <div className="mb-8">
+          <div className="qs-kicker rounded-full px-3 py-1.5">
+            <UploadCloud className="h-4 w-4" />
+            New problem request
+          </div>
+          <h1 className="mt-4 text-4xl font-black text-text-main">Post Your Problem</h1>
+          <p className="mt-2 text-text-muted">Details / Preferences / Confirm</p>
+        </div>
+
+        <Card>
+          <CardContent className="p-5 sm:p-8">
+            <form onSubmit={handleSubmit} className="space-y-8">
+              <div className="space-y-3">
+                <label className="text-sm font-bold text-text-main">Your Class</label>
+                <div className="grid grid-cols-2 gap-2 rounded-lg bg-surface-hover p-1 sm:grid-cols-4">
+                  {['9th', '10th', '1st Year', '2nd Year'].map((cls) => (
+                    <button
+                      key={cls}
+                      type="button"
+                      onClick={() => { setActiveClass(cls); setSelectedSubject('') }}
+                      className={cn(
+                        "rounded-lg px-3 py-2 text-sm font-bold transition-all",
+                        activeClass === cls ? "bg-surface text-primary shadow-sm" : "text-text-muted hover:text-text-main"
+                      )}
+                    >
+                      {cls}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-sm font-bold text-text-main">Select Subject <span className="text-red-500">*</span></label>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {subjects.map((sub) => (
+                    <button
+                      key={sub}
+                      type="button"
+                      onClick={() => setSelectedSubject(sub)}
+                      className={cn(
+                        "rounded-lg border p-3 text-left text-sm font-bold transition-all",
+                        selectedSubject === sub
+                          ? "border-primary bg-primary-subtle text-primary shadow-sm"
+                          : "border-border bg-surface hover:border-primary/40 hover:bg-surface-hover text-text-main"
+                      )}
+                    >
+                      {sub}
+                    </button>
+                  ))}
+                </div>
+              </div>
