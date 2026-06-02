@@ -1095,4 +1095,68 @@ export default function TutorCompleteProfilePage() {
                             setPersonalDetails(prev => ({ ...prev, city: val }))
                           }}
                           placeholder="Lahore, Karachi, Islamabad"
-            
+                                      className={`${inputClass} pl-9`}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className={labelClass}>CNIC number *</label>
+                      <div className="relative">
+                        <Hash className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+                        <input
+                          type="text"
+                          value={personalDetails.cnic}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, '').slice(0, CNIC_LENGTH)
+                            setPersonalDetails(prev => ({ ...prev, cnic: val }))
+                          }}
+                          placeholder="13 digits without dashes"
+                          maxLength={CNIC_LENGTH}
+                          className={`${inputClass} pl-9`}
+                        />
+                      </div>
+                      <p className="mt-1 text-xs font-medium text-text-muted">{normalizeCnic(personalDetails.cnic).length}/{CNIC_LENGTH} digits entered</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className={labelClass}>About you</label>
+                    <textarea
+                      value={personalDetails.bio}
+                      onChange={(e) => setPersonalDetails(prev => ({ ...prev, bio: e.target.value }))}
+                      placeholder="Share your teaching experience, style, and strengths."
+                      rows={6}
+                      className={`${inputClass} min-h-36 resize-none leading-6`}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {step === 2 && (
+                <div className="space-y-5">
+                  <div className="flex flex-wrap gap-2">
+                    {SUBJECTS.map((sub) => {
+                      const selected = selectedSubjects.includes(sub)
+                      return (
+                        <button
+                          key={sub}
+                          type="button"
+                          onClick={() => toggleSubject(sub)}
+                          className={`rounded-lg border px-3 py-2 text-sm font-semibold transition-all ${
+                            selected
+                              ? 'border-primary bg-primary text-white shadow-md shadow-primary/15'
+                              : 'border-border bg-surface text-text-muted hover:border-primary/50 hover:bg-primary-subtle/35 hover:text-text-main'
+                          }`}
+                        >
+                          {sub}
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  <div className="rounded-lg border border-secondary/20 bg-secondary-subtle/45 px-4 py-3 text-sm font-semibold text-secondary-dark">
+                    {selectedSubjects.length > 0 ? `${selectedSubjects.length} subject(s) selected` : 'Select at least one subject to continue'}
+                  </div>
+                </div>
+              )}
