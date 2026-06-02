@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "react-toastify/dist/ReactToastify.css";
+import GoogleWrapper from "@/components/google-wrapper";
+import { ActivityTracker } from "@/components/activity-tracker";
+import { ToastProvider } from "@/components/toast-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,6 +32,37 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
+    </html>
+  );
+}
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html
+      lang="en"
+      className="h-full antialiased"
+      suppressHydrationWarning
+    >
+      <head>
+        <link
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap"
+          rel="stylesheet"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="min-h-full flex flex-col font-inter bg-background text-text-main" suppressHydrationWarning>
+        <GoogleWrapper>
+          {children}
+          <ActivityTracker />
+          <ToastProvider />
+        </GoogleWrapper>
+      </body>
     </html>
   );
 }
