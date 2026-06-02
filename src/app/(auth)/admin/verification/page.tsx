@@ -268,3 +268,4 @@ export default function AdminVerificationsPage() {
                 verification_stage: updatedStage,
                 verification_status: updatedStatus,
               }
+              Add admin verification helpers"
