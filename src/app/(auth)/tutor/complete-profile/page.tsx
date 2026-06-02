@@ -451,3 +451,66 @@ type FaceApiRuntimeModule = FaceApiModule & {
 }
 
 let faceApiLoadPromise: Promise<FaceApiModule> | null = null
+const loadProfilePhotoFaceApi = async () => {
+  if (!faceApiLoadPromise) {
+    faceApiLoadPromise = import('@vladmandic/face-api').then(async (faceapi) => {
+      const faceRuntime = faceapi as unknown as FaceApiRuntimeModule
+      await faceRuntime.tf.setBackend('cpu')
+      await faceRuntime.tf.ready()
+      await faceapi.nets.tinyFaceDetector.loadFromUri('/models')
+      return faceapi
+    })
+  }
+
+  return faceApiLoadPromise
+}
+
+const loadImageForFaceCheck = (file: File): Promise<HTMLImageElement> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const objectUrl = URL.createObjectURL(file)
+
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl)
+      resolve(img)
+    }
+    img.onerror = (err) => {
+      URL.revokeObjectURL(objectUrl)
+      reject(err)
+    }
+    img.src = objectUrl
+  })
+}
+
+const validateProfilePhotoFace = async (file: File) => {
+  const faceapi = await loadProfilePhotoFaceApi()
+  const image = await loadImageForFaceCheck(file)
+  const detections = await faceapi.detectAllFaces(
+    image,
+    new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.45 })
+  )
+
+  if (detections.length === 0) {
+    return {
+      valid: false,
+      error: 'Profile photo must show a clear human face. Random images are not allowed.',
+    }
+  }
+
+  if (detections.length > 1) {
+    return {
+      valid: false,
+      error: 'Profile photo must show only one person. Please upload a solo, clear face photo.',
+    }
+  }
+
+  const { box } = detections[0]
+  const faceWidthRatio = box.width / image.naturalWidth
+  const faceHeightRatio = box.height / image.naturalHeight
+
+  if (faceWidthRatio < 0.12 || faceHeightRatio < 0.12) {
+    return {
+      valid: false,
+      error: 'Face is too small in this photo. Please upload a closer, clearer profile photo.',
+    }
+  }
