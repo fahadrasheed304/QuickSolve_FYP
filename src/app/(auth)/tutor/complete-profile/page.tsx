@@ -1030,4 +1030,69 @@ export default function TutorCompleteProfilePage() {
                           <span className={`mt-0.5 block text-xs ${isActive ? 'text-white/76' : 'text-text-muted'}`}>{item.caption}</span>
                         </span>
                       </span>
+                                          </button>
+                  )
+                })}
+              </div>
+
+              <div className="mt-4 rounded-lg border border-primary/15 bg-primary-subtle/60 p-3">
+                <div className="flex items-center gap-2 text-sm font-bold text-primary-dark">
+                  <ShieldCheck className="h-4 w-4" />
+                  CNIC match assisted by OCR
+                </div>
+                <p className="mt-1 text-xs leading-5 text-text-muted">
+                  Clear mismatches are blocked. If OCR is unclear, upload continues for admin review.
+                </p>
+              </div>
+            </div>
+          </aside>
+
+          <section className="qs-panel overflow-hidden rounded-lg">
+            <div className="border-b border-border bg-surface/80 px-5 py-5 sm:px-7">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase text-primary">Step {step} of {steps.length}</p>
+                  <h2 className="mt-1 text-2xl font-bold text-text-main">{currentStep.title}</h2>
+                  <p className="mt-1 text-sm text-text-muted">{currentStep.caption}</p>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center sm:min-w-[260px]">
+                  <div className="rounded-lg border border-border bg-surface px-3 py-2">
+                    <p className="text-lg font-bold text-primary">{selectedSubjects.length}</p>
+                    <p className="text-[11px] font-semibold text-text-muted">Subjects</p>
+                  </div>
+                  <div className="rounded-lg border border-border bg-surface px-3 py-2">
+                    <p className="text-lg font-bold text-secondary-dark">{degrees.length}</p>
+                    <p className="text-[11px] font-semibold text-text-muted">Degrees</p>
+                  </div>
+                  <div className="rounded-lg border border-border bg-surface px-3 py-2">
+                    <p className="text-lg font-bold text-accent">{requiredUploadedCount}/3</p>
+                    <p className="text-[11px] font-semibold text-text-muted">Docs</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {error && (
+              <div className="mx-5 mt-5 flex items-start gap-3 rounded-lg border border-error/25 bg-red-50 px-4 py-3 text-sm font-medium text-error sm:mx-7">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <div className="p-5 sm:p-7">
+              {step === 1 && (
+                <div className="space-y-5">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className={labelClass}>City *</label>
+                      <div className="relative">
+                        <MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+                        <input
+                          type="text"
+                          value={personalDetails.city}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/[^A-Za-z\s]/g, '')
+                            setPersonalDetails(prev => ({ ...prev, city: val }))
+                          }}
+                          placeholder="Lahore, Karachi, Islamabad"
             
