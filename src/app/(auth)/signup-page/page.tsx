@@ -225,3 +225,79 @@ export default function SignupPagePage() {
               {/* Phone */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-text-muted mb-1.5" htmlFor="phone">Phone Number</label>
+                                <div className="flex">
+                  <select
+                    value={countryCode}
+                    onChange={(e) => setCountryCode(e.target.value)}
+                    className="w-[100px] h-12 px-3 bg-surface-hover border-y border-l border-border focus:border-primary focus:bg-surface outline-none text-text-main rounded-l-xl text-sm transition-all"
+                  >
+                    <option value="+92">+92</option>
+                    <option value="+1">+1</option>
+                    <option value="+44">+44</option>
+                    <option value="+971">+971</option>
+                    <option value="+966">+966</option>
+                    <option value="+61">+61</option>
+                  </select>
+                  <input 
+                    required
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                    className="flex-1 h-12 px-4 bg-surface-hover border border-border focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none text-text-main rounded-r-xl" 
+                    name="quicksolve-signup-phone"
+                    autoComplete="off"
+                    id="phone" placeholder="Enter phone number" type="tel" 
+                  />
+                </div>
+              </div>
+
+              {/* Password */}
+              <div className="space-y-3">
+                <label className="block text-xs font-bold uppercase tracking-wider text-text-muted mb-1.5" htmlFor="password">Create Password</label>
+                <PasswordInput
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full h-12 px-4 bg-surface-hover border border-border focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none text-text-main rounded-xl" 
+                  name="quicksolve-signup-password"
+                  autoComplete="new-password"
+                  id="password"
+                  placeholder="Enter password"
+                />
+                
+                {/* Password Strength Meter */}
+                <div className="h-1.5 w-full bg-border rounded-full overflow-hidden">
+                  <div className={`h-full transition-all duration-300 ${strength === 0 ? 'w-0' : strength === 1 ? 'w-1/3 bg-red-400' : strength === 2 ? 'w-2/3 bg-amber-400' : 'w-full bg-success'}`}></div>
+                </div>
+                
+              </div>
+
+              {/* Terms */}
+              <div className="flex items-start gap-3">
+                <div className="flex items-center h-5">
+                  <input 
+                    checked={terms}
+                    onChange={(e) => setTerms(e.target.checked)}
+                    className="w-4 h-4 text-primary border-border rounded focus:ring-primary/20" 
+                    id="terms" type="checkbox" 
+                  />
+                </div>
+                <label className="text-xs text-text-muted leading-relaxed" htmlFor="terms">
+                  I agree to the <Link className="text-primary font-semibold hover:underline" href="/terms">Terms of Service</Link> and <Link className="text-primary font-semibold hover:underline" href="/privacy">Privacy Policy</Link>, including the use of cookies.
+                </label>
+              </div>
+
+              {/* Submit Button */}
+              <button 
+                disabled={loading}
+                className="w-full h-12 bg-primary hover:bg-primary-dark disabled:opacity-70 text-white font-bold rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98]" 
+                type="submit"
+              >
+                {loading ? "CREATING ACCOUNT..." : "CREATE ACCOUNT"}
+              </button>
+            </form>
+          </div>
+        </section>
+      </main>
+    </>
+  );
+}
