@@ -771,3 +771,68 @@ export default function TutorCompleteProfilePage() {
         setError('Profile photo is required')
         return
       }
+          }
+
+    setError('')
+    setStep(step + 1)
+  }
+
+  const handleBack = () => {
+    setError('')
+    setStep(step - 1)
+  }
+
+  const handleSubmit = async () => {
+    setSubmitting(true)
+    setError('')
+
+    try {
+      const res = await fetch('/api/tutor/submit-for-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          personalDetails: {
+            ...personalDetails,
+          },
+          subjects: selectedSubjects,
+          degrees: degrees.map(d => ({
+            degreeName: d.degreeName,
+            institution: d.institution,
+            boardUniversity: d.boardUniversity,
+            yearCompleted: d.yearCompleted,
+          })),
+          documents: documents.map(d => ({
+            documentType: d.documentType,
+            documentUrl: d.documentUrl,
+            fileName: d.fileName,
+            fileSize: d.fileSize,
+          })),
+        })
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        notifySuccess(data.message, 'Your profile has been submitted for verification.')
+        // Clear saved progress
+        localStorage.removeItem('tutor_profile_progress')
+        router.push('/tutor/waiting-verification')
+      } else {
+        setError(getApiMessage(data, 'We could not submit your profile. Please review the required details and try again.'))
+        setSubmitting(false)
+      }
+    } catch {
+      setError("We could not submit your profile right now. Please check your connection and try again.")
+      setSubmitting(false)
+    }
+  }
+
+  // Check for saved data on mount (and fetch existing profile)
+  useEffect(() => {
+    if (!user) {
+      fetchUser()
+    }
+  }, [user, fetchUser])
+
+  useEffect(() => {
+    const profile = user?.tutorProfile
