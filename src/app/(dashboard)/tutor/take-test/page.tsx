@@ -923,3 +923,70 @@ export default function TakeTestPage() {
                   ? 'You have passed the subject proficiency test.' 
                   : 'You did not meet the passing score requirement.'}
               </p>
+              <div className="bg-muted rounded-lg p-6 mb-6">
+                <p className="text-sm text-muted-foreground mb-1">Your Score</p>
+                <p className={`text-4xl font-bold ${result.passed ? 'text-green-600' : 'text-red-600'}`}>
+                  {result.score}%
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Passing: {testData?.passingScore || 80}%
+                </p>
+              </div>
+
+              {!result.passed && (
+                <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+                  <p className="text-sm text-blue-800 dark:text-blue-300">
+                    You can retake this test after 7 days. Please review the subject material and try again.
+                  </p>
+                </div>
+              )}
+
+              <Button 
+                onClick={() => router.push('/tutor/waiting-verification')}
+                className="bg-[#006c4a] hover:bg-green-800"
+              >
+                Back to Dashboard
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+    )
+  }
+
+  const currentQ = testData?.questions[currentQuestion]
+  const totalQuestions = testData?.questions.length || 0
+  const answeredCount = Object.keys(answers).length
+  const answeredProgress = totalQuestions > 0 ? (answeredCount / totalQuestions) * 100 : 0
+
+  return (
+    <main 
+      className="min-h-screen bg-background py-8 px-4 select-none"
+      onContextMenu={(e) => e.preventDefault()}
+      onCopy={(e) => e.preventDefault()}
+      onCut={(e) => e.preventDefault()}
+      onPaste={(e) => e.preventDefault()}
+    >
+      {/* Hidden video element for continuous tracking */}
+      <video ref={handleVideoRef} className="hidden" playsInline muted />
+
+      {/* Header */}
+      <div className="max-w-4xl mx-auto mb-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-bold text-foreground">Subject Proficiency Test</h1>
+          
+          <div className="flex items-center gap-4">
+            {warningCount > 0 && (
+              <div className="flex items-center gap-1 text-red-600">
+                <AlertTriangle className="w-4 h-4" />
+                <span className="text-sm font-medium">Warning {warningCount}/{MAX_WARNINGS}</span>
+              </div>
+            )}
+            
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-lg font-mono font-bold ${
+              timeLeft < 60 ? 'bg-red-100 dark:bg-red-900/30 text-red-600' : 'bg-muted text-foreground'
+            }`}>
+              <Clock className="w-4 h-4" />
+              {formatTime(timeLeft)}
+            </div>
+          </div>
