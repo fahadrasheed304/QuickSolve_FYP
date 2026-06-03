@@ -32,7 +32,7 @@ export const DB = {
 
   createUser: async (user: {
     fullname: string
-        email: string
+    email: string
     phone?: string
     password: string
     role?: string
@@ -66,7 +66,7 @@ export const DB = {
     
     return data
   },
-  
+
   // ── ROLE-BASED WALLETS ──────────────────────────────────────
   getWalletBalance: async (email: string, role: string) => {
     const normalizedEmail = email.toLowerCase().trim()
@@ -100,7 +100,7 @@ export const DB = {
         .from('role_wallets')
         .insert({ user_email: normalizedEmail, role, balance: 0 })
         .select()
-                .single()
+        .single()
       
       return {
         balance: newWallet?.balance ?? 0,
@@ -134,7 +134,7 @@ export const DB = {
     const normalizedEmail = email.toLowerCase().trim()
     
     // Use database function to update wallet
-        const { data: wallet, error } = await supabaseAdmin
+    const { data: wallet, error } = await supabaseAdmin
       .rpc('update_wallet_balance', {
         p_email: normalizedEmail,
         p_role: role,
@@ -168,7 +168,7 @@ export const DB = {
           .insert({ user_email: normalizedEmail, role, balance: amount })
         
         return !insertErr
-              }
+      }
     }
 
     return !!wallet
@@ -202,7 +202,7 @@ export const DB = {
   },
 
   updateUserPassword: async (email: string, password: string) => {
-        const normalizedEmail = email.toLowerCase().trim()
+    const normalizedEmail = email.toLowerCase().trim()
     const { error } = await supabaseAdmin
       .from('users')
       .update({ password })
@@ -236,7 +236,7 @@ export const DB = {
       })
       .select()
       .single()
-          if (error) throw new Error(error.message)
+    if (error) throw new Error(error.message)
     return data
   },
 
@@ -270,7 +270,7 @@ export const DB = {
       .from('problems')
       .select('*, bids(*)')
       .eq('status', 'open')
-            .gte('created_at', cutoff)
+      .gte('created_at', cutoff)
       .order('created_at', { ascending: false })
 
     const cleanedSubjects = (subjects || []).filter(Boolean)
@@ -304,7 +304,7 @@ export const DB = {
 
     if (problemError || !problem) throw new Error('Problem request not found')
     if (problem.status !== 'open' || new Date(problem.created_at).getTime() < new Date(cutoff).getTime()) {
-              throw new Error('This problem request has expired. Please bid on a newer request.')
+      throw new Error('This problem request has expired. Please bid on a newer request.')
     }
 
     const { data, error } = await supabaseAdmin
@@ -338,7 +338,7 @@ export const DB = {
   getOpenProblemsForStudent: async (email: string) => {
     await DB.expireOldOpenProblems()
     const cutoff = new Date(Date.now() - PROBLEM_EXPIRY_MINUTES * 60 * 1000).toISOString()
-        const { data, error } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from('problems')
       .select('id, subject, class, offer_price, duration_min, status, created_at')
       .eq('student_email', email)
@@ -372,7 +372,7 @@ export const DB = {
     const { data, error } = await supabaseAdmin
       .from('problems')
       .update({ status: 'accepted' })
-            .eq('id', problemId)
+      .eq('id', problemId)
       .eq('student_email', normalizedEmail)
       .eq('status', 'open')
       .gte('created_at', cutoff)
@@ -406,7 +406,7 @@ export const DB = {
         experience_years: profile.experienceYears || 0,
         verification_status: 'not_started',
         verification_stage: 'not_started',
-              })
+      })
       .select()
       .single()
     if (error) throw new Error(error.message)
@@ -440,7 +440,7 @@ export const DB = {
       .from('users')
       .update({ role: newRole })
       .eq('email', email)
-            .select()
+      .select()
       .single()
     if (error) throw new Error(error.message)
     return data
@@ -474,7 +474,7 @@ export const DB = {
       .from('tutor_profiles')
       .select('*')
       .eq('verification_status', status)
-            .order('created_at', { ascending: true })
+      .order('created_at', { ascending: true })
     if (error) return []
     return data
   },
@@ -508,7 +508,7 @@ export const DB = {
         .single()
       data = fallback.data
       error = fallback.error
-          }
+    }
 
     if (error) throw new Error(error.message)
     return data
@@ -542,7 +542,7 @@ export const DB = {
   }) => {
     const { data, error } = await supabaseAdmin
       .from('tutor_documents')
-            .insert({
+      .insert({
         tutor_email: email,
         document_type: doc.documentType,
         document_url: doc.documentUrl,
@@ -576,7 +576,7 @@ export const DB = {
       })
       .eq('id', docId)
       .select()
-            .single()
+      .single()
     if (error) throw new Error(error.message)
     return data
   },
@@ -610,7 +610,7 @@ export const DB = {
     const numSubjects = subjects.length
     const basePerSubject = Math.floor(limit / numSubjects)
     let remainder = limit % numSubjects
-    
+
     const selectedQuestions: any[] = []
     let shortfall = 0
 
@@ -644,7 +644,7 @@ export const DB = {
       const remainingAvailable = Object.values(questionsBySubject).flat().sort(() => Math.random() - 0.5)
       if (remainingAvailable.length > 0) {
         selectedQuestions.push(...remainingAvailable.slice(0, shortfall))
-              }
+      }
     }
 
     // Shuffle the final combined list so subjects appear in mixed order during the test
@@ -678,7 +678,7 @@ export const DB = {
   }) => {
     const { data, error } = await supabaseAdmin
       .from('test_results')
-            .insert({
+      .insert({
         tutor_email: result.tutorEmail,
         questions: result.questions,
         total_questions: result.totalQuestions,
@@ -712,7 +712,7 @@ export const DB = {
   addVerificationNote: async (email: string, note: {
     noteType: string;
     message: string;
-        createdBy: string;
+    createdBy: string;
   }) => {
     const { data, error } = await supabaseAdmin
       .from('verification_notes')
@@ -746,7 +746,7 @@ export const DB = {
       degreeName: string;
       institution: string;
       boardUniversity: string;
-            yearCompleted: string;
+      yearCompleted: string;
     }>;
     documents: Array<{
       documentType: string;
@@ -780,7 +780,7 @@ export const DB = {
     const { error: deleteDegreesError } = await supabaseAdmin
       .from('tutor_degrees')
       .delete()
-            .eq('tutor_email', email)
+      .eq('tutor_email', email)
     if (deleteDegreesError) throw new Error(deleteDegreesError.message)
 
     const degreeRows = data.degrees.map((degree) => ({
@@ -814,7 +814,7 @@ export const DB = {
     const existingDocuments = await DB.getDocuments(email)
     const existingDocumentUrls = new Set(
       existingDocuments
-              .map((doc: { document_url?: string }) => doc.document_url)
+        .map((doc: { document_url?: string }) => doc.document_url)
         .filter(Boolean)
     )
     const missingDocumentRows = data.documents
