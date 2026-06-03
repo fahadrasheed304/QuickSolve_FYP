@@ -1,5 +1,7 @@
 "use client"
 
+"use client"
+
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
@@ -263,13 +265,12 @@ export default function AdminVerificationsPage() {
         } as Tutor)
         setTutors(prev => prev.map(tutor =>
           tutor.user_email === tutorEmail
-            ? {
+              ? {
                 ...tutor,
                 verification_stage: updatedStage,
                 verification_status: updatedStatus,
               }
-              Add admin verification helpers"
-               : tutor
+            : tutor
         ))
       } else if (res.status === 401) {
         router.push('/admin/signin')
@@ -670,8 +671,9 @@ export default function AdminVerificationsPage() {
                       <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
                       <div>
                         <p className="font-black">Incomplete submission detected</p>
-                        <p className="mt-1 text-sm leading-6"></p>
-                         </p>
+                        <p className="mt-1 text-sm leading-6">
+                          This tutor has not completed all required profile, degree, or document information yet.
+                        </p>
                       </div>
                     </div>
                   </div>

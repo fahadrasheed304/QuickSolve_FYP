@@ -1,3 +1,5 @@
+"use client"
+
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { LayoutDashboard, PlusCircle, Video, Wallet, History, LogOut, Menu, X } from 'lucide-react'

@@ -1,5 +1,7 @@
 
 
+"use client"
+
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { CheckCircle, BookOpen, GraduationCap, FileText, Camera, ChevronRight, ChevronLeft, Plus, X, Upload, Eye, AlertCircle, User, ShieldCheck, MapPin, Hash, ClipboardCheck, LogOut } from 'lucide-react'

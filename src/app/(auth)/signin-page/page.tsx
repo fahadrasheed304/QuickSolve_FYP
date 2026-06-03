@@ -1,3 +1,5 @@
+"use client"
+
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -208,3 +210,58 @@ export default function SigninPage() {
             {/* Signin Form */}
             <form onSubmit={handleLogin} className="space-y-6" autoComplete="off">
               {/* Email */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-text-muted mb-1.5" htmlFor="signin-email">
+                  Email
+                </label>
+                <input
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full h-12 px-4 bg-surface-hover border border-border focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none text-text-main rounded-xl"
+                  name="quicksolve-signin-email"
+                  autoComplete="off"
+                  id="signin-email"
+                  placeholder="Enter email"
+                  type="email"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-text-muted mb-1.5" htmlFor="signin-password">
+                  Password
+                </label>
+                <PasswordInput
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full h-12 px-4 bg-surface-hover border border-border focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none text-text-main rounded-xl"
+                  name="quicksolve-signin-password"
+                  autoComplete="current-password"
+                  id="signin-password"
+                  placeholder="Enter password"
+                />
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <Link href="/forgot-password" className="text-sm font-semibold text-primary hover:underline">
+                  Forgot password?
+                </Link>
+                <Link href="/signup-page" className="text-sm font-semibold text-text-muted hover:text-primary">
+                  Create account
+                </Link>
+              </div>
+
+              <button
+                disabled={loading}
+                className="w-full h-12 bg-primary hover:bg-primary-dark disabled:opacity-70 text-white font-bold rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
+                type="submit"
+              >
+                {loading ? 'SIGNING IN...' : 'SIGN IN'}
+              </button>
+            </form>
+          </div>
+        </section>
+      </main>
+  );
+}

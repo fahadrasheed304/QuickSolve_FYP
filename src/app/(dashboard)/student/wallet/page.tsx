@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect } from 'react'
 import { ArrowDown, ArrowUp, Lock, RefreshCw, WalletCards } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'

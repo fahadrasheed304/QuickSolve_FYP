@@ -1,3 +1,5 @@
+"use client"
+
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Wallet, FileText, CheckCircle, Star, Zap, Bell, PlusCircle, ArrowRight, Sparkles, Clock3, XCircle, Loader2 } from 'lucide-react'

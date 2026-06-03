@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Wallet, BookOpen, Users, Star, Zap, Bell, Shield, Clock, CheckCircle, AlertCircle, GraduationCap, FileText, Send, Loader2, MapPin, Award } from 'lucide-react'
@@ -386,8 +388,8 @@ export default function TutorDashboard() {
                       </p>
                     </div>
 
-                    <div className="w-full shrink-0 md:w-56"></div>
-                     <label className="mb-2 block text-xs font-black uppercase text-text-muted">Your bid</label>
+                    <div className="w-full shrink-0 md:w-56">
+                      <label className="mb-2 block text-xs font-black uppercase text-text-muted">Your bid</label>
                       <div className="mb-3 flex rounded-lg shadow-sm">
                         <span className="inline-flex items-center rounded-l-lg border border-r-0 border-border bg-surface-hover px-3 text-xs font-black text-text-muted">
                           Rs.

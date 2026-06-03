@@ -96,4 +96,3 @@ export async function GET() {
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
-      class: studentClass || '10th',

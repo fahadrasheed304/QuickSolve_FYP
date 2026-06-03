@@ -1,3 +1,5 @@
+"use client"
+
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
@@ -259,8 +261,8 @@ export default function WaitingVerificationPage() {
                       </span>
                       <div className="min-w-0 flex-1">
                         <h3 className="font-black text-text-main">{step.label}</h3>
-                        <p className="mt-1 text-sm font-semibold text-text-muted"></p>
-                         {getStepText(step.key, isCurrent, status)}
+                        <p className="mt-1 text-sm font-semibold text-text-muted">
+                          {getStepText(step.key, isCurrent, status)}
                         </p>
                       </div>
                       {isCurrent && (
@@ -325,8 +327,8 @@ export default function WaitingVerificationPage() {
                   </span>
                   <h2 className="text-xl font-black text-text-main">Admin notes</h2>
                 </div>
-                <div className="space-y-3"></div>
-                {status.adminNotes.map((note, index) => (
+                <div className="space-y-3">
+                  {status.adminNotes.map((note, index) => (
                     <div key={`${note}-${index}`} className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm font-semibold leading-6 text-amber-900">
                       {note}
                     </div>

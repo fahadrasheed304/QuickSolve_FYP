@@ -1,3 +1,5 @@
+"use client"
+
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Mic, Video as VideoIcon, MonitorUp, PhoneOff, Clock, Send, PenTool, Eraser, Square, Circle, Star } from 'lucide-react'

@@ -1,3 +1,5 @@
+"use client"
+
 import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Clock, AlertTriangle, CheckCircle, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react'
@@ -63,77 +65,62 @@ const getNativeFaceDetector = () => {
 let faceApiLoadPromise: Promise<FaceApiModule> | null = null
 
 const loadFaceRecognitionApi = async () => {
-    node.srcObject = streamRef.current;
-      node.play().catch(() => {});
-    }
-  }, []);
+  if (!faceApiLoadPromise) {
+    faceApiLoadPromise = import('@vladmandic/face-api').then(async (faceapi) => {
+      const runtime = faceapi as unknown as FaceApiRuntimeModule
+      await runtime.tf.setBackend('webgl').catch(() => runtime.tf.setBackend('cpu'))
+      await runtime.tf.ready()
+      await faceapi.nets.ssdMobilenetv1.loadFromUri('/models')
+      await faceapi.nets.faceLandmark68Net.loadFromUri('/models')
+      await faceapi.nets.faceRecognitionNet.loadFromUri('/models')
+      return faceapi
+    })
+  }
 
-  useEffect(() => {
-    if (verificationError) {
-      notifyError(verificationError)
-    }
-  }, [verificationError])
+  return faceApiLoadPromise
+}
 
-  const stopCameraStream = useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(t => t.stop())
-      streamRef.current = null
-    }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null
-    }
-  }, [])
-
-  // Cleanup stream on unmount
-  useEffect(() => {
-    return stopCameraStream
-  }, [stopCameraStream])
-  // Fetch test questions
-  useEffect(() => {
-    console.log('[TakeTest] Component mounted - fetching questions...')
-    const controller = new AbortController()
-    const timeoutId = window.setTimeout(() => controller.abort(), 15000)
-    let isMounted = true
-
-    const fetchTest = async () => {
-      try {
-        const res = await fetch('/api/tutor/test/questions', {
-          cache: 'no-store',
-          signal: controller.signal,
-        })
-        const status = res.status
-        console.log('[TakeTest] API response status:', status)
-        if (!isMounted) return
-
-        if (res.ok) {
-          const data = await res.json()
-          console.log('[TakeTest] Questions loaded:', data.questions?.length)
-          setTestData(data)
-          setTimeLeft(data.timeLimit || TEST_DURATION)
-          setProfilePhotoUrl(data.profilePhotoUrl || null)
-        } else {
-          const body = await res.json().catch(() => ({}))
-          console.log('[TakeTest] API error body:', body)
-          if (status === 403) {
-            setError('You are not eligible to take the test yet. Please complete the previous verification step first.')
-          } else if (status === 401) {
-            setError('Please sign in again before taking the tutor test.')
-          } else {
-            setError(body.error || 'We could not load your test questions. Please refresh and try again.')
-          }
-        }
-      } catch (err) {
-        console.error('[TakeTest] fetch exception:', err)
-        if (isMounted) {
-          setError(err instanceof DOMException && err.name === 'AbortError'
-            ? 'Test questions took too long to load. Please refresh and try again.'
-            : 'We could not reach the test service. Please check your connection and try again.'
-          )
-        }
-        reject(new Error('Could not load profile photo for verification.'))
+const loadImage = (src: string) => {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image()
+    image.onload = () => resolve(image)
+    image.onerror = () => {
+      reject(new Error('Could not load profile photo for verification.'))
     }
     image.crossOrigin = 'anonymous'
     image.src = src
+  })
+}
+
+const wait = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms))
+
+const waitForVideoReady = (video: HTMLVideoElement) => {
+  return new Promise<void>((resolve, reject) => {
+    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && video.videoWidth > 0) {
+      resolve()
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      cleanup()
+      reject(new Error('Camera did not become ready in time.'))
+    }, 8000)
+
+    const handleReady = () => {
+      if (video.videoWidth > 0) {
+        cleanup()
+        resolve()
+      }
+    }
+
+    const cleanup = () => {
+      window.clearTimeout(timeoutId)
+      video.removeEventListener('loadeddata', handleReady)
+      video.removeEventListener('canplay', handleReady)
+    }
+
+    video.addEventListener('loadeddata', handleReady)
+    video.addEventListener('canplay', handleReady)
   })
 }
 
@@ -790,8 +777,8 @@ export default function TakeTestPage() {
   if (!verificationPassed && !testFinished && !testStarted) {
     return (
       <main className="min-h-screen bg-background py-12 px-4 flex flex-col items-center justify-center">
-        <Card className="max-w-md w-full"></Card>
-        <CardContent className="p-8">
+        <Card className="max-w-md w-full">
+          <CardContent className="p-8">
             <h1 className="text-2xl font-bold text-center mb-6">Identity Verification</h1>
             <p className="text-muted-foreground text-center mb-6 text-sm">
               Please position your face clearly in the camera before starting the test.

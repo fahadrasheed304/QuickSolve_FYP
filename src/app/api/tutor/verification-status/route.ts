@@ -62,7 +62,7 @@ export async function GET() {
     const degrees = await DB.getDegrees(session.email as string)
     const documents = getCurrentTutorDocuments(await DB.getDocuments(session.email as string))
     const uniqueDocumentsCount = documents.length
-        const verification = getTutorVerificationState(profile, degrees, documents)
+    const verification = getTutorVerificationState(profile, degrees, documents)
 
     if (!verification.isSubmitted) {
       return NextResponse.json({
@@ -94,7 +94,7 @@ export async function GET() {
       'test_failed': 'You did not pass the test. You can retake after 7 days.',
       'verified': 'You are fully verified! You can now start teaching.',
       'rejected': 'Your application was rejected. Please contact support.',
-          }
+    }
     
     return NextResponse.json({
       status: verification.status,
