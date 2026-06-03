@@ -64,3 +64,36 @@ export async function POST(request: Request) {
       studentEmail: session.email as string,
       subject,
       class: studentClass || '10th',
+      details: details || '',
+      offerPrice: amount,
+      durationMin: duration,
+      imageUrl,
+    })
+
+    return NextResponse.json({ success: true, problem, bids: [] })
+
+  } catch (error: unknown) {
+    console.error("Post problem error:", error)
+    const message = error instanceof Error ? error.message : "Internal server error"
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
+}
+
+// Optional GET to fetch open problems
+export async function GET() {
+  const cookieStore = await cookies()
+  const token = cookieStore.get('auth_token')?.value
+  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const session = await decrypt(token)
+  if (!session?.email) return NextResponse.json({ error: 'Invalid session' }, { status: 401 })
+
+  try {
+    const problems = await DB.getProblemsForStudent(session.email as string)
+    return NextResponse.json({ problems })
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Internal server error'
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
+}
+      class: studentClass || '10th',
