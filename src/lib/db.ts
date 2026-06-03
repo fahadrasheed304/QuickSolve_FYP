@@ -474,3 +474,275 @@ export const DB = {
       .from('tutor_profiles')
       .select('*')
       .eq('verification_status', status)
+            .order('created_at', { ascending: true })
+    if (error) return []
+    return data
+  },
+
+  // ── TUTOR DEGREES ───────────────────────────────────────────
+  addDegree: async (email: string, degree: {
+    degreeName: string;
+    institution: string;
+    boardUniversity: string;
+    yearCompleted: string;
+  }) => {
+    const degreeRow = {
+      tutor_email: email,
+      degree_name: degree.degreeName,
+      institution: degree.institution,
+      board_university: degree.boardUniversity,
+      year_completed: degree.yearCompleted,
+    }
+
+    let { data, error } = await supabaseAdmin
+      .from('tutor_degrees')
+      .insert(degreeRow)
+      .select()
+      .single()
+
+    if (error && error.message.toLowerCase().includes('grade_marks')) {
+      const fallback = await supabaseAdmin
+        .from('tutor_degrees')
+        .insert({ ...degreeRow, grade_marks: 'Not provided' })
+        .select()
+        .single()
+      data = fallback.data
+      error = fallback.error
+          }
+
+    if (error) throw new Error(error.message)
+    return data
+  },
+
+  getDegrees: async (email: string) => {
+    const { data, error } = await supabaseAdmin
+      .from('tutor_degrees')
+      .select('*')
+      .eq('tutor_email', email)
+      .order('year_completed', { ascending: false })
+    if (error) return []
+    return data
+  },
+
+  deleteDegree: async (degreeId: string) => {
+    const { error } = await supabaseAdmin
+      .from('tutor_degrees')
+      .delete()
+      .eq('id', degreeId)
+    if (error) throw new Error(error.message)
+    return true
+  },
+
+  // ── TUTOR DOCUMENTS ─────────────────────────────────────────
+  addDocument: async (email: string, doc: {
+    documentType: string;
+    documentUrl: string;
+    fileName: string;
+    fileSize?: number;
+  }) => {
+    const { data, error } = await supabaseAdmin
+      .from('tutor_documents')
+            .insert({
+        tutor_email: email,
+        document_type: doc.documentType,
+        document_url: doc.documentUrl,
+        file_name: doc.fileName,
+        file_size: doc.fileSize || 0,
+        verification_status: 'pending',
+      })
+      .select()
+      .single()
+    if (error) throw new Error(error.message)
+    return data
+  },
+
+  getDocuments: async (email: string) => {
+    const { data, error } = await supabaseAdmin
+      .from('tutor_documents')
+      .select('*')
+      .eq('tutor_email', email)
+      .order('uploaded_at', { ascending: false })
+    if (error) return []
+    return data
+  },
+
+  updateDocumentStatus: async (docId: string, status: string, adminNotes?: string) => {
+    const { data, error } = await supabaseAdmin
+      .from('tutor_documents')
+      .update({
+        verification_status: status,
+        admin_notes: adminNotes || '',
+        verified_at: status !== 'pending' ? new Date().toISOString() : null,
+      })
+      .eq('id', docId)
+      .select()
+            .single()
+    if (error) throw new Error(error.message)
+    return data
+  },
+
+  // ── TEST QUESTIONS ──────────────────────────────────────────
+  getTestQuestions: async (subjects: string[], limit: number = 40) => {
+    if (!subjects || subjects.length === 0) return []
+
+    // Fetch all active questions for the selected subjects
+    const { data, error } = await supabaseAdmin
+      .from('test_questions')
+      .select('*')
+      .in('subject', subjects)
+      .eq('is_active', true)
+
+    if (error || !data) return []
+
+    // Group questions by subject
+    const questionsBySubject: Record<string, any[]> = {}
+    subjects.forEach(sub => {
+      questionsBySubject[sub] = []
+    })
+
+    data.forEach(q => {
+      if (questionsBySubject[q.subject]) {
+        questionsBySubject[q.subject].push(q)
+      }
+    })
+
+    // Calculate distribution
+    const numSubjects = subjects.length
+    const basePerSubject = Math.floor(limit / numSubjects)
+    let remainder = limit % numSubjects
+    
+    const selectedQuestions: any[] = []
+    let shortfall = 0
+
+    // First pass: Try to pick equally from each subject
+    subjects.forEach(sub => {
+      let needed = basePerSubject
+      if (remainder > 0) {
+        needed += 1
+        remainder -= 1
+      }
+
+      let subjectQs = questionsBySubject[sub] || []
+      // Shuffle the questions for this subject randomly
+      subjectQs = subjectQs.sort(() => Math.random() - 0.5)
+
+      if (subjectQs.length < needed) {
+        // If this subject doesn't have enough questions, note the shortfall
+        shortfall += (needed - subjectQs.length)
+        selectedQuestions.push(...subjectQs)
+        // Remove used questions
+        questionsBySubject[sub] = []
+      } else {
+        selectedQuestions.push(...subjectQs.slice(0, needed))
+        // Keep the unused ones in case we need to make up for a shortfall
+        questionsBySubject[sub] = subjectQs.slice(needed)
+      }
+    })
+
+    // Second pass: Make up for any shortfall from other subjects that still have questions left
+    if (shortfall > 0) {
+      const remainingAvailable = Object.values(questionsBySubject).flat().sort(() => Math.random() - 0.5)
+      if (remainingAvailable.length > 0) {
+        selectedQuestions.push(...remainingAvailable.slice(0, shortfall))
+              }
+    }
+
+    // Shuffle the final combined list so subjects appear in mixed order during the test
+    return selectedQuestions.sort(() => Math.random() - 0.5)
+  },
+
+  getQuestionById: async (id: string) => {
+    const { data, error } = await supabaseAdmin
+      .from('test_questions')
+      .select('*')
+      .eq('id', id)
+      .single()
+    if (error || !data) return null
+    return data
+  },
+
+  // ── TEST RESULTS ─────────────────────────────────────────────
+  saveTestResult: async (result: {
+    tutorEmail: string;
+    questions: any[];
+    totalQuestions: number;
+    correctAnswers: number;
+    wrongAnswers: number;
+    skippedQuestions: number;
+    scorePercentage: number;
+    passed: boolean;
+    tabSwitches: number;
+    warningsGiven: number;
+    testStatus: string;
+    timeTakenSeconds: number;
+  }) => {
+    const { data, error } = await supabaseAdmin
+      .from('test_results')
+            .insert({
+        tutor_email: result.tutorEmail,
+        questions: result.questions,
+        total_questions: result.totalQuestions,
+        correct_answers: result.correctAnswers,
+        wrong_answers: result.wrongAnswers,
+        skipped_questions: result.skippedQuestions,
+        score_percentage: result.scorePercentage,
+        passed: result.passed,
+        tab_switches: result.tabSwitches,
+        warnings_given: result.warningsGiven,
+        test_status: result.testStatus,
+        time_taken_seconds: result.timeTakenSeconds,
+      })
+      .select()
+      .single()
+    if (error) throw new Error(error.message)
+    return data
+  },
+
+  getTestResults: async (email: string) => {
+    const { data, error } = await supabaseAdmin
+      .from('test_results')
+      .select('*')
+      .eq('tutor_email', email)
+      .order('test_date', { ascending: false })
+    if (error) return []
+    return data
+  },
+
+  // ── VERIFICATION NOTES ────────────────────────────────────
+  addVerificationNote: async (email: string, note: {
+    noteType: string;
+    message: string;
+        createdBy: string;
+  }) => {
+    const { data, error } = await supabaseAdmin
+      .from('verification_notes')
+      .insert({
+        tutor_email: email,
+        note_type: note.noteType,
+        message: note.message,
+        created_by: note.createdBy,
+      })
+      .select()
+      .single()
+    if (error) throw new Error(error.message)
+    return data
+  },
+
+  getVerificationNotes: async (email: string) => {
+    const { data, error } = await supabaseAdmin
+      .from('verification_notes')
+      .select('*')
+      .eq('tutor_email', email)
+      .order('created_at', { ascending: true })
+    if (error) return []
+    return data
+  },
+
+  // ── COMPLETE PROFILE SUBMISSION ───────────────────────────
+  submitProfileForVerification: async (email: string, data: {
+    personalDetails?: { phone: string; city: string; cnic: string; bio: string };
+    subjects: string[];
+    degrees: Array<{
+      degreeName: string;
+      institution: string;
+      boardUniversity: string;
