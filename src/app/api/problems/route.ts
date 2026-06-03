@@ -31,3 +31,36 @@ export async function POST(request: Request) {
     }
 
     let imageUrl: string | undefined = undefined
+
+    if (image && image.size > 0) {
+      const bytes = await image.arrayBuffer()
+      const buffer = Buffer.from(bytes)
+      
+      const fileName = `${Date.now()}-${image.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+      
+      const { error: uploadError } = await supabaseAdmin
+        .storage
+        .from('problem-images')
+        .upload(fileName, buffer, {
+          contentType: image.type,
+          upsert: false
+        })
+
+      if (uploadError) {
+        console.error("Upload error:", uploadError)
+        return NextResponse.json({ error: "Failed to upload image" }, { status: 500 })
+      }
+
+      const { data: { publicUrl } } = supabaseAdmin
+        .storage
+        .from('problem-images')
+        .getPublicUrl(fileName)
+        
+      imageUrl = publicUrl
+    }
+
+    // Create problem in Supabase
+    const problem = await DB.createProblem({
+      studentEmail: session.email as string,
+      subject,
+      class: studentClass || '10th',
