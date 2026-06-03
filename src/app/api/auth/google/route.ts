@@ -38,3 +38,43 @@ export async function POST(request: Request) {
     if (!user) {
       // Create user from Google Identity automatically
       user = await DB.createUser({
+        fullname: googleUser.name || googleEmail.split('@')[0], 
+        email: googleEmail, 
+        phone: "", // Cannot extract phone from default read scopes
+        password: "", // Handled by OAuth Provider
+        role: userRole 
+      })
+      
+    }
+
+    // Determine session role (allow role switching like regular login)
+    const sessionRole = userRole || user.role || 'student'
+    await DB.getWalletBalance(user.email, sessionRole)
+
+    if (sessionRole === 'tutor') {
+      try {
+        const existingProfile = await DB.getTutorProfile(user.email)
+        if (!existingProfile) {
+          await DB.createTutorProfile({
+            userEmail: user.email,
+            fullname: googleUser.name || googleEmail.split('@')[0],
+            phone: '',
+            city: '',
+            subjects: [],
+            highestEducation: '',
+            university: '',
+            experienceYears: 0,
+          })
+        }
+      } catch (profileErr: any) {
+        console.error("Tutor profile creation error (Google):", profileErr)
+        // Don't block signup if profile creation fails
+      }
+    }
+
+    // Check if tutor profile is complete (for tutor role only)
+    let profileComplete = true
+    let verificationStage = 'not_started'
+    if (sessionRole === 'tutor') {
+      const tutorProfile = await DB.getTutorProfile(user.email)
+      const degrees = tutorProfile ? await DB.getDegrees(user.email) : []
