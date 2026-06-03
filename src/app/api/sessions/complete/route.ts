@@ -27,3 +27,32 @@ export async function POST(request: Request) {
     }
 
     const email = session.email as string
+    const role = (session.role as string) || 'student'
+
+    // 1. Fetch wallet to determine if sufficient funds exist
+    const wallet = await DB.getWalletBalance(email, role)
+    if (!wallet) {
+      return NextResponse.json({ error: "User or wallet not found" }, { status: 404 })
+    }
+
+    const newBalance = wallet.balance - amount
+    
+    // Allow ending a session even if it falls negative for now?
+    // The user mentioned it fell to -700. For QuickSolve dummy, let's fix it by preventing negative.
+    // Or let's just let it be 0 if it goes below 0.
+    const finalBalance = Math.max(0, newBalance)
+
+    // Construct transaction record
+    const newTx: Transaction = {
+      id: randomUUID(),
+      type: 'debit',
+      amount,
+      method: 'Session',
+      description: `Whiteboard session with ${tutorName || 'Tutor'}`,
+      date: new Date().toISOString(),
+      status: 'completed'
+    }
+
+    const updateSuccess = await DB.updateWallet(
+      email,
+      role,
