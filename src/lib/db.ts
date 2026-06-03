@@ -202,3 +202,105 @@ export const DB = {
   },
 
   updateUserPassword: async (email: string, password: string) => {
+        const normalizedEmail = email.toLowerCase().trim()
+    const { error } = await supabaseAdmin
+      .from('users')
+      .update({ password })
+      .eq('email', normalizedEmail)
+
+    if (error) throw new Error(error.message)
+    return true
+  },
+
+  // ── PROBLEMS ────────────────────────────────────────────────
+  createProblem: async (problem: {
+    studentEmail: string
+    subject: string
+    class: string
+    details?: string
+    offerPrice: number
+    durationMin: number
+    imageUrl?: string
+  }) => {
+    const { data, error } = await supabaseAdmin
+      .from('problems')
+      .insert({
+        student_email: problem.studentEmail,
+        subject: problem.subject,
+        class: problem.class,
+        details: problem.details || '',
+        offer_price: problem.offerPrice,
+        duration_min: problem.durationMin,
+        image_url: problem.imageUrl || null,
+        status: 'open',
+      })
+      .select()
+      .single()
+          if (error) throw new Error(error.message)
+    return data
+  },
+
+  expireOldOpenProblems: async () => {
+    const cutoff = new Date(Date.now() - PROBLEM_EXPIRY_MINUTES * 60 * 1000).toISOString()
+    const { error } = await supabaseAdmin
+      .from('problems')
+      .update({ status: 'expired' })
+      .eq('status', 'open')
+      .lt('created_at', cutoff)
+
+    if (error) throw new Error(error.message)
+  },
+
+  getProblemsForStudent: async (email: string) => {
+    const normalizedEmail = email.toLowerCase().trim()
+    await DB.expireOldOpenProblems()
+    const { data, error } = await supabaseAdmin
+      .from('problems')
+      .select('*, bids(*)')
+      .eq('student_email', normalizedEmail)
+      .order('created_at', { ascending: false })
+    if (error) return []
+    return data
+  },
+
+  getOpenProblemsForTutors: async (subjects?: string[]) => {
+    await DB.expireOldOpenProblems()
+    const cutoff = new Date(Date.now() - PROBLEM_EXPIRY_MINUTES * 60 * 1000).toISOString()
+    let query = supabaseAdmin
+      .from('problems')
+      .select('*, bids(*)')
+      .eq('status', 'open')
+            .gte('created_at', cutoff)
+      .order('created_at', { ascending: false })
+
+    const cleanedSubjects = (subjects || []).filter(Boolean)
+    if (cleanedSubjects.length > 0) {
+      query = query.in('subject', cleanedSubjects)
+    }
+
+    const { data, error } = await query
+    if (error) return []
+    return data
+  },
+
+  // ── BIDS ────────────────────────────────────────────────────
+  createBid: async (bid: {
+    problemId: string
+    tutorName: string
+    tutorRating: number
+    tutorSessions: number
+    tutorSubject: string
+    responseTimeMin: number
+    price: number
+    durationMin: number
+  }) => {
+    await DB.expireOldOpenProblems()
+    const cutoff = new Date(Date.now() - PROBLEM_EXPIRY_MINUTES * 60 * 1000).toISOString()
+    const { data: problem, error: problemError } = await supabaseAdmin
+      .from('problems')
+      .select('id, status, created_at')
+      .eq('id', bid.problemId)
+      .single()
+
+    if (problemError || !problem) throw new Error('Problem request not found')
+    if (problem.status !== 'open' || new Date(problem.created_at).getTime() < new Date(cutoff).getTime()) {
