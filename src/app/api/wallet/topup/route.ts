@@ -37,3 +37,43 @@ export async function POST(request: Request) {
 
     const email = session.email as string
     const role = (session.role as string) || 'student'
+        // Fetch current wallet from Supabase
+    const wallet = await DB.getWalletBalance(email, role)
+    if (!wallet) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    const methodNames: Record<string, string> = {
+      easypaisa: 'Easypaisa',
+      jazzcash: 'JazzCash',
+      bank: 'Bank Transfer',
+    }
+
+    const newTx: Transaction = {
+      id: randomUUID(),
+      type: 'credit',
+      amount: numAmount,
+      method,
+      description: `Added via ${methodNames[method]}`,
+      date: new Date().toISOString(),
+      status: 'completed',
+    }
+
+    const newBalance = wallet.balance + numAmount
+    const success = await DB.updateWallet(email, role, newBalance, newTx)
+
+    if (!success) {
+      return NextResponse.json({ error: 'Failed to update wallet' }, { status: 500 })
+    }
+
+    return NextResponse.json({
+      success: true,
+      newBalance,
+      transaction: newTx,
+      message: `Rs. ${numAmount.toLocaleString()} added successfully!`,
+    })
+  } catch (error: any) {
+    console.error('Wallet topup error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
