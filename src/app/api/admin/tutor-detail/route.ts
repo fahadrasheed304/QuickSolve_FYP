@@ -32,3 +32,36 @@ export async function GET(request: Request) {
     if (!await isAdmin(session.email as string)) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
+    
+    const { searchParams } = new URL(request.url)
+    const tutorEmail = searchParams.get('tutorEmail')
+    
+    if (!tutorEmail) {
+      return NextResponse.json({ error: 'Tutor email required' }, { status: 400 })
+    }
+    
+    // Get tutor profile
+    let profile = await DB.getTutorProfile(tutorEmail)
+    if (!profile) {
+      return NextResponse.json({ error: 'Tutor not found' }, { status: 404 })
+    }
+
+    const currentStage = profile.verification_stage || 'submitted'
+    const shouldMarkUnderReview = ['submitted', 'pending'].includes(currentStage)
+
+    if (shouldMarkUnderReview) {
+      profile = await DB.updateTutorProfile(tutorEmail, {
+        verification_stage: 'under_review',
+        verification_status: 'pending',
+        verified_by: session.email,
+      })
+
+      await DB.addVerificationNote(tutorEmail, {
+        noteType: 'admin_to_tutor',
+        message: 'Admin review started.',
+        createdBy: session.email as string,
+      })
+    }
+    
+    // Get degrees
+    const degrees = await DB.getDegrees(tutorEmail)
