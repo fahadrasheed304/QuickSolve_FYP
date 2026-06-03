@@ -78,3 +78,43 @@ export async function POST(request: Request) {
     if (sessionRole === 'tutor') {
       const tutorProfile = await DB.getTutorProfile(user.email)
       const degrees = tutorProfile ? await DB.getDegrees(user.email) : []
+      const documents = tutorProfile ? await DB.getDocuments(user.email) : []
+      const verification = getTutorVerificationState(tutorProfile, degrees, documents)
+
+      verificationStage = verification.stage
+      profileComplete = verification.isSubmitted
+    }
+
+    // Create session cookie automatically via jose
+    const { session, expiresAt } = await createSession(user.email, user.email, sessionRole)
+
+    // Check if admin email
+    const isAdminEmail = ADMIN_EMAILS.includes(user.email.toLowerCase())
+
+    const response = NextResponse.json({ 
+      success: true, 
+      message: "Logged in via Google successfully",
+      role: sessionRole,
+      isNewUser, // Frontend can check if this was a new signup
+      profileComplete,
+      verificationStage,
+      requiresProfileCompletion: sessionRole === 'tutor' && !profileComplete,
+      isAdmin: isAdminEmail,
+      redirectTo: isAdminEmail ? '/admin/verifications' : null
+    })
+    response.cookies.set('auth_token', session, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      expires: expiresAt,
+      sameSite: 'lax',
+      path: '/',
+    })
+
+    return response
+
+  } catch (error: any) {
+    console.error("Google Auth error:", error)
+    return NextResponse.json({ error: error.message || "Failed to authenticate with Google" }, { status: 500 })
+  }
+}
+
