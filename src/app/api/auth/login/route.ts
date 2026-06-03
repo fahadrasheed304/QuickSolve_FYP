@@ -60,3 +60,34 @@ export async function POST(request: Request) {
       const verification = getTutorVerificationState(tutorProfile, degrees, documents)
 
       verificationStage = verification.stage
+      profileComplete = verification.isSubmitted
+    }
+
+    // Create secure HTTP only cookie params
+    const { session, expiresAt } = await createSession(user.email, user.email, sessionRole)
+
+    const response = NextResponse.json({ 
+      success: true, 
+      message: "Logged in successfully", 
+      role: sessionRole,
+      profileComplete,
+      verificationStage,
+      requiresProfileCompletion: sessionRole === 'tutor' && !profileComplete,
+      isAdmin: isAdminEmail,
+      redirectTo: isAdminEmail ? '/admin/verifications' : null
+    })
+    response.cookies.set('auth_token', session, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      expires: expiresAt,
+      sameSite: 'lax',
+      path: '/',
+    })
+    
+    return response
+
+  } catch (error: any) {
+    console.error("Login error:", error)
+    return NextResponse.json({ error: error.message || "Failed to login" }, { status: 500 })
+  }
+}
