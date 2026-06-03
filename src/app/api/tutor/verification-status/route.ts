@@ -62,3 +62,35 @@ export async function GET() {
     const degrees = await DB.getDegrees(session.email as string)
     const documents = getCurrentTutorDocuments(await DB.getDocuments(session.email as string))
     const uniqueDocumentsCount = documents.length
+        const verification = getTutorVerificationState(profile, degrees, documents)
+
+    if (!verification.isSubmitted) {
+      return NextResponse.json({
+        requiresProfileCompletion: true,
+        status: 'not_started',
+        stage: 'not_started',
+        message: 'Please complete and submit your tutor profile first.',
+        stats: {
+          degreesCount: degrees.length,
+          documentsCount: uniqueDocumentsCount,
+          testResultsCount: 0,
+        },
+      }, { status: 409 })
+    }
+
+    const testResults = await DB.getTestResults(session.email as string)
+    const uniqueTestAttempts = countUniqueTestAttempts(testResults)
+    const notes = await DB.getVerificationNotes(session.email as string)
+    const retakeInfo = getTestRetakeInfo(profile.last_test_date)
+    
+    // Status messages for each stage
+    const stageMessages: Record<string, string> = {
+      'submitted': 'Your application has been submitted and is waiting for review.',
+      'pending': 'Your documents are pending review by our admin team.',
+      'under_review': 'An admin is currently reviewing your documents and degrees.',
+      'test_invited': 'Great! You are invited to take the subject proficiency test.',
+      'test_scheduled': 'Your test has been scheduled. Please prepare!',
+      'test_passed': 'Congratulations! You passed the test. Final verification in progress.',
+      'test_failed': 'You did not pass the test. You can retake after 7 days.',
+      'verified': 'You are fully verified! You can now start teaching.',
+      'rejected': 'Your application was rejected. Please contact support.',
