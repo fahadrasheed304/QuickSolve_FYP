@@ -304,3 +304,105 @@ export const DB = {
 
     if (problemError || !problem) throw new Error('Problem request not found')
     if (problem.status !== 'open' || new Date(problem.created_at).getTime() < new Date(cutoff).getTime()) {
+              throw new Error('This problem request has expired. Please bid on a newer request.')
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('bids')
+      .insert({
+        problem_id: bid.problemId,
+        tutor_name: bid.tutorName,
+        tutor_rating: bid.tutorRating,
+        tutor_sessions: bid.tutorSessions,
+        tutor_subject: bid.tutorSubject,
+        response_time_min: bid.responseTimeMin,
+        price: bid.price,
+        duration_min: bid.durationMin,
+      })
+      .select()
+      .single()
+    if (error) throw new Error(error.message)
+    return data
+  },
+
+  getBidsForProblem: async (problemId: string) => {
+    const { data, error } = await supabaseAdmin
+      .from('bids')
+      .select('*')
+      .eq('problem_id', problemId)
+      .order('created_at', { ascending: true })
+    if (error) return []
+    return data
+  },
+
+  getOpenProblemsForStudent: async (email: string) => {
+    await DB.expireOldOpenProblems()
+    const cutoff = new Date(Date.now() - PROBLEM_EXPIRY_MINUTES * 60 * 1000).toISOString()
+        const { data, error } = await supabaseAdmin
+      .from('problems')
+      .select('id, subject, class, offer_price, duration_min, status, created_at')
+      .eq('student_email', email)
+      .eq('status', 'open')
+      .gte('created_at', cutoff)
+      .order('created_at', { ascending: false })
+    if (error) return []
+    return data
+  },
+
+  // ── TUTOR PROFILES ──────────────────────────────────────────
+  cancelProblemForStudent: async (problemId: string, studentEmail: string) => {
+    const normalizedEmail = studentEmail.toLowerCase().trim()
+    const { data, error } = await supabaseAdmin
+      .from('problems')
+      .update({ status: 'cancelled' })
+      .eq('id', problemId)
+      .eq('student_email', normalizedEmail)
+      .eq('status', 'open')
+      .select()
+      .single()
+
+    if (error) throw new Error(error.message)
+    return data
+  },
+
+  acceptBidForStudent: async (problemId: string, studentEmail: string) => {
+    const normalizedEmail = studentEmail.toLowerCase().trim()
+    await DB.expireOldOpenProblems()
+    const cutoff = new Date(Date.now() - PROBLEM_EXPIRY_MINUTES * 60 * 1000).toISOString()
+    const { data, error } = await supabaseAdmin
+      .from('problems')
+      .update({ status: 'accepted' })
+            .eq('id', problemId)
+      .eq('student_email', normalizedEmail)
+      .eq('status', 'open')
+      .gte('created_at', cutoff)
+      .select()
+      .single()
+
+    if (error) throw new Error(error.message)
+    return data
+  },
+
+  createTutorProfile: async (profile: {
+    userEmail: string
+    fullname: string
+    phone?: string
+    city?: string
+    subjects?: string[]
+    highestEducation?: string
+    university?: string
+    experienceYears?: number
+  }) => {
+    const { data, error } = await supabaseAdmin
+      .from('tutor_profiles')
+      .insert({
+        user_email: profile.userEmail,
+        fullname: profile.fullname,
+        phone: profile.phone || '',
+        city: profile.city || '',
+        subjects: profile.subjects || [],
+        highest_education: profile.highestEducation || '',
+        university: profile.university || '',
+        experience_years: profile.experienceYears || 0,
+        verification_status: 'not_started',
+        verification_stage: 'not_started',
