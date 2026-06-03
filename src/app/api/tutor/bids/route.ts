@@ -1,0 +1,35 @@
+import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
+import { decrypt } from '@/lib/auth'
+import { DB } from '@/lib/db'
+
+export const dynamic = 'force-dynamic'
+
+export async function POST(request: Request) {
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get('auth_token')?.value
+
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const session = await decrypt(token)
+    if (!session?.email || session.role !== 'tutor') {
+      return NextResponse.json({ error: 'Invalid tutor session' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const problemId = String(body.problemId || '')
+    const price = Number(body.price)
+    const durationMin = Number(body.durationMin)
+
+    if (!problemId || !price || !durationMin) {
+      return NextResponse.json({ error: 'Missing required bid fields' }, { status: 400 })
+    }
+
+    if (price < 200 || price > 2000) {
+      return NextResponse.json({ error: 'Bid price must be between Rs. 200 and Rs. 2,000' }, { status: 400 })
+    }
+
+    const user = await DB.findUserByEmail(session.email as string)
