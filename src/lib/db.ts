@@ -134,3 +134,71 @@ export const DB = {
     const normalizedEmail = email.toLowerCase().trim()
     
     // Use database function to update wallet
+        const { data: wallet, error } = await supabaseAdmin
+      .rpc('update_wallet_balance', {
+        p_email: normalizedEmail,
+        p_role: role,
+        p_amount: amount
+      })
+    
+    if (error) {
+      console.error('Error updating wallet:', error)
+      
+      // Fallback: manual update
+      const { data: existing } = await supabaseAdmin
+        .from('role_wallets')
+        .select('balance')
+        .eq('user_email', normalizedEmail)
+        .eq('role', role)
+        .single()
+      
+      if (existing) {
+        const newBalance = (existing.balance ?? 0) + amount
+        const { error: updateErr } = await supabaseAdmin
+          .from('role_wallets')
+          .update({ balance: newBalance, updated_at: new Date().toISOString() })
+          .eq('user_email', normalizedEmail)
+          .eq('role', role)
+        
+        return !updateErr
+      } else {
+        // Create new wallet with initial amount
+        const { error: insertErr } = await supabaseAdmin
+          .from('role_wallets')
+          .insert({ user_email: normalizedEmail, role, balance: amount })
+        
+        return !insertErr
+              }
+    }
+
+    return !!wallet
+  },
+
+  updateWallet: async (
+    email: string,
+    role: string,
+    newBalance: number,
+    newTransaction: Transaction
+  ): Promise<boolean> => {
+    // Update balance
+    const updated = await DB.updateWalletBalance(email, role, newBalance - (await DB.getWalletBalance(email, role)).balance)
+    if (!updated) return false
+
+    // Insert transaction record
+    const { error: txErr } = await supabaseAdmin
+      .from('wallet_transactions')
+      .insert({
+        id: newTransaction.id,
+        user_email: email,
+        user_role: role,
+        type: newTransaction.type,
+        amount: newTransaction.amount,
+        description: newTransaction.description,
+        status: newTransaction.status,
+      })
+    if (txErr) return false
+
+    return true
+  },
+
+  updateUserPassword: async (email: string, password: string) => {
