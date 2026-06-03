@@ -33,3 +33,38 @@ export async function POST(request: Request) {
     }
 
     const user = await DB.findUserByEmail(session.email as string)
+
+    const profile = await DB.getTutorProfile(session.email as string)
+
+    if (!user || !profile) {
+      return NextResponse.json({ error: 'Tutor profile not found' }, { status: 404 })
+    }
+
+    if (profile.verification_status !== 'verified' && profile.verification_stage !== 'verified') {
+      return NextResponse.json({ error: 'Only verified tutors can place bids' }, { status: 403 })
+    }
+
+    if (profile.is_available === false) {
+      return NextResponse.json({ error: 'Turn availability on before placing a bid' }, { status: 403 })
+    }
+
+    const bid = await DB.createBid({
+      problemId,
+      tutorName: profile.fullname || user.fullname || user.email.split('@')[0],
+      tutorRating: profile.rating || 5,
+      tutorSessions: profile.total_sessions || 0,
+      tutorSubject: Array.isArray(profile.subjects) && profile.subjects.length > 0
+        ? profile.subjects[0]
+        : 'Subject Tutor',
+      responseTimeMin: profile.response_time_min || 3,
+      price,
+      durationMin,
+    })
+
+    return NextResponse.json({ success: true, bid })
+  } catch (error: unknown) {
+    console.error('Tutor bid error:', error)
+    const message = error instanceof Error ? error.message : 'Internal server error'
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
+}
