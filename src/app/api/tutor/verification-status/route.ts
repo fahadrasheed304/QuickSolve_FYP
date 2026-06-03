@@ -94,3 +94,35 @@ export async function GET() {
       'test_failed': 'You did not pass the test. You can retake after 7 days.',
       'verified': 'You are fully verified! You can now start teaching.',
       'rejected': 'Your application was rejected. Please contact support.',
+          }
+    
+    return NextResponse.json({
+      status: verification.status,
+      stage: verification.stage,
+      message: verification.stage === 'test_failed' && !retakeInfo.canRetake
+        ? retakeInfo.message
+        : stageMessages[verification.stage] || stageMessages.submitted,
+      canTakeTest: verification.stage === 'test_invited' ||
+        (verification.stage === 'test_failed' && retakeInfo.canRetake),
+      canRetakeTest: verification.stage === 'test_failed' && retakeInfo.canRetake,
+      retakeAvailableAt: verification.stage === 'test_failed' ? retakeInfo.retakeAvailableAt : null,
+      retakeRemainingMs: verification.stage === 'test_failed' ? retakeInfo.remainingMs : 0,
+      testAttempts: uniqueTestAttempts,
+      lastTestScore: profile.subject_test_score,
+      testPassed: profile.subject_test_passed,
+      stats: {
+        degreesCount: degrees.length,
+        documentsCount: uniqueDocumentsCount,
+        testResultsCount: uniqueTestAttempts,
+      },
+      adminNotes: notes.filter((n: any) => n.note_type === 'admin_to_tutor').map((n: any) => n.message),
+    })
+    
+  } catch (error: any) {
+    console.error('Get verification status error:', error)
+    return NextResponse.json(
+      { error: error.message || 'Failed to get status' },
+      { status: 500 }
+    )
+  }
+}
