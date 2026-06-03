@@ -746,3 +746,105 @@ export const DB = {
       degreeName: string;
       institution: string;
       boardUniversity: string;
+            yearCompleted: string;
+    }>;
+    documents: Array<{
+      documentType: string;
+      documentUrl: string;
+      fileName: string;
+      fileSize?: number;
+    }>;
+  }) => {
+    // Update tutor profile with personal details, subjects and status
+    const updateData: Record<string, string | string[]> = {
+      subjects: data.subjects,
+      verification_status: 'pending',
+      verification_stage: 'submitted',
+    }
+    
+    // Add personal details if provided
+    if (data.personalDetails) {
+      updateData.phone = data.personalDetails.phone
+      updateData.city = data.personalDetails.city
+      updateData.cnic = data.personalDetails.cnic
+      updateData.bio = data.personalDetails.bio
+    }
+    
+    const { error: profileError } = await supabaseAdmin
+      .from('tutor_profiles')
+      .update(updateData)
+      .eq('user_email', email)
+    if (profileError) throw new Error(profileError.message)
+
+    // Replace degrees with the latest wizard state so re-submits do not duplicate rows.
+    const { error: deleteDegreesError } = await supabaseAdmin
+      .from('tutor_degrees')
+      .delete()
+            .eq('tutor_email', email)
+    if (deleteDegreesError) throw new Error(deleteDegreesError.message)
+
+    const degreeRows = data.degrees.map((degree) => ({
+      tutor_email: email,
+      degree_name: degree.degreeName,
+      institution: degree.institution,
+      board_university: degree.boardUniversity,
+      year_completed: degree.yearCompleted,
+    }))
+
+    if (degreeRows.length > 0) {
+      let { error: degreeError } = await supabaseAdmin
+        .from('tutor_degrees')
+        .insert(degreeRows)
+
+      if (degreeError && degreeError.message.toLowerCase().includes('grade_marks')) {
+        const fallbackRows = degreeRows.map((degree) => ({
+          ...degree,
+          grade_marks: 'Not provided',
+        }))
+        const fallback = await supabaseAdmin
+          .from('tutor_degrees')
+          .insert(fallbackRows)
+        degreeError = fallback.error
+      }
+
+      if (degreeError) throw new Error(degreeError.message)
+    }
+
+    // Document uploads are saved immediately. Only insert payload docs that are not already saved.
+    const existingDocuments = await DB.getDocuments(email)
+    const existingDocumentUrls = new Set(
+      existingDocuments
+              .map((doc: { document_url?: string }) => doc.document_url)
+        .filter(Boolean)
+    )
+    const missingDocumentRows = data.documents
+      .filter((doc) => doc.documentUrl && !existingDocumentUrls.has(doc.documentUrl))
+      .map((doc) => ({
+        tutor_email: email,
+        document_type: doc.documentType,
+        document_url: doc.documentUrl,
+        file_name: doc.fileName,
+        file_size: doc.fileSize || 0,
+        verification_status: 'pending',
+      }))
+
+    if (missingDocumentRows.length > 0) {
+      const { error: documentError } = await supabaseAdmin
+        .from('tutor_documents')
+        .insert(missingDocumentRows)
+      if (documentError) throw new Error(documentError.message)
+    }
+
+    return { success: true }
+  },
+}
+
+// ── PENDING SIGNUPS (in-memory, OTP flow) ───────────────────
+// Uses globalThis so it survives Next.js hot-reloads in dev
+const globalForPending = globalThis as unknown as {
+  pendingSignups: Record<string, { otp: string; user: any; expires: number }>
+}
+if (!globalForPending.pendingSignups) {
+  globalForPending.pendingSignups = {}
+}
+export const pendingSignups = globalForPending.pendingSignups
