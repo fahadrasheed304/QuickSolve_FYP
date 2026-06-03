@@ -29,3 +29,34 @@ export async function POST(request: Request) {
     if (user && user.password === '') {
       return NextResponse.json({ error: "This account was created with Google. Please use 'Continue with Google' to sign in." }, { status: 401 })
     }
+
+    if (!user || !verifyPassword(password, user.password)) {
+      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
+    }
+
+    // Seamlessly migrate old plaintext passwords after a successful login.
+    if (user.password && !isPasswordHash(user.password)) {
+      await DB.updateUserPassword(user.email, hashPassword(password))
+    }
+
+    // Use only roles that this email has actually registered for.
+    const sessionRole = requestedRole === 'tutor' ? 'tutor' : 'student'
+    const hasRequestedRole = await DB.userHasRole(user.email, sessionRole)
+    if (!hasRequestedRole) {
+      return NextResponse.json({
+        error: "Role not registered",
+        message: `This email is not registered as a ${sessionRole}. Please sign up for that role first.`,
+        actualRole: user.role,
+      }, { status: 403 })
+    }
+
+    // Check if tutor profile is complete (for tutor role only)
+    let profileComplete = true
+    let verificationStage = 'not_started'
+    if (sessionRole === 'tutor') {
+      const tutorProfile = await DB.getTutorProfile(user.email)
+      const degrees = tutorProfile ? await DB.getDegrees(user.email) : []
+      const documents = tutorProfile ? await DB.getDocuments(user.email) : []
+      const verification = getTutorVerificationState(tutorProfile, degrees, documents)
+
+      verificationStage = verification.stage
