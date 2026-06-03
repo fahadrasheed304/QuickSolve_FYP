@@ -149,6 +149,23 @@ export default function WaitingVerificationPage() {
   const currentMeta = useMemo(() => {
     return stageMeta[status?.stage || 'pending'] || stageMeta.pending
   }, [status?.stage])
+  const displayMeta = useMemo(() => {
+    if (status?.stage !== 'test_failed') return currentMeta
+
+    if (status.canRetakeTest) {
+      return {
+        ...currentMeta,
+        eyebrow: 'Retake available',
+        tone: 'bg-success-subtle text-success border-success/20',
+      }
+    }
+
+    return {
+      ...currentMeta,
+      eyebrow: 'Retake pending',
+      tone: 'bg-amber-50 text-amber-700 border-amber-200',
+    }
+  }, [currentMeta, status?.canRetakeTest, status?.stage])
 
   if (loading) {
     return (
@@ -191,14 +208,14 @@ export default function WaitingVerificationPage() {
                   <Sparkles className="h-4 w-4" />
                   Tutor verification
                 </div>
-                <h1 className="text-4xl font-black leading-tight sm:text-5xl">{currentMeta.title}</h1>
+                <h1 className="text-4xl font-black leading-tight sm:text-5xl">{displayMeta.title}</h1>
                 <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-white/72">
                   {status?.message || 'Your application is moving through the verification workflow.'}
                 </p>
               </div>
               <div className="flex flex-col gap-3 sm:flex-row lg:flex-col lg:items-end">
-                <span className={`inline-flex items-center justify-center rounded-lg border bg-white px-4 py-2 text-sm font-black ${currentMeta.tone}`}>
-                  {currentMeta.eyebrow}
+                <span className={`inline-flex items-center justify-center rounded-lg border bg-white px-4 py-2 text-sm font-black ${displayMeta.tone}`}>
+                  {displayMeta.eyebrow}
                 </span>
                 <Button onClick={handleLogout} className="h-11 border border-white/20 bg-white/10 px-4 text-white hover:bg-white/20">
                   <LogOut className="mr-2 h-4 w-4" />

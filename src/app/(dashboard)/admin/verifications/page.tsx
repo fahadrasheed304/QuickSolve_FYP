@@ -1,7 +1,5 @@
 "use client"
 
-"use client"
-
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
@@ -206,7 +204,7 @@ export default function AdminVerificationsPage() {
   const [selectedTutor, setSelectedTutor] = useState<Tutor | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [stageFilter, setStageFilter] = useState('all')
-  const [updating, setUpdating] = useState<string | null>(null)
+  const [updating, setUpdating] = useState<{ email: string; action: string } | null>(null)
   const [noteText, setNoteText] = useState('')
 
   useEffect(() => {
@@ -286,8 +284,8 @@ export default function AdminVerificationsPage() {
     fetchTutors()
   }, [fetchTutors])
 
-  const updateStatus = useCallback(async (tutorEmail: string, newStage: string, newStatus: string) => {
-    setUpdating(tutorEmail)
+  const updateStatus = useCallback(async (tutorEmail: string, newStage: string, newStatus: string, action = newStage) => {
+    setUpdating({ email: tutorEmail, action })
 
     try {
       const res = await fetch('/api/admin/verifications', {
@@ -406,7 +404,11 @@ export default function AdminVerificationsPage() {
   const selectedEmail = getTutorEmail(selectedTutor)
   const selectedName = getTutorName(selectedTutor)
   const isIncompleteSubmission = Boolean(selectedTutor && selectedDegrees.length === 0)
-  const isUpdatingSelected = Boolean(selectedTutor && updating === selectedTutor.user_email)
+  const isUpdatingSelected = Boolean(selectedTutor && updating?.email === selectedTutor.user_email)
+  const isUpdatingAction = useCallback(
+    (action: string) => Boolean(selectedTutor && updating?.email === selectedTutor.user_email && updating.action === action),
+    [selectedTutor, updating]
+  )
 
   if (loading) {
     return (
@@ -776,46 +778,6 @@ export default function AdminVerificationsPage() {
                   <aside className="space-y-5">
                     <section className="qs-panel rounded-lg p-5">
                       <div className="mb-4 flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-subtle text-primary">
-                          <UserRound className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-black text-text-main">Profile snapshot</h3>
-                          <p className="text-sm text-text-muted">{selectedSubjects.length} subjects selected</p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-3">
-                        <div className="rounded-lg border border-border/80 bg-surface/76 p-3">
-                          <p className="text-xs font-black uppercase text-text-muted">Subjects</p>
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {selectedSubjects.length > 0 ? selectedSubjects.map(subject => (
-                              <span key={subject} className="rounded-full border border-secondary/20 bg-secondary-subtle px-2.5 py-1 text-xs font-black text-secondary-dark">
-                                {subject}
-                              </span>
-                            )) : (
-                              <span className="text-sm text-text-muted">No subjects added</span>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="rounded-lg border border-border/80 bg-surface/76 p-3">
-                            <p className="text-xs font-black uppercase text-text-muted">Status</p>
-                            <p className="mt-1 text-sm font-bold text-text-main">{selectedTutor.verification_status || 'pending'}</p>
-                          </div>
-                          <div className="rounded-lg border border-border/80 bg-surface/76 p-3">
-                            <p className="text-xs font-black uppercase text-text-muted">Face check</p>
-                            <p className="mt-1 text-sm font-bold text-text-main">
-                              {selectedTutor.subject_test_passed ? 'Passed' : 'Pending'}
-                               </p>
-                          </div>
-                        </div>
-                      </div>
-                    </section>
-
-                    <section className="qs-panel rounded-lg p-5">
-                      <div className="mb-4 flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-subtle text-accent">
                           <FileText className="h-5 w-5" />
                         </div>
@@ -866,22 +828,22 @@ export default function AdminVerificationsPage() {
                         {['submitted', 'pending'].includes(selectedTutor.verification_stage || '') && (
                           <Button
                             type="button"
-                            onClick={() => updateStatus(selectedTutor.user_email, 'under_review', 'pending')}
+                            onClick={() => updateStatus(selectedTutor.user_email, 'under_review', 'pending', 'start_review')}
                             disabled={isUpdatingSelected || isIncompleteSubmission}
                             className="w-full justify-start bg-primary hover:bg-primary-dark"
                           >
-                            {isUpdatingSelected ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
+                            {isUpdatingAction('start_review') ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
                             Start review
                           </Button>
                         )}
                                             {['submitted', 'pending', 'under_review'].includes(selectedTutor.verification_stage || '') && (
                           <Button
                             type="button"
-                            onClick={() => updateStatus(selectedTutor.user_email, 'test_invited', 'pending')}
+                            onClick={() => updateStatus(selectedTutor.user_email, 'test_invited', 'pending', 'invite_test')}
                             disabled={isUpdatingSelected || isIncompleteSubmission}
                             className="w-full justify-start bg-secondary hover:bg-secondary-dark"
                           >
-                            {isUpdatingSelected ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
+                            {isUpdatingAction('invite_test') ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
                             Invite to test
                           </Button>
                         )}
@@ -889,11 +851,11 @@ export default function AdminVerificationsPage() {
                         {selectedTutor.verification_stage === 'test_passed' && (
                           <Button
                             type="button"
-                            onClick={() => updateStatus(selectedTutor.user_email, 'verified', 'verified')}
+                            onClick={() => updateStatus(selectedTutor.user_email, 'verified', 'verified', 'approve')}
                             disabled={isUpdatingSelected}
                             className="w-full justify-start bg-success hover:bg-success"
                           >
-                            {isUpdatingSelected ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckSquare className="mr-2 h-4 w-4" />}
+                            {isUpdatingAction('approve') ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckSquare className="mr-2 h-4 w-4" />}
                             Approve and verify
                           </Button>
                         )}
@@ -901,23 +863,23 @@ export default function AdminVerificationsPage() {
                         {selectedTutor.verification_stage === 'test_failed' && (
                           <Button
                             type="button"
-                            onClick={() => updateStatus(selectedTutor.user_email, 'test_invited', 'pending')}
+                            onClick={() => updateStatus(selectedTutor.user_email, 'test_invited', 'pending', 'allow_retake')}
                             disabled={isUpdatingSelected}
                             className="w-full justify-start bg-primary hover:bg-primary-dark"
                           >
-                            {isUpdatingSelected ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                            {isUpdatingAction('allow_retake') ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                             Allow retake
                           </Button>
                         )}
 
                         <Button
                           type="button"
-                          onClick={() => updateStatus(selectedTutor.user_email, 'rejected', 'rejected')}
+                          onClick={() => updateStatus(selectedTutor.user_email, 'rejected', 'rejected', 'reject')}
                           disabled={isUpdatingSelected}
                           variant="destructive"
                           className="w-full justify-start"
                         >
-                          {isUpdatingSelected ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <XCircle className="mr-2 h-4 w-4" />}
+                          {isUpdatingAction('reject') ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <XCircle className="mr-2 h-4 w-4" />}
                           Reject application
                         </Button>
                       </div>

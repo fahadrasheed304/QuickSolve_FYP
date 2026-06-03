@@ -3,6 +3,7 @@ import "./globals.css";
 import "react-toastify/dist/ReactToastify.css";
 import GoogleWrapper from "@/components/google-wrapper";
 import { ActivityTracker } from "@/components/activity-tracker";
+import { GlobalBrand } from "@/components/global-brand";
 import { ToastProvider } from "@/components/toast-provider";
 
 export const metadata: Metadata = {
@@ -33,6 +34,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col font-inter bg-background text-text-main" suppressHydrationWarning>
         <GoogleWrapper>
+          <GlobalBrand />
           {children}
           <ActivityTracker />
           <ToastProvider />

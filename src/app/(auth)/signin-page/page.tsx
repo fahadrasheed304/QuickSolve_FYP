@@ -9,6 +9,7 @@ import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
 import { AuthDivider } from '@/components/auth/AuthDivider';
 import { PasswordInput } from '@/components/auth/PasswordInput';
 import { getApiMessage, notifyError, notifySuccess } from '@/lib/toast';
+import { ShieldCheck } from 'lucide-react';
 export default function SigninPage() {
   const router = useRouter();
   const [role, setRole] = useState<'student'|'tutor'>('student');
@@ -260,6 +261,26 @@ export default function SigninPage() {
                 {loading ? 'SIGNING IN...' : 'SIGN IN'}
               </button>
             </form>
+
+            <div className="mt-6 rounded-xl border border-border bg-surface-hover/70 p-3">
+              <Link
+                href="/admin/signin"
+                className="group flex items-center justify-between gap-3 rounded-lg bg-surface px-4 py-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+              >
+                <span className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-subtle text-primary">
+                    <ShieldCheck className="h-5 w-5" />
+                  </span>
+                  <span>
+                    <span className="block text-sm font-black text-text-main">Admin access</span>
+                    <span className="block text-xs font-semibold text-text-muted">Manage tutor verification</span>
+                  </span>
+                </span>
+                <span className="text-sm font-black text-primary transition-transform group-hover:translate-x-1">
+                  Sign in
+                </span>
+              </Link>
+            </div>
           </div>
         </section>
       </main>
