@@ -3,6 +3,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { CheckCircle, BookOpen, GraduationCap, FileText, Camera, ChevronRight, ChevronLeft, Plus, X, Upload, Eye, AlertCircle, User, ShieldCheck, MapPin, Hash, ClipboardCheck, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -519,6 +520,34 @@ const validateProfilePhotoFace = async (file: File) => {
    return { valid: true, error: '' }
 }
 
+const detectIdentityDocumentText = async (file: File) => {
+  let worker: Awaited<ReturnType<typeof Tesseract.createWorker>> | null = null
+
+  try {
+    const variants = await createCnicOcrVariants(file)
+    worker = await Tesseract.createWorker('eng')
+    await worker.setParameters({
+      tessedit_pageseg_mode: Tesseract.PSM.SPARSE_TEXT,
+      user_defined_dpi: '300',
+    })
+
+    let ocrText = ''
+    for (const variant of variants.slice(0, 4)) {
+      const ret = await worker.recognize(variant.source)
+      ocrText = `${ocrText}\n${ret.data.text}`
+
+      if (extractCnicCandidates(ocrText).length > 0) return true
+    }
+
+    return /national\s+identity|identity\s+card|cnic|pakistan|date\s+of\s+birth|father\s+name/i.test(ocrText)
+  } catch (err) {
+    console.error('Profile photo document OCR error:', err)
+    return false
+  } finally {
+    if (worker) await worker.terminate()
+  }
+}
+
 export default function TutorCompleteProfilePage() {
   const router = useRouter()
   const { user, fetchUser, logout } = useAuthStore()
@@ -563,8 +592,7 @@ export default function TutorCompleteProfilePage() {
   
   // Document types required
   const requiredDocs = [
-    { type: 'cnic_front', label: 'CNIC Front', icon: <FileText className="w-5 h-5" /> },
-    { type: 'cnic_back', label: 'CNIC Back', icon: <FileText className="w-5 h-5" /> },
+    { type: 'cnic_front', label: 'CNIC', icon: <FileText className="w-5 h-5" /> },
     { type: 'profile_photo', label: 'Profile Photo', icon: <Camera className="w-5 h-5" /> },
   ]
 
@@ -688,6 +716,13 @@ export default function TutorCompleteProfilePage() {
     if (docType === 'profile_photo') {
       try {
         setFaceLoading(true)
+        const looksLikeIdentityDocument = await detectIdentityDocumentText(file)
+        if (looksLikeIdentityDocument) {
+          setUploading(null)
+          setError('Profile photo cannot be a CNIC or document image. Please upload a clear face photo only.')
+          return
+        }
+
         const faceCheck = await validateProfilePhotoFace(file)
         if (!faceCheck.valid) {
           setUploading(null)
@@ -759,16 +794,15 @@ export default function TutorCompleteProfilePage() {
       setError('Please add at least one degree')
       return
     }
-    if (step === 4) {
-      // Check required documents
-      const hasCnicFront = documents.some(d => d.documentType === 'cnic_front')
-      const hasCnicBack = documents.some(d => d.documentType === 'cnic_back')
-      const hasProfilePhoto = documents.some(d => d.documentType === 'profile_photo')
+      if (step === 4) {
+        // Check required documents
+        const hasCnicFront = documents.some(d => d.documentType === 'cnic_front')
+        const hasProfilePhoto = documents.some(d => d.documentType === 'profile_photo')
 
-      if (!hasCnicFront || !hasCnicBack) {
-        setError('CNIC front and back images are required')
-        return
-      }
+      if (!hasCnicFront) {
+        setError('CNIC image is required')
+          return
+        }
       if (!hasProfilePhoto) {
         setError('Profile photo is required')
         return
@@ -933,8 +967,7 @@ export default function TutorCompleteProfilePage() {
   const getDocumentByType = (type: string) => documents.find(d => d.documentType === type)
   const degreeCertificates = documents.filter(d => d.documentType === 'degree_certificate')
   const documentLabels: Record<string, string> = {
-    cnic_front: 'CNIC Front',
-    cnic_back: 'CNIC Back',
+    cnic_front: 'CNIC',
     profile_photo: 'Profile Photo',
   }
   const steps = [
@@ -954,12 +987,19 @@ export default function TutorCompleteProfilePage() {
     <main className="min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <header className="mb-6 overflow-hidden rounded-lg border border-border bg-hero-gradient surface-grid px-5 py-5 text-white shadow-xl shadow-primary/10 sm:px-7">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-2xl">
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/12 px-3 py-1 text-xs font-bold uppercase text-white ring-1 ring-white/20">
-                <ShieldCheck className="h-3.5 w-3.5" />
-                Tutor verification
-              </span>
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-2xl">
+                <Link href="/" className="mb-5 inline-flex items-center gap-3 rounded-lg border border-white/18 bg-white/12 px-3 py-2 text-white shadow-lg shadow-black/10 backdrop-blur transition hover:bg-white/18">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-primary font-black shadow-sm">
+                    Q
+                  </span>
+                  <span className="text-xl font-black tracking-normal">QuickSolve</span>
+                </Link>
+
+                <span className="flex w-fit items-center gap-2 rounded-full bg-white/12 px-3 py-1 text-xs font-bold uppercase text-white ring-1 ring-white/20">
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                 Tutor verification
+                </span>
               <h1 className="mt-4 text-2xl font-bold sm:text-3xl">Complete your profile</h1>
               <p className="mt-2 max-w-xl text-sm leading-6 text-white/78">
                 Welcome, {(user?.fullname || 'Tutor').split(' ')[0]}. Add your teaching details, verify CNIC, and submit a clean application for review.
@@ -1458,7 +1498,7 @@ export default function TutorCompleteProfilePage() {
                   <div className="rounded-lg border border-border bg-surface p-4">
                     <h3 className="mb-3 flex items-center gap-2 font-bold text-text-main"><FileText className="h-4 w-4 text-primary" /> Documents</h3>
                     <div className="grid gap-3 md:grid-cols-2">
-                      {['cnic_front', 'cnic_back', 'profile_photo'].map(type => {
+                       {['cnic_front', 'profile_photo'].map(type => {
                         const doc = getDocumentByType(type)
                         return (
                           <div key={type} className="flex items-center gap-3 rounded-lg border border-border bg-surface-container-low px-3 py-3">

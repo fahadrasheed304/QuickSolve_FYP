@@ -52,11 +52,10 @@ export async function POST(request: Request) {
     
     // Check for required documents
     const hasCnicFront = documents.some((d: SubmittedDocument) => d.documentType === 'cnic_front')
-    const hasCnicBack = documents.some((d: SubmittedDocument) => d.documentType === 'cnic_back')
     const hasProfilePhoto = documents.some((d: SubmittedDocument) => d.documentType === 'profile_photo')
     
-    if (!hasCnicFront || !hasCnicBack) {
-      return NextResponse.json({ error: 'CNIC front and back images are required' }, { status: 400 })
+    if (!hasCnicFront) {
+      return NextResponse.json({ error: 'CNIC image is required' }, { status: 400 })
     }
     
     if (!hasProfilePhoto) {

@@ -11,7 +11,7 @@ const SUBMITTED_REVIEW_STAGES = new Set([
 
 const EARLY_REVIEW_STAGES = new Set(['submitted', 'pending', 'under_review'])
 
-const REQUIRED_DOCUMENT_TYPES = ['cnic_front', 'cnic_back', 'profile_photo']
+const REQUIRED_DOCUMENT_TYPES = ['cnic_front', 'profile_photo']
 
 type TutorProfileLike = {
   city?: string | null
