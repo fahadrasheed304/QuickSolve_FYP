@@ -32,3 +32,105 @@ export const DB = {
 
   createUser: async (user: {
     fullname: string
+        email: string
+    phone?: string
+    password: string
+    role?: string
+  }) => {
+    const normalizedEmail = user.email.toLowerCase().trim()
+    const role = user.role || 'student'
+    
+    // Create user
+    const { data, error } = await supabaseAdmin
+      .from('users')
+      .insert({
+        fullname: user.fullname,
+        email: normalizedEmail,
+        phone: user.phone || '',
+        password: user.password,
+        role: role,
+      })
+      .select()
+      .single()
+    if (error) throw new Error(error.message)
+    
+    // Create role-specific wallet for new user
+    try {
+      await supabaseAdmin
+        .from('role_wallets')
+        .insert({ user_email: normalizedEmail, role, balance: 0 })
+    } catch (walletErr) {
+      // Wallet might already exist, ignore error
+      console.log('Wallet creation skipped or error:', walletErr)
+    }
+    
+    return data
+  },
+  
+  // ── ROLE-BASED WALLETS ──────────────────────────────────────
+  getWalletBalance: async (email: string, role: string) => {
+    const normalizedEmail = email.toLowerCase().trim()
+    
+    // Get or create role-specific wallet using database function
+    const { data: wallet, error: walletErr } = await supabaseAdmin
+      .rpc('get_or_create_wallet', {
+        p_email: normalizedEmail,
+        p_role: role
+      })
+    
+    if (walletErr) {
+      console.error('Error getting wallet:', walletErr)
+      // Fallback: try direct query
+      const { data: existingWallet } = await supabaseAdmin
+        .from('role_wallets')
+        .select('*')
+        .eq('user_email', normalizedEmail)
+        .eq('role', role)
+        .single()
+      
+      if (existingWallet) {
+        return {
+          balance: existingWallet.balance ?? 0,
+          transactions: [],
+        }
+      }
+      
+      // Create wallet if not exists
+      const { data: newWallet } = await supabaseAdmin
+        .from('role_wallets')
+        .insert({ user_email: normalizedEmail, role, balance: 0 })
+        .select()
+                .single()
+      
+      return {
+        balance: newWallet?.balance ?? 0,
+        transactions: [],
+      }
+    }
+
+    // Fetch transactions for this role
+    const { data: txs } = await supabaseAdmin
+      .from('wallet_transactions')
+      .select('*')
+      .eq('user_email', normalizedEmail)
+      .eq('user_role', role)
+      .order('created_at', { ascending: false })
+
+    return {
+      balance: wallet?.balance ?? 0,
+      transactions: (txs || []).map((tx: any) => ({
+        id: tx.id,
+        type: tx.type,
+        amount: tx.amount,
+        method: tx.method || '',
+        description: tx.description,
+        status: tx.status,
+        date: tx.created_at,
+      })),
+    }
+  },
+
+  updateWalletBalance: async (email: string, role: string, amount: number) => {
+    const normalizedEmail = email.toLowerCase().trim()
+    
+    // Use database function to update wallet
