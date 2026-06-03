@@ -65,3 +65,38 @@ export async function GET(request: Request) {
     
     // Get degrees
     const degrees = await DB.getDegrees(tutorEmail)
+
+    // Get documents
+    const documents = getCurrentTutorDocuments(await DB.getDocuments(tutorEmail))
+    
+    // Get verification notes
+    const notes = await DB.getVerificationNotes(tutorEmail)
+    
+    // Get test results
+    const testResults = await DB.getTestResults(tutorEmail)
+    
+    // Get user info
+    const user = await DB.findUserByEmail(tutorEmail)
+    
+    return NextResponse.json({
+      profile,
+      degrees,
+      documents,
+      notes,
+      testResults,
+      user: {
+        email: user?.email,
+        fullname: user?.fullname,
+        phone: user?.phone,
+        createdAt: user?.created_at,
+      },
+    })
+    
+  } catch (error: any) {
+    console.error('Get tutor detail error:', error)
+    return NextResponse.json(
+      { error: error.message || 'Failed to get tutor details' },
+      { status: 500 }
+    )
+  }
+}
