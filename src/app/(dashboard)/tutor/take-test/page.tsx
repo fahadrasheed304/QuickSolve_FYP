@@ -71,6 +71,7 @@ const loadFaceRecognitionApi = async () => {
       await runtime.tf.setBackend('webgl').catch(() => runtime.tf.setBackend('cpu'))
       await runtime.tf.ready()
       await faceapi.nets.ssdMobilenetv1.loadFromUri('/models')
+      await faceapi.nets.tinyFaceDetector.loadFromUri('/models')
       await faceapi.nets.faceLandmark68Net.loadFromUri('/models')
       await faceapi.nets.faceRecognitionNet.loadFromUri('/models')
       return faceapi
@@ -195,8 +196,12 @@ const FACE_MATCH_AVERAGE_THRESHOLD = 0.7
 const FACE_TRACKING_MISMATCH_THRESHOLD = 0.74
 const LIVE_MATCH_SAMPLE_COUNT = 9
 const MIN_LIVE_FACE_SAMPLES = 2
-const FACE_ATTENTION_CHECK_INTERVAL_MS = 2000
-const IDENTITY_CHECK_INTERVAL_MS = 4000
+const FACE_TRACKING_LOOP_INTERVAL_MS = 700
+const FACE_ATTENTION_CHECK_INTERVAL_MS = 1000
+const IDENTITY_CHECK_INTERVAL_MS = 2500
+const MISSING_FACE_WARNING_FRAMES = 2
+const LOOKING_AWAY_WARNING_FRAMES = 1
+const IDENTITY_MISMATCH_WARNING_FRAMES = 1
 
 const FACE_DETECTOR_SETTINGS = [
   { inputSize: 416, scoreThreshold: 0.45 },
@@ -332,14 +337,16 @@ export default function TakeTestPage() {
 
   const handleProctoringWarning = useCallback((reason: string) => {
     setWarningCount(prev => {
-      const newCount = prev + 1
-      warningCountRef.current = newCount
-      if (newCount >= MAX_WARNINGS) {
-        if (handleSubmitRef.current) handleSubmitRef.current(true)
-      } else {
+      if (prev >= MAX_WARNINGS) {
         setWarningMessage(reason)
         setShowWarningModal(true)
+        return prev
       }
+
+      const newCount = prev + 1
+      warningCountRef.current = newCount
+      setWarningMessage(reason)
+      setShowWarningModal(true)
       return newCount
     })
   }, [])
@@ -399,7 +406,7 @@ export default function TakeTestPage() {
       if (!isActive) return;
       if (showWarningModal) {
         // Pause tracking while warning is shown
-        setTimeout(trackFace, 1000);
+        setTimeout(trackFace, FACE_TRACKING_LOOP_INTERVAL_MS);
         return;
       }
       
@@ -414,7 +421,7 @@ export default function TakeTestPage() {
           
           if (faceMissing) {
             missingFaceFrames++;
-            if (missingFaceFrames > 3) {
+            if (missingFaceFrames >= MISSING_FACE_WARNING_FRAMES) {
               handleProctoringWarning("No face detected in the camera frame.");
               missingFaceFrames = 0;
             }
@@ -436,7 +443,7 @@ export default function TakeTestPage() {
             if (liveFace) {
               if (isLookingAwayFromCamera(liveFace.landmarks)) {
                 lookingAwayFrames++
-                if (lookingAwayFrames >= 2) {
+                if (lookingAwayFrames >= LOOKING_AWAY_WARNING_FRAMES) {
                   handleProctoringWarning("Please keep your face directed toward the screen during the test.")
                   lookingAwayFrames = 0
                 }
@@ -449,7 +456,7 @@ export default function TakeTestPage() {
                 const distance = faceapi.euclideanDistance(referenceDescriptor, liveFace.descriptor)
                 if (distance > FACE_TRACKING_MISMATCH_THRESHOLD) {
                   identityMismatchFrames++
-                  if (identityMismatchFrames >= 2) {
+                  if (identityMismatchFrames >= IDENTITY_MISMATCH_WARNING_FRAMES) {
                     handleProctoringWarning("Camera face does not match the verified profile photo.")
                     identityMismatchFrames = 0
                   }
@@ -465,7 +472,7 @@ export default function TakeTestPage() {
       }
 
       if (isActive) {
-        setTimeout(trackFace, 1000);
+        setTimeout(trackFace, FACE_TRACKING_LOOP_INTERVAL_MS);
       }
     };
 
@@ -1093,16 +1100,22 @@ export default function TakeTestPage() {
             <p className="text-foreground font-medium mb-2 text-red-600">
               {warningMessage}
             </p>
-            <p className="text-muted-foreground mb-4 text-sm">
-              This is your {warningCount} of {MAX_WARNINGS} warnings. 
-              After {MAX_WARNINGS} warnings, your test will be automatically submitted.
-            </p>
-            <Button 
-              onClick={() => setShowWarningModal(false)}
-              className="w-full bg-[#006c4a] hover:bg-green-800"
-            >
-              I Understand - Continue Test
-            </Button>
+              <p className="text-muted-foreground mb-4 text-sm">
+               {warningCount >= MAX_WARNINGS
+                 ? 'This is your final warning. Your test will be submitted after you acknowledge this message.'
+                 : `This is your ${warningCount} of ${MAX_WARNINGS} warnings. After ${MAX_WARNINGS} warnings, your test will be automatically submitted.`}
+              </p>
+              <Button 
+               onClick={() => {
+                 setShowWarningModal(false)
+                 if (warningCountRef.current >= MAX_WARNINGS && handleSubmitRef.current) {
+                   void handleSubmitRef.current(true)
+                 }
+               }}
+                className="w-full bg-[#006c4a] hover:bg-green-800"
+              >
+               {warningCount >= MAX_WARNINGS ? 'I Understand - Submit Test' : 'I Understand - Continue Test'}
+              </Button>
           </div>
         </div>
       )}

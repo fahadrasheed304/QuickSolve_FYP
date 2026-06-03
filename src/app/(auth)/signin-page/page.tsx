@@ -65,10 +65,15 @@ export default function SigninPage() {
           window.location.href = '/tutor/complete-profile';
           return;
         }
+
+        if (data.role === 'tutor' && data.verificationStage === 'verified') {
+          window.location.href = '/tutor/dashboard';
+          return;
+        }
         
         // Check if profile is submitted but pending verification - go to waiting page
         // 'pending' = submitted, waiting admin | 'not_started' or null = not submitted yet
-        if (data.verificationStage && data.verificationStage !== 'not_started' && data.verificationStage !== '') {
+        if (data.role === 'tutor' && data.verificationStage && data.verificationStage !== 'not_started' && data.verificationStage !== '') {
           window.location.href = '/tutor/waiting-verification';
            return;
         }
@@ -115,9 +120,14 @@ export default function SigninPage() {
             window.location.href = '/tutor/complete-profile';
             return;
           }
+
+          if (data.role === 'tutor' && data.verificationStage === 'verified') {
+            window.location.href = '/tutor/dashboard';
+            return;
+          }
           
           // If profile submitted but pending verification - go to waiting page
-          if (data.verificationStage && data.verificationStage !== 'not_started' && data.verificationStage !== '') {
+          if (data.role === 'tutor' && data.verificationStage && data.verificationStage !== 'not_started' && data.verificationStage !== '') {
             window.location.href = '/tutor/waiting-verification';
             return;
           }

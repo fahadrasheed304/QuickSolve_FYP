@@ -196,10 +196,9 @@ export async function POST(request: Request) {
       createdBy: session.email as string,
     })
     
-    // Send email notification for test invitation
+    // Send email notification for test invitation without delaying the admin action.
     if (newStage === 'test_invited') {
-      try {
-        const emailHtml = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      const emailHtml = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
   <h2 style="color: #006c4a;">Subject Test Invitation</h2>
   <p>Hello,</p>
   <p>Congratulations! Your profile has been reviewed and you are invited to take the subject test.</p>
@@ -219,16 +218,14 @@ export async function POST(request: Request) {
   <p style="color: #666; font-size: 12px;">If you have any questions, please contact us at support@quicksolve.com</p>
 </div>`
 
-        await sendMail(
+      void sendMail(
           tutorEmail,
           'QuickSolve - Subject Test Invitation',
           'You are invited to take the subject test. Login to your dashboard to start.',
           emailHtml
-        )
-      } catch (emailErr) {
+      ).catch((emailErr) => {
         console.error('Failed to send test invitation email:', emailErr)
-        // Don't fail the API if email fails
-      }
+      })
     }
     
     return NextResponse.json({

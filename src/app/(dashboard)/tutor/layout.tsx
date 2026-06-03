@@ -2,11 +2,10 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, BookOpen, Clock, Wallet, History, LogOut, Shield, Menu, X } from 'lucide-react'
+import { LayoutDashboard, BookOpen, History, LogOut, Shield, Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useAuthStore } from '@/stores/auth-store'
-import { useWalletStore } from '@/stores/wallet-store'
 import { useEffect, useState } from 'react'
 
 export default function TutorLayout({
@@ -17,13 +16,11 @@ export default function TutorLayout({
   const pathname = usePathname()
   const router = useRouter()
   const { user, isLoading, fetchUser, logout } = useAuthStore()
-  const { balance, fetchWallet } = useWalletStore()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     fetchUser()
-    fetchWallet()
-  }, [fetchUser, fetchWallet])
+  }, [fetchUser])
 
   useEffect(() => {
     if (!isLoading) {
@@ -47,13 +44,6 @@ export default function TutorLayout({
   const navItems = [
     { name: 'Dashboard', href: '/tutor/dashboard', icon: LayoutDashboard },
     { name: 'My Subjects', href: '/tutor/subjects', icon: BookOpen },
-    { name: 'Availability', href: '/tutor/availability', icon: Clock },
-    {
-      name: 'Wallet',
-      href: '/tutor/wallet',
-      icon: Wallet,
-      trailing: <span className="text-xs font-semibold text-success">Rs. {balance.toLocaleString()}</span>
-    },
     { name: 'History', href: '/tutor/history', icon: History },
   ]
 
@@ -132,7 +122,6 @@ export default function TutorLayout({
               >
                 <item.icon className={cn("w-5 h-5", isActive ? "text-white" : "text-text-muted")} />
                 <span className="flex-1">{item.name}</span>
-                {item.trailing}
               </Link>
             )
           })}

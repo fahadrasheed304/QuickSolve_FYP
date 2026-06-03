@@ -111,23 +111,28 @@ export default function WaitingVerificationPage() {
   }
 
   const fetchStatus = useCallback(async () => {
+    let redirected = false
     try {
       const res = await fetch('/api/tutor/verification-status', { cache: 'no-store' })
       const data = await res.json().catch(() => null)
       if (res.ok) {
         if (data?.requiresProfileCompletion || data?.stage === 'not_started') {
+          redirected = true
           router.replace('/tutor/complete-profile')
           return
         }
         if (data?.stage === 'verified' || data?.status === 'verified') {
+          redirected = true
           router.replace('/tutor/dashboard')
           return
         }
         setStatus(data)
         setError('')
       } else if (res.status === 401) {
+        redirected = true
         router.replace('/signin-page?role=tutor')
       } else if (res.status === 404 || res.status === 409 || data?.requiresProfileCompletion) {
+        redirected = true
         router.replace('/tutor/complete-profile')
       } else {
         setError('We could not load your verification status. Please refresh and try again.')
@@ -135,7 +140,7 @@ export default function WaitingVerificationPage() {
     } catch {
       setError('We could not reach the verification service. Please check your connection and try again.')
     } finally {
-      setLoading(false)
+      if (!redirected) setLoading(false)
     }
   }, [router])
 

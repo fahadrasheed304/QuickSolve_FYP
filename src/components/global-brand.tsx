@@ -13,7 +13,9 @@ const hiddenBrandRoutes = new Set([
 export function GlobalBrand() {
   const pathname = usePathname()
 
-  if (hiddenBrandRoutes.has(pathname)) return null
+  const isDashboardShell = pathname.startsWith('/tutor/') || pathname.startsWith('/student/')
+
+  if (hiddenBrandRoutes.has(pathname) || isDashboardShell) return null
 
   return (
     <header className="w-full border-b border-border/80 bg-white/92 px-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] backdrop-blur-xl sm:px-8">
