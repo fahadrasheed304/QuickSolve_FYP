@@ -406,3 +406,71 @@ export const DB = {
         experience_years: profile.experienceYears || 0,
         verification_status: 'not_started',
         verification_stage: 'not_started',
+              })
+      .select()
+      .single()
+    if (error) throw new Error(error.message)
+    return data
+  },
+
+  getTutorProfile: async (email: string) => {
+    const { data, error } = await supabaseAdmin
+      .from('tutor_profiles')
+      .select('*')
+      .eq('user_email', email)
+      .single()
+    if (error || !data) return null
+    return data
+  },
+
+  updateTutorProfile: async (email: string, updates: Record<string, any>) => {
+    const { data, error } = await supabaseAdmin
+      .from('tutor_profiles')
+      .update(updates)
+      .eq('user_email', email)
+      .select()
+      .single()
+    if (error) throw new Error(error.message)
+    return data
+  },
+
+  // ── ROLE SWITCHING ──────────────────────────────────────────
+  updateUserRole: async (email: string, newRole: string) => {
+    const { data, error } = await supabaseAdmin
+      .from('users')
+      .update({ role: newRole })
+      .eq('email', email)
+            .select()
+      .single()
+    if (error) throw new Error(error.message)
+    return data
+  },
+
+  userHasRole: async (email: string, role: string) => {
+    const normalizedEmail = email.toLowerCase().trim()
+    const normalizedRole = role.toLowerCase().trim()
+
+    const user = await DB.findUserByEmail(normalizedEmail)
+    if (String(user?.role || '').toLowerCase().trim() === normalizedRole) return true
+
+    const { data: wallet } = await supabaseAdmin
+      .from('role_wallets')
+      .select('id')
+      .eq('user_email', normalizedEmail)
+      .eq('role', normalizedRole)
+      .maybeSingle()
+    if (wallet) return true
+
+    if (normalizedRole === 'tutor') {
+      const profile = await DB.getTutorProfile(normalizedEmail)
+      if (profile) return true
+    }
+
+    return false
+  },
+
+  getTutorsByVerificationStatus: async (status: string) => {
+    const { data, error } = await supabaseAdmin
+      .from('tutor_profiles')
+      .select('*')
+      .eq('verification_status', status)
