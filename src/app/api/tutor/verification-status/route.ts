@@ -30,3 +30,35 @@ const countUniqueTestAttempts = (results: any[]) => {
       return Math.abs(resultTime - attemptTime) <= 60_000 &&
         getTestAttemptFingerprint(attempt) === resultFingerprint
     })
+
+    if (!isDuplicate) uniqueAttempts.push(result)
+  }
+
+  return uniqueAttempts.length
+}
+
+// GET /api/tutor/verification-status
+// Get current tutor verification status
+export async function GET() {
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get('auth_token')?.value
+    
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    
+    const session = await decrypt(token)
+    if (!session?.email) {
+      return NextResponse.json({ error: 'Invalid session' }, { status: 401 })
+    }
+    
+    const profile = await DB.getTutorProfile(session.email as string)
+    if (!profile) {
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+    }
+    
+    // Get counts
+    const degrees = await DB.getDegrees(session.email as string)
+    const documents = getCurrentTutorDocuments(await DB.getDocuments(session.email as string))
+    const uniqueDocumentsCount = documents.length
