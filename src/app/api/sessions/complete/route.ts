@@ -56,3 +56,32 @@ export async function POST(request: Request) {
     const updateSuccess = await DB.updateWallet(
       email,
       role,
+      finalBalance,
+      newTx
+    )
+
+    if (!updateSuccess) {
+      return NextResponse.json({ error: "Failed to deduct balance" }, { status: 500 })
+    }
+
+    // 2. Increment user sessions count
+    const { data: userData } = await supabaseAdmin
+      .from('users')
+      .select('sessions')
+      .eq('email', email)
+      .single()
+
+    const currentSessions = userData?.sessions || 0
+
+    await supabaseAdmin
+      .from('users')
+      .update({ sessions: currentSessions + 1 })
+      .eq('email', email)
+
+    return NextResponse.json({ success: true })
+
+  } catch (error: any) {
+    console.error("Session complete error:", error)
+    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 })
+  }
+}
