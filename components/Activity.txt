@@ -146,3 +146,4 @@ June continuation notes
 - June 1 (evening): Recorded fallback test coverage for password login after failed scan.
 - June 2: Refined failed-match notes for unclear face position and lighting problems.
 - June 3: Tracked model loading check results across fresh browser sessions.
+- June 4 (morning): Documented camera permission retests for blocked and allowed states.
