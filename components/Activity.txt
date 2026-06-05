@@ -147,3 +147,4 @@ June continuation notes
 - June 2: Refined failed-match notes for unclear face position and lighting problems.
 - June 3: Tracked model loading check results across fresh browser sessions.
 - June 4 (morning): Documented camera permission retests for blocked and allowed states.
+- June 4 (evening): Noted auth retry cleanup after switching from face login to password.
