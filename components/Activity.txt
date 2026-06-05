@@ -148,3 +148,4 @@ June continuation notes
 - June 3: Tracked model loading check results across fresh browser sessions.
 - June 4 (morning): Documented camera permission retests for blocked and allowed states.
 - June 4 (evening): Noted auth retry cleanup after switching from face login to password.
+- June 5: Added verification timeout review notes for slow network and model responses.
