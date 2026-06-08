@@ -152,3 +152,4 @@ June continuation notes
 - June 6: Updated scan performance notes after comparing retry timing results.
 - June 7 (morning): Recorded face detection QA pass for successful and failed login paths.
 - June 7 (evening): Added dashboard review notes for showing face login failure status.
+- June 8 (morning): Documented final retry behavior after three failed detection attempts.
