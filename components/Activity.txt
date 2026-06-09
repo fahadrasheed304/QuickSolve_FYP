@@ -155,3 +155,4 @@ June continuation notes
 - June 8 (morning): Documented final retry behavior after three failed detection attempts.
 - June 8 (evening): Updated browser camera checks for Chrome, Edge, and mobile web.
 - June 9 (morning): Added regression review notes for face login and fallback routing.
+- June 9 (afternoon): Captured remaining polish items around loading and retry messaging.
