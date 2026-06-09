@@ -154,3 +154,4 @@ June continuation notes
 - June 7 (evening): Added dashboard review notes for showing face login failure status.
 - June 8 (morning): Documented final retry behavior after three failed detection attempts.
 - June 8 (evening): Updated browser camera checks for Chrome, Edge, and mobile web.
+- June 9 (morning): Added regression review notes for face login and fallback routing.
