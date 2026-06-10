@@ -8,8 +8,10 @@ import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { useWalletStore } from '@/stores/wallet-store'
 import { notifyError, notifySuccess } from '@/lib/toast'
+import { sanitizePhoneDigits } from '@/lib/phone'
 
 const PRESET_AMOUNTS = ['500', '1000', '2000', '5000']
+const PAKISTAN_MOBILE_DIGITS = 11
 
 const PAYMENT_METHODS = [
   {
@@ -71,6 +73,11 @@ export default function WalletPage() {
       return
     }
 
+    if (method !== 'bank' && !/^03\d{9}$/.test(sanitizePhoneDigits(accountInput, PAKISTAN_MOBILE_DIGITS))) {
+      notifyError('Please enter an 11-digit mobile number, for example 03XXXXXXXXX.')
+      return
+    }
+
     setSubmitting(true)
     const result = await topUp(parseInt(amount), method)
     setSubmitting(false)
@@ -85,6 +92,17 @@ export default function WalletPage() {
 
   const selectedMethod = PAYMENT_METHODS.find((m) => m.id === method)!
   const filteredTxs = transactions.filter((tx) => activeTab === 'all' ? true : tx.type === activeTab)
+
+  const handlePaymentMethodChange = (nextMethod: typeof method) => {
+    setMethod(nextMethod)
+    setAccountInput((current) => (
+      nextMethod === 'bank' ? current : sanitizePhoneDigits(current, PAKISTAN_MOBILE_DIGITS)
+    ))
+  }
+
+  const handleAccountInputChange = (value: string) => {
+    setAccountInput(method === 'bank' ? value.toUpperCase().slice(0, 34) : sanitizePhoneDigits(value, PAKISTAN_MOBILE_DIGITS))
+  }
 
   const formatDate = (iso: string) => {
     const d = new Date(iso)
@@ -157,7 +175,7 @@ export default function WalletPage() {
                 {PAYMENT_METHODS.map((m) => (
                                       <button
                     key={m.id}
-                    onClick={() => setMethod(m.id)}
+                    onClick={() => handlePaymentMethodChange(m.id)}
                     className={cn(
                       'flex w-full items-center rounded-lg border p-4 text-left transition-all',
                       method === m.id ? m.activeBorder : 'border-border bg-surface hover:bg-surface-hover'
@@ -182,9 +200,11 @@ export default function WalletPage() {
                   </label>
                   <Input
                     type="text"
+                    inputMode={method === 'bank' ? 'text' : 'numeric'}
+                    maxLength={method === 'bank' ? 34 : PAKISTAN_MOBILE_DIGITS}
                     placeholder={selectedMethod.placeholder}
                     value={accountInput}
-                    onChange={(e) => setAccountInput(e.target.value)}
+                    onChange={(e) => handleAccountInputChange(e.target.value)}
                     required
                   />
                 </div>

@@ -9,6 +9,7 @@ import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton'
 import { AuthDivider } from '@/components/auth/AuthDivider'
 import { PasswordInput } from '@/components/auth/PasswordInput'
 import { getApiMessage, notifyError, notifySuccess } from '@/lib/toast'
+import { COUNTRY_PHONE_OPTIONS, formatCountryPhoneOption, getCountryPhoneOption, sanitizePhoneDigits } from '@/lib/phone'
 export default function TutorSignupPage() {
   const router = useRouter()
 
@@ -35,6 +36,7 @@ export default function TutorSignupPage() {
     return score
   }
   const strength = calculateStrength()
+  const selectedCountry = getCountryPhoneOption(countryCode)
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -46,6 +48,10 @@ export default function TutorSignupPage() {
     }
     if (strength < 2) {
       showError("Please choose a stronger password with at least 8 characters and a number or symbol.")
+      return
+    }
+    if (phone.length !== selectedCountry.maxDigits) {
+      showError(`Please enter a valid ${selectedCountry.maxDigits}-digit phone number for ${selectedCountry.label}.`)
       return
     }
 
@@ -200,23 +206,27 @@ export default function TutorSignupPage() {
                   <div className="flex">
                     <select
                       value={countryCode}
-                      onChange={(e) => setCountryCode(e.target.value)}
-                      className="w-[90px] h-11 px-2 bg-surface-container-low border-b-2 border-r-2 border-outline-variant focus:border-primary outline-none text-on-surface rounded-tl-lg text-sm"
+                      onChange={(e) => {
+                        const nextCountry = getCountryPhoneOption(e.target.value)
+                        setCountryCode(nextCountry.code)
+                        setPhone((current) => sanitizePhoneDigits(current, nextCountry.maxDigits))
+                      }}
+                      className="w-[108px] h-11 px-2 bg-surface-container-low border-b-2 border-r-2 border-outline-variant focus:border-primary outline-none text-on-surface rounded-tl-lg text-sm"
                     >
-                                              <option value="+92">+92</option>
-                      <option value="+1">+1</option>
-                      <option value="+44">+44</option>
-                      <option value="+971">+971</option>
-                      <option value="+966">+966</option>
-                      <option value="+61">+61</option>
+                      {COUNTRY_PHONE_OPTIONS.map((option) => (
+                        <option key={option.code} value={option.code}>
+                          {formatCountryPhoneOption(option)}
+                        </option>
+                      ))}
                     </select>
                     <input
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                      onChange={(e) => setPhone(sanitizePhoneDigits(e.target.value, selectedCountry.maxDigits))}
+                      maxLength={selectedCountry.maxDigits}
                       className="flex-1 h-11 px-4 bg-surface-container-low border-b-2 border-outline-variant focus:border-primary focus:ring-0 transition-all duration-200 outline-none text-on-surface rounded-tr-lg"
                       name="quicksolve-tutor-signup-phone"
                       autoComplete="off"
-                      id="phone" placeholder="Enter phone number" type="tel"
+                      id="phone" placeholder={countryCode === '+92' ? '3XXXXXXXXX' : 'Enter phone number'} type="tel"
                     />
                   </div>
                 </div>
