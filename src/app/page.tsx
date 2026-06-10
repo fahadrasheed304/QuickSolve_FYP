@@ -333,7 +333,7 @@ export default function Home() {
                   </li>
                 ))}
               </ul>
-              <Link href="/signup-page?role=tutor" className="mt-8 inline-flex h-11 items-center gap-2 rounded-lg bg-secondary px-5 font-bold text-white shadow-lg shadow-secondary/20">
+              <Link href="/signup-page?role=tutor" className="mt-8 inline-flex h-11 items-center gap-2 rounded-lg bg-premium-gradient px-5 font-bold text-white shadow-lg shadow-primary/20">
                 Apply to teach
                 <ArrowRight className="h-4 w-4" />
               </Link>
