@@ -221,12 +221,13 @@ const isLookingAwayFromCamera = (landmarks: any) => {
 
 const MAX_WARNINGS = 3
 const TEST_DURATION = 20 * 60 // 20 minutes in seconds
-const FACE_MATCH_THRESHOLD = 0.62
-const FACE_MATCH_MEDIAN_THRESHOLD = 0.68
-const FACE_MATCH_AVERAGE_THRESHOLD = 0.7
-const FACE_TRACKING_MISMATCH_THRESHOLD = 0.74
-const LIVE_MATCH_SAMPLE_COUNT = 9
-const MIN_LIVE_FACE_SAMPLES = 2
+const FACE_MATCH_THRESHOLD = 0.5
+const FACE_MATCH_BEST_THRESHOLD = 0.46
+const FACE_MATCH_MEDIAN_THRESHOLD = 0.52
+const FACE_MATCH_AVERAGE_THRESHOLD = 0.54
+const FACE_TRACKING_MISMATCH_THRESHOLD = 0.58
+const LIVE_MATCH_SAMPLE_COUNT = 10
+const MIN_LIVE_FACE_SAMPLES = 5
 const FACE_TRACKING_LOOP_INTERVAL_MS = 700
 const FACE_ATTENTION_CHECK_INTERVAL_MS = 1000
 const IDENTITY_CHECK_INTERVAL_MS = 2500
@@ -709,11 +710,16 @@ export default function TakeTestPage() {
         ? matchDistances.reduce((sum, value) => sum + value, 0) / matchDistances.length
         : Number.POSITIVE_INFINITY
       const strongMatches = matchDistances.filter(distance => distance <= FACE_MATCH_THRESHOLD).length
+      const requiredStrongMatches = Math.max(
+        MIN_LIVE_FACE_SAMPLES,
+        Math.ceil(matchDistances.length * 0.8)
+      )
 
       if (
          !bestLiveDescriptor ||
         matchDistances.length < MIN_LIVE_FACE_SAMPLES ||
-        strongMatches < MIN_LIVE_FACE_SAMPLES ||
+        strongMatches < requiredStrongMatches ||
+        bestMatchDistance > FACE_MATCH_BEST_THRESHOLD ||
         medianDistance > FACE_MATCH_MEDIAN_THRESHOLD ||
         averageDistance > FACE_MATCH_AVERAGE_THRESHOLD
       ) {
