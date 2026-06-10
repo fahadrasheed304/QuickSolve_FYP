@@ -800,6 +800,7 @@ export default function TutorCompleteProfilePage() {
         // Check required documents
         const hasCnicFront = documents.some(d => d.documentType === 'cnic_front')
         const hasProfilePhoto = documents.some(d => d.documentType === 'profile_photo')
+        const hasDegreeCertificate = documents.some(d => d.documentType === 'degree_certificate')
 
       if (!hasCnicFront) {
         setError('CNIC image is required')
@@ -807,6 +808,10 @@ export default function TutorCompleteProfilePage() {
         }
       if (!hasProfilePhoto) {
         setError('Profile photo is required')
+        return
+      }
+      if (!hasDegreeCertificate) {
+        setError('At least one degree certificate is required')
         return
       }
           }
@@ -1422,7 +1427,7 @@ export default function TutorCompleteProfilePage() {
                         </div>
                         <div>
                           <h3 className="font-bold text-text-main">Degree certificates</h3>
-                          <p className="text-sm text-text-muted">Optional, but recommended for a stronger application.</p>
+                          <p className="text-sm text-text-muted">Required. Upload at least one certificate for your added degree.</p>
                         </div>
                       </div>
                       <label className={`inline-flex ${uploading ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}>
@@ -1535,7 +1540,7 @@ export default function TutorCompleteProfilePage() {
                         </div>
                         <div>
                           <p className="text-sm font-bold text-text-main">Degree certificates</p>
-                          <p className="text-xs font-medium text-text-muted">Optional uploads</p>
+                          <p className="text-xs font-medium text-text-muted">{degreeCertificates.length > 0 ? 'Uploaded' : 'Missing'}</p>
                         </div>
                       </div>
                     </div>

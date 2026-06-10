@@ -53,6 +53,7 @@ export async function POST(request: Request) {
     // Check for required documents
     const hasCnicFront = documents.some((d: SubmittedDocument) => d.documentType === 'cnic_front')
     const hasProfilePhoto = documents.some((d: SubmittedDocument) => d.documentType === 'profile_photo')
+    const hasDegreeCertificate = documents.some((d: SubmittedDocument) => d.documentType === 'degree_certificate')
     
     if (!hasCnicFront) {
       return NextResponse.json({ error: 'CNIC image is required' }, { status: 400 })
@@ -60,6 +61,10 @@ export async function POST(request: Request) {
     
     if (!hasProfilePhoto) {
       return NextResponse.json({ error: 'Profile photo is required' }, { status: 400 })
+    }
+
+    if (!hasDegreeCertificate) {
+      return NextResponse.json({ error: 'At least one degree certificate is required' }, { status: 400 })
     }
     
     // 5. Submit for verification
