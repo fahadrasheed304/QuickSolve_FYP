@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 import { CheckCircle, BookOpen, GraduationCap, FileText, Camera, ChevronRight, ChevronLeft, Plus, X, Upload, Eye, AlertCircle, User, ShieldCheck, MapPin, Hash, ClipboardCheck, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth-store'
-import { getApiMessage, notifyError, notifySuccess, notifyWarning } from '@/lib/toast'
+import { getApiMessage, notifyError, notifySuccess } from '@/lib/toast'
 import Tesseract from 'tesseract.js'
 
 // Available subjects
@@ -709,7 +709,9 @@ export default function TutorCompleteProfilePage() {
       }
 
       if (cnicInconclusive) {
-        notifyWarning('CNIC OCR could not confidently read the number. Upload allowed, but admin will review the CNIC manually.')
+        setUploading(null)
+        setError('CNIC image could not be verified. Upload blocked. Please upload a clear front-side CNIC image that shows the entered CNIC number.')
+        return
       }
     }
 
