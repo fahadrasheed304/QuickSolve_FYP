@@ -51,6 +51,11 @@ type WindowWithFaceDetector = Window & {
   FaceDetector?: NativeFaceDetectorConstructor
 }
 
+type PreparedReferenceFace = {
+  descriptor: Float32Array | null
+  count: number
+}
+
 const getNativeFaceDetector = () => {
   const Detector = (window as WindowWithFaceDetector).FaceDetector
   if (!Detector) return null
@@ -63,6 +68,7 @@ const getNativeFaceDetector = () => {
 }
 
 let faceApiLoadPromise: Promise<FaceApiModule> | null = null
+const referenceFaceCache = new Map<string, Promise<PreparedReferenceFace>>()
 
 const loadFaceRecognitionApi = async () => {
   if (!faceApiLoadPromise) {
@@ -70,15 +76,40 @@ const loadFaceRecognitionApi = async () => {
       const runtime = faceapi as unknown as FaceApiRuntimeModule
       await runtime.tf.setBackend('webgl').catch(() => runtime.tf.setBackend('cpu'))
       await runtime.tf.ready()
-      await faceapi.nets.ssdMobilenetv1.loadFromUri('/models')
-      await faceapi.nets.tinyFaceDetector.loadFromUri('/models')
-      await faceapi.nets.faceLandmark68Net.loadFromUri('/models')
-      await faceapi.nets.faceRecognitionNet.loadFromUri('/models')
+      await Promise.all([
+        faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
+        faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
+        faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
+      ])
       return faceapi
     })
   }
 
   return faceApiLoadPromise
+}
+
+const getPreparedReferenceFace = (faceapi: FaceApiModule, profilePhotoUrl: string) => {
+  const cached = referenceFaceCache.get(profilePhotoUrl)
+  if (cached) return cached
+
+  const prepared = loadImage(profilePhotoUrl).then(async (referenceImage) => {
+    let profileFaces: DetectedFace[] = []
+    for (const settings of FACE_DETECTOR_SETTINGS) {
+      profileFaces = await faceapi
+        .detectAllFaces(referenceImage, new faceapi.TinyFaceDetectorOptions(settings))
+        .withFaceLandmarks()
+        .withFaceDescriptors()
+      if (profileFaces.length > 0) break
+    }
+
+    return {
+      descriptor: profileFaces[0]?.descriptor || null,
+      count: profileFaces.length,
+    }
+  })
+
+  referenceFaceCache.set(profilePhotoUrl, prepared)
+  return prepared
 }
 
 const loadImage = (src: string) => {
@@ -264,6 +295,25 @@ export default function TakeTestPage() {
       notifyError(verificationError)
     }
   }, [verificationError])
+
+  useEffect(() => {
+    if (!profilePhotoUrl) return
+
+    let cancelled = false
+    loadFaceRecognitionApi()
+      .then((faceapi) => {
+        if (cancelled) return
+        faceApiRef.current = faceapi
+        return getPreparedReferenceFace(faceapi, profilePhotoUrl)
+      })
+      .catch((err) => {
+        console.error('Face match preload error:', err)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [profilePhotoUrl])
 
   const stopCameraStream = useCallback(() => {
     if (streamRef.current) {
@@ -534,7 +584,13 @@ export default function TakeTestPage() {
     try {
       const faceDetector = faceDetectorRef.current || getNativeFaceDetector()
       faceDetectorRef.current = faceDetector
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'user',
+          width: { ideal: 640 },
+          height: { ideal: 480 },
+        },
+      })
       streamRef.current = stream
       if (videoRef.current) {
         videoRef.current.srcObject = stream
@@ -558,24 +614,16 @@ export default function TakeTestPage() {
       faceApiRef.current = faceapi
 
       setVerificationStep('Checking profile photo...')
-      const referenceImage = await loadImage(profilePhotoUrl)
-      let profileFaces: DetectedFace[] = []
-      for (const settings of FACE_DETECTOR_SETTINGS) {
-        profileFaces = await faceapi
-          .detectAllFaces(referenceImage, new faceapi.TinyFaceDetectorOptions(settings))
-          .withFaceLandmarks()
-          .withFaceDescriptors()
-        if (profileFaces.length > 0) break
-      }
+      const profileFace = await getPreparedReferenceFace(faceapi, profilePhotoUrl)
 
-      if (profileFaces.length === 0) {
+      if (profileFace.count === 0 || !profileFace.descriptor) {
         setVerificationError('Could not detect a clear face in your profile picture. Please upload a better profile photo.')
         stopCameraStream()
         setVerifying(false)
         return
       }
 
-      if (profileFaces.length > 1) {
+      if (profileFace.count > 1) {
         setVerificationError('Your profile picture must show only one person. Please upload a solo, clear face photo.')
         stopCameraStream()
         setVerifying(false)
@@ -615,7 +663,7 @@ export default function TakeTestPage() {
             continue
           }
 
-          const distance = faceapi.euclideanDistance(profileFaces[0].descriptor, liveFaces[0].descriptor)
+          const distance = faceapi.euclideanDistance(profileFace.descriptor, liveFaces[0].descriptor)
           matchDistances.push(distance)
           if (distance < bestMatchDistance) {
             bestMatchDistance = distance
@@ -665,7 +713,7 @@ export default function TakeTestPage() {
         return
       }
 
-      referenceFaceDescriptorRef.current = profileFaces[0].descriptor
+      referenceFaceDescriptorRef.current = profileFace.descriptor
       setFaceTrackingReady(true)
       setVerificationPassed(true)
       
