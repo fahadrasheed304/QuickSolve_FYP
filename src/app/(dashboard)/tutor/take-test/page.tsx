@@ -462,35 +462,45 @@ export default function TakeTestPage() {
       
       if (videoRef.current && streamRef.current && videoRef.current.readyState === 4) {
         try {
-          const detections = faceDetector
+          const now = Date.now()
+          const quickDetections = faceDetector
             ? await faceDetector.detect(videoRef.current)
             : null
-          const faceMissing = detections
-            ? detections.length === 0
-            : !hasUsableCameraFrame(videoRef.current)
-          
-          if (faceMissing) {
-            missingFaceFrames++;
+
+          if (quickDetections && quickDetections.length === 0 && (!faceapi || !referenceDescriptor)) {
+            missingFaceFrames++
             if (missingFaceFrames >= MISSING_FACE_WARNING_FRAMES) {
-              handleProctoringWarning("No face detected in the camera frame.");
-              missingFaceFrames = 0;
+              handleProctoringWarning("No face detected in the camera frame.")
+              missingFaceFrames = 0
             }
-          } else {
-            missingFaceFrames = 0; // reset
           }
 
-          const now = Date.now()
-          if (!faceMissing && faceapi && referenceDescriptor && now - lastFaceAnalysisCheck > FACE_ATTENTION_CHECK_INTERVAL_MS) {
+          if (faceapi && referenceDescriptor && now - lastFaceAnalysisCheck > FACE_ATTENTION_CHECK_INTERVAL_MS) {
             lastFaceAnalysisCheck = now
-            const liveFace = await faceapi
-              .detectSingleFace(
+            const liveFaces = await faceapi
+              .detectAllFaces(
                 videoRef.current,
                 new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.45 })
               )
               .withFaceLandmarks()
-              .withFaceDescriptor()
+              .withFaceDescriptors()
 
-            if (liveFace) {
+            if (liveFaces.length === 0) {
+              missingFaceFrames++
+              if (missingFaceFrames >= MISSING_FACE_WARNING_FRAMES) {
+                handleProctoringWarning("No face detected in the camera frame.")
+                missingFaceFrames = 0
+              }
+              lookingAwayFrames = 0
+              identityMismatchFrames = 0
+            } else if (liveFaces.length > 1) {
+              handleProctoringWarning("Only one person should be visible during the test.")
+              missingFaceFrames = 0
+              lookingAwayFrames = 0
+              identityMismatchFrames = 0
+            } else {
+              missingFaceFrames = 0
+              const liveFace = liveFaces[0]
               if (isLookingAwayFromCamera(liveFace.landmarks)) {
                 lookingAwayFrames++
                 if (lookingAwayFrames >= LOOKING_AWAY_WARNING_FRAMES) {
