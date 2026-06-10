@@ -156,3 +156,4 @@ June continuation notes
 - June 8 (evening): Updated browser camera checks for Chrome, Edge, and mobile web.
 - June 9 (morning): Added regression review notes for face login and fallback routing.
 - June 9 (afternoon): Captured remaining polish items around loading and retry messaging.
+- June 9 (evening): Finalized face login review notes before the June wrap-up.
