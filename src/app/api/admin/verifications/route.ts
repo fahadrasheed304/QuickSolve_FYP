@@ -5,6 +5,7 @@ import { decrypt } from '@/lib/auth'
 import { DB } from '@/lib/db'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getCurrentTutorDocuments } from '@/lib/tutor-documents'
+import { getAppUrl } from '@/lib/app-url'
 
 // Hardcoded admin emails (fallback if env not set)
 const HARDCODED_ADMIN_EMAILS = ['quicksolve.officials@gmail.com']
@@ -198,6 +199,7 @@ export async function POST(request: Request) {
     
     // Send email notification for test invitation without delaying the admin action.
     if (newStage === 'test_invited') {
+      const dashboardUrl = `${getAppUrl(request)}/tutor/waiting-verification`
       const emailHtml = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
   <h2 style="color: #006c4a;">Subject Test Invitation</h2>
   <p>Hello,</p>
@@ -210,7 +212,7 @@ export async function POST(request: Request) {
   </ol>
   <p>The test will assess your knowledge in the subjects you selected. Good luck!</p>
   <br>
-  <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/tutor/waiting-verification" 
+  <a href="${dashboardUrl}" 
      style="background: #006c4a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
     Go to Dashboard
   </a>

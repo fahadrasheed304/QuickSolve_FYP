@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { DB } from '@/lib/db'
 import { sendMail } from '@/lib/mail'
 import { createResetToken } from '@/lib/auth'
+import { getAppUrl } from '@/lib/app-url'
 
 export async function POST(request: Request) {
   try {
@@ -20,8 +21,7 @@ export async function POST(request: Request) {
 
     const token = await createResetToken(email)
     
-    // In dev mode, ensure a clean localhost URL. In production, use the actual domain.
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    const baseUrl = getAppUrl(request)
     const resetLink = `${baseUrl}/reset-password?token=${token}`
 
     const html = `<div style="font-family: Arial, sans-serif; padding: 20px;">

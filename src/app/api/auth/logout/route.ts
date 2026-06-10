@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { getAppUrl } from '@/lib/app-url'
 
 export async function POST() {
   const response = NextResponse.json({ success: true, message: "Logged out successfully" })
@@ -7,8 +8,8 @@ export async function POST() {
 }
 
 // GET handler so you can logout by visiting /api/auth/logout in the browser
-export async function GET() {
-  const response = NextResponse.redirect(new URL('/signin-page', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'))
+export async function GET(request: Request) {
+  const response = NextResponse.redirect(new URL('/signin-page', getAppUrl(request)))
   response.cookies.delete('auth_token')
   return response
 }
