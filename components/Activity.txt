@@ -13,4 +13,6 @@ lve_FYP.githttps://github.com/fahadrasheed304/QuickSolve_FYP.git
 t4/QuickSolve_FYP.githttps://github.com/fahadrasheed304/QuickSo
 lve_FYP.githttps://github.com/fahadrasheed304/QuickSolve_FYP.git
 GGGGGGGNEAR@DESKTOP-N2ERBV8
-NEAR@DESKTOP-N2ERBV8NEAR@DESKTOP-N2ERBV8NEAR@DESKTOP-N2ERBV8NEAR@DESKTOP-N2ERBV8
+NEAR@DESKTOP-N2ERBV8NEAR@DESKTOP-N2ERBV8NEAR@DESKTOP-N2NEAR@DESKT$ git commit -m "Face detection not working"
+$ git commit -m "Face detection not working"
+OP-N2ERBV8ERBV8NEAR@DESKTOP-N2ERBV8
