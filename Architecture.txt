@@ -5,3 +5,4 @@ This document records key development work across the application, including ses
 Development notes:
 - August 6, 2026: Live call support was added to let users connect during a session.
 - August 8, 2026: Fixed an error in messaging during live calls so participants can communicate reliably.
+- August 10, 2026: Added a feedback flow for users to share their experience after a session.
