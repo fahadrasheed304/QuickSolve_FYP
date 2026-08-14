@@ -7,3 +7,4 @@ Development notes:
 - August 8, 2026: Fixed an error in messaging during live calls so participants can communicate reliably.
 - August 10, 2026: Added a feedback flow for users to share their experience after a session.
 - August 12, 2026: Added database tables to store submitted feedback and its session association.
+- August 14, 2026: Added the frontend design for submitting and viewing feedback.
