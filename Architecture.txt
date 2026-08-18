@@ -9,3 +9,4 @@ Development notes:
 - August 12, 2026: Added database tables to store submitted feedback and its session association.
 - August 14, 2026: Added the frontend design for submitting and viewing feedback.
 - August 16, 2026: Refined the frontend layout and fixed visual issues across the user interface.
+- August 18, 2026: Added the class scheduling flow to support arranging sessions.
