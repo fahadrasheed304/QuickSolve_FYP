@@ -11,3 +11,4 @@ Development notes:
 - August 16, 2026: Refined the frontend layout and fixed visual issues across the user interface.
 - August 18, 2026: Added the class scheduling flow to support arranging sessions.
 - August 20, 2026: Fixed capacity validation to prevent bookings beyond the available class seats.
+- August 22, 2026: Improved session and wallet flows for a smoother user experience.
