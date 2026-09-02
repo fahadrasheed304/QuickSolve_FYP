@@ -14,3 +14,4 @@ Development notes:
 - August 22, 2026: Improved session and wallet flows for a smoother user experience.
 - August 24, 2026: Improved moderation and authentication input validation.
 - September 2, 2026: Added audio device selection toggle for live session calls.
+- September 2, 2026: Fixed microphone permission fallback on mobile browsers.
