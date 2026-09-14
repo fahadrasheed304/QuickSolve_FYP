@@ -9,13 +9,18 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@livekit/components-react": "^2.9.24",
+    "@livekit/components-styles": "^1.2.0",
     "@react-oauth/google": "^0.13.5",
+    "@stripe/stripe-js": "^9.16.0",
     "@supabase/supabase-js": "^2.103.0",
     "@types/nodemailer": "^8.0.0",
     "@vladmandic/face-api": "^1.7.15",
     "clsx": "^2.1.1",
     "google-auth-library": "^10.6.2",
     "jose": "^6.2.2",
+    "livekit-client": "^2.22.3",
+    "livekit-server-sdk": "^2.19.0",
     "lucide-react": "^1.8.0",
     "next": "16.2.3",
     "next-themes": "^0.4.6",
@@ -23,6 +28,7 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-toastify": "^11.1.0",
+    "stripe": "^22.6.2",
     "tailwind-merge": "^3.5.0",
     "tesseract.js": "^7.0.0",
     "zustand": "^5.0.12"

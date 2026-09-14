@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Wallet, BookOpen, Users, Star, Zap, Bell, Shield, Clock, CheckCircle, AlertCircle, GraduationCap, FileText, Send, Loader2, MapPin, Award } from 'lucide-react'
+import { Wallet, BookOpen, Users, Star, Zap, Bell, Shield, Clock, CheckCircle, AlertCircle, GraduationCap, FileText, Send, Loader2, MapPin, Award, Video } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuthStore } from '@/stores/auth-store'
+import { useSessionStore } from '@/stores/session-store'
 import { getApiMessage, notifyError, notifySuccess } from '@/lib/toast'
 import Link from 'next/link'
 
@@ -22,9 +23,20 @@ interface OpenProblem {
   bids?: Array<{ id: string }>
 }
 
+interface ActiveSession {
+  bidId: string
+  problemId: string
+  roomName: string
+  subject: string
+  class: string
+  price: number
+  durationMin: number
+}
+
 export default function TutorDashboard() {
   const router = useRouter()
   const { user, logout } = useAuthStore()
+  const startSession = useSessionStore((state) => state.startSession)
   const [showNotifications, setShowNotifications] = useState(false)
   const [openProblems, setOpenProblems] = useState<OpenProblem[]>([])
   const [isLoadingProblems, setIsLoadingProblems] = useState(false)
@@ -33,6 +45,7 @@ export default function TutorDashboard() {
   const [bidMessage, setBidMessage] = useState<string | null>(null)
   const [localAvailability, setLocalAvailability] = useState<boolean | null>(null)
   const [isUpdatingAvailability, setIsUpdatingAvailability] = useState(false)
+  const [activeSessions, setActiveSessions] = useState<ActiveSession[]>([])
   const profile = user?.tutorProfile
   const verificationStatus = profile?.verificationStatus || 'not_started'
   const totalSessions = profile?.totalSessions || 0
@@ -91,6 +104,40 @@ export default function TutorDashboard() {
       cancelled = true
     }
   }, [user, isAvailable])
+
+  // Poll for accepted sessions (bids that students have accepted)
+  useEffect(() => {
+    let cancelled = false
+    const checkActiveSessions = async () => {
+      try {
+        const res = await fetch('/api/tutor/active-sessions', { cache: 'no-store' })
+        if (cancelled) return
+        if (res.ok) {
+          const data = await res.json()
+          setActiveSessions(data.sessions || [])
+        }
+      } catch {
+        // silently ignore
+      }
+    }
+
+    if (user?.role === 'tutor') {
+      checkActiveSessions()
+      const interval = window.setInterval(checkActiveSessions, 5000)
+      return () => {
+        cancelled = true
+        window.clearInterval(interval)
+      }
+    }
+    return () => { cancelled = true }
+  }, [user])
+
+  const handleJoinSession = (session: ActiveSession) => {
+    startSession('Student', session.durationMin, session.price, session.roomName)
+    notifySuccess('Joining live video call in new window...')
+    const url = `/tutor/session/${session.roomName}`
+    window.open(url, 'QuickSolve_LiveSession', 'width=1280,height=750,resizable=yes,scrollbars=yes,status=no,location=no,toolbar=no')
+  }
 
   const handleAvailabilityToggle = async () => {
     const nextAvailability = !isAvailable
@@ -266,6 +313,36 @@ export default function TutorDashboard() {
             )}
           </CardContent>
         </Card>
+      )}
+
+      {/* ── Active Sessions Banner ── */}
+      {activeSessions.length > 0 && (
+        <div className="mb-8 space-y-3">
+          {activeSessions.map((session) => (
+            <Card key={session.bidId} className="border-success/30 bg-success-subtle overflow-hidden animate-scale-in">
+              <CardContent className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-success text-white shadow-lg">
+                    <Video className="h-7 w-7" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-text-main">🟢 Student is waiting!</h3>
+                    <p className="mt-1 text-sm text-text-muted">
+                      <span className="font-bold">{session.subject}</span> • {session.class} • Rs. {session.price} • {session.durationMin} min
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => handleJoinSession(session)}
+                  className="h-12 bg-success hover:bg-success/90 text-white font-black px-8 text-base shadow-lg"
+                >
+                  <Video className="mr-2 h-5 w-5" />
+                  Join Live Session
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       )}
 
       <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">

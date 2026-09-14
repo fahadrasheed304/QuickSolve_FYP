@@ -15,6 +15,16 @@ const PAKISTAN_MOBILE_DIGITS = 11
 
 const PAYMENT_METHODS = [
   {
+    id: 'stripe' as const,
+    label: 'Stripe Card',
+    subtitle: 'Credit / Debit Card (Visa, Mastercard)',
+    icon: <span className="font-black text-indigo-600 text-sm">CARD</span>,
+    iconBg: 'bg-indigo-50',
+    activeBorder: 'border-indigo-600 bg-indigo-50',
+    placeholder: '4242 •••• •••• 4242',
+    inputLabel: 'Card Number / Reference',
+  },
+  {
     id: 'easypaisa' as const,
     label: 'Easypaisa',
     subtitle: 'Mobile Account',
@@ -51,7 +61,7 @@ type TabType = 'all' | 'credit' | 'debit' | 'escrow'
 export default function WalletPage() {
   const { balance, transactions, isLoading, error, fetchWallet, topUp } = useWalletStore()
   const [amount, setAmount] = useState('1000')
-  const [method, setMethod] = useState<'easypaisa' | 'jazzcash' | 'bank'>('easypaisa')
+  const [method, setMethod] = useState<'stripe' | 'easypaisa' | 'jazzcash' | 'bank'>('stripe')
   const [accountInput, setAccountInput] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [activeTab, setActiveTab] = useState<TabType>('all')
@@ -73,7 +83,7 @@ export default function WalletPage() {
       return
     }
 
-    if (method !== 'bank' && !/^03\d{9}$/.test(sanitizePhoneDigits(accountInput, PAKISTAN_MOBILE_DIGITS))) {
+    if (method !== 'bank' && method !== 'stripe' && !/^03\d{9}$/.test(sanitizePhoneDigits(accountInput, PAKISTAN_MOBILE_DIGITS))) {
       notifyError('Please enter an 11-digit mobile number, for example 03XXXXXXXXX.')
       return
     }
@@ -84,7 +94,7 @@ export default function WalletPage() {
 
     if (result.success) {
       notifySuccess(result.message, 'Wallet topped up successfully.')
-            setAccountInput('')
+      setAccountInput('')
     } else {
       notifyError(result.message, 'We could not top up your wallet. Please try again.')
     }
@@ -96,12 +106,12 @@ export default function WalletPage() {
   const handlePaymentMethodChange = (nextMethod: typeof method) => {
     setMethod(nextMethod)
     setAccountInput((current) => (
-      nextMethod === 'bank' ? current : sanitizePhoneDigits(current, PAKISTAN_MOBILE_DIGITS)
+      (nextMethod === 'bank' || nextMethod === 'stripe') ? current : sanitizePhoneDigits(current, PAKISTAN_MOBILE_DIGITS)
     ))
   }
 
   const handleAccountInputChange = (value: string) => {
-    setAccountInput(method === 'bank' ? value.toUpperCase().slice(0, 34) : sanitizePhoneDigits(value, PAKISTAN_MOBILE_DIGITS))
+    setAccountInput((method === 'bank' || method === 'stripe') ? value.toUpperCase().slice(0, 34) : sanitizePhoneDigits(value, PAKISTAN_MOBILE_DIGITS))
   }
 
   const formatDate = (iso: string) => {

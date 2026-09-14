@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Mic, Video as VideoIcon, MonitorUp, PhoneOff, Clock, Send, PenTool, Eraser, Square, Circle, Star } from 'lucide-react'
+import { Clock, ExternalLink, Send, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -12,12 +12,25 @@ import { useSessionStore } from '@/stores/session-store'
 import { useWalletStore } from '@/stores/wallet-store'
 import { ReviewModal } from '@/components/rating/review-modal'
 import { notifyError, notifySuccess } from '@/lib/toast'
+import dynamic from 'next/dynamic'
+
+// Dynamically import VideoRoom to avoid SSR issues with LiveKit
+const VideoRoom = dynamic(() => import('@/components/livekit/video-room'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full w-full items-center justify-center bg-[#08111f]">
+      <div className="text-center space-y-3">
+        <div className="h-10 w-10 mx-auto border-3 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-white/60 text-sm font-semibold">Loading video call...</p>
+      </div>
+    </div>
+  ),
+})
 
 export default function SessionPage() {
   const router = useRouter()
-  const { isActive, timeLeftSeconds, tutorName, price, endSession, extendSession, tickTime } = useSessionStore()
+  const { isActive, timeLeftSeconds, tutorName, price, sessionId, roomName, endSession, extendSession, tickTime } = useSessionStore()
   const { balance, moveToEscrow } = useWalletStore()
-  const [isWhiteboard, setIsWhiteboard] = useState(false)
   const [chatMessage, setChatMessage] = useState("")
   const [showExtensionModal, setShowExtensionModal] = useState(false)
   const [extensionAmount, setExtensionAmount] = useState(250)
@@ -28,6 +41,10 @@ export default function SessionPage() {
     endSession()
     setShowReview(true)
   }, [endSession])
+
+  const handlePopOutWindow = () => {
+    window.open(window.location.href, 'QuickSolve_LiveSession', 'width=1280,height=750,resizable=yes,scrollbars=yes,status=no,location=no,toolbar=no')
+  }
 
   useEffect(() => {
     if (!isActive) return
@@ -69,6 +86,7 @@ export default function SessionPage() {
   if (!isActive && !showReview) return null
 
   const isEndingSoon = isActive && timeLeftSeconds <= 300
+  const liveKitRoomName = roomName || sessionId || 'default-room'
 
   return (
     <div className="h-screen flex flex-col bg-[#101d32] text-white overflow-hidden">
@@ -93,70 +111,21 @@ export default function SessionPage() {
           <div className="text-[10px] text-white/45 uppercase font-black">Remaining</div>
         </div>
 
-        <Button onClick={handleEndSession} variant="destructive" size="sm" className="font-bold px-5">
-          End
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={handlePopOutWindow} variant="outline" size="sm" className="font-bold border-white/20 text-white bg-white/10 hover:bg-white/20">
+            <ExternalLink className="w-4 h-4 mr-1.5" />
+            Pop Out Window
+          </Button>
+          <Button onClick={handleEndSession} variant="destructive" size="sm" className="font-bold px-5">
+            End
+          </Button>
+        </div>
       </header>
 
       <main className="flex-1 flex overflow-hidden">
-        <div className="flex-1 relative flex flex-col items-center justify-center bg-[#08111f] surface-grid">
-          {!isWhiteboard ? (
-            <div className="w-full h-full relative p-4 flex flex-col items-center justify-center">
-              <div className="relative flex aspect-video w-full max-w-5xl items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-[#16253b] shadow-2xl">
-                <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(22,103,255,0.14),transparent_45%,rgba(0,167,165,0.14))]" />
-                <Avatar className="h-32 w-32 border-4 border-white/10 bg-white/10">
-                  <AvatarFallback className="bg-transparent text-4xl text-white/60">{tutorName.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div className="absolute bottom-4 left-4 rounded-lg bg-black/45 px-3 py-1 text-sm font-bold backdrop-blur-sm">
-                  {tutorName}
-                </div>
-              </div>
-              <div className="absolute bottom-24 right-6 w-44 aspect-video rounded-lg border border-white/15 bg-[#16253b] shadow-xl flex items-center justify-center text-sm font-bold text-white/55">
-                You
-              </div>
-            </div>
-          ) : (
-            <div className="w-full h-full bg-surface text-text-main relative flex flex-col">
-              <div className="h-14 bg-surface border-b border-border flex items-center justify-center gap-2 px-4">
-                <button className="p-2 bg-primary-subtle text-primary rounded-lg hover:bg-primary/15"><PenTool className="w-5 h-5" /></button>
-                <button className="p-2 text-text-muted rounded-lg hover:bg-surface-hover"><Eraser className="w-5 h-5" /></button>
-                <div className="w-px h-6 bg-border mx-2" />
-                <button className="p-2 text-text-muted rounded-lg hover:bg-surface-hover"><Square className="w-5 h-5" /></button>
-                <button className="p-2 text-text-muted rounded-lg hover:bg-surface-hover"><Circle className="w-5 h-5" /></button>
-                <div className="w-px h-6 bg-border mx-2" />
-                <div className="flex gap-1 ml-2">
-                  {['#172033', '#e5484d', '#1667ff', '#12a874'].map(color => (
-                    <button key={color} className="w-6 h-6 rounded-full border border-border shadow-sm" style={{ backgroundColor: color }} />
-                  ))}
-                </div>
-                              </div>
-              <div className="flex-1 flex items-center justify-center text-text-muted font-bold">
-                Shared Canvas
-              </div>
-            </div>
-          )}
-
-          <div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-lg border border-white/10 bg-[#111c2d]/82 p-3 shadow-2xl backdrop-blur-xl">
-            <button className="flex h-12 w-12 items-center justify-center rounded-lg bg-white/10 text-white transition-colors hover:bg-white/15">
-              <Mic className="w-5 h-5" />
-            </button>
-            <button className="flex h-12 w-12 items-center justify-center rounded-lg bg-white/10 text-white transition-colors hover:bg-white/15">
-              <VideoIcon className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => setIsWhiteboard(!isWhiteboard)}
-              className={cn(
-                "flex h-12 w-12 items-center justify-center rounded-lg transition-colors shadow-lg",
-                isWhiteboard ? "bg-primary text-white" : "bg-white/10 hover:bg-white/15 text-white"
-              )}
-            >
-              <MonitorUp className="w-5 h-5" />
-            </button>
-            <div className="mx-1 h-8 w-px bg-white/15" />
-            <button onClick={handleEndSession} className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-600 text-white shadow-lg transition-colors hover:bg-red-700">
-              <PhoneOff className="w-5 h-5" />
-            </button>
-          </div>
+        {/* ── LiveKit Video Room ── */}
+        <div className="flex-1 relative flex flex-col">
+          <VideoRoom roomName={liveKitRoomName} onDisconnected={handleEndSession} />
         </div>
 
         <aside className="hidden w-80 shrink-0 flex-col border-l border-border bg-surface text-text-main md:flex">

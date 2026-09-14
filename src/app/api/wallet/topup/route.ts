@@ -8,7 +8,7 @@ import { randomUUID } from 'crypto'
 export async function POST(request: Request) {
   try {
     const cookieStore = await cookies()
-    const token = cookieStore.get('auth_token')?.value
+    const token = cookieStore.get('auth_token')?.value || cookieStore.get('session')?.value
 
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -30,14 +30,15 @@ export async function POST(request: Request) {
       )
     }
 
-    const validMethods = ['easypaisa', 'jazzcash', 'bank']
+    const validMethods = ['easypaisa', 'jazzcash', 'bank', 'stripe']
     if (!validMethods.includes(method)) {
       return NextResponse.json({ error: 'Invalid payment method' }, { status: 400 })
     }
 
     const email = session.email as string
     const role = (session.role as string) || 'student'
-        // Fetch current wallet from Supabase
+    
+    // Fetch current wallet from Supabase
     const wallet = await DB.getWalletBalance(email, role)
     if (!wallet) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
@@ -47,6 +48,7 @@ export async function POST(request: Request) {
       easypaisa: 'Easypaisa',
       jazzcash: 'JazzCash',
       bank: 'Bank Transfer',
+      stripe: 'Stripe (Card Payment)',
     }
 
     const newTx: Transaction = {
@@ -54,7 +56,7 @@ export async function POST(request: Request) {
       type: 'credit',
       amount: numAmount,
       method,
-      description: `Added via ${methodNames[method]}`,
+      description: `Added via ${methodNames[method] || method}`,
       date: new Date().toISOString(),
       status: 'completed',
     }
@@ -70,7 +72,7 @@ export async function POST(request: Request) {
       success: true,
       newBalance,
       transaction: newTx,
-      message: `Rs. ${numAmount.toLocaleString()} added successfully!`,
+      message: `Rs. ${numAmount.toLocaleString()} added successfully via ${methodNames[method]}!`,
     })
   } catch (error: any) {
     console.error('Wallet topup error:', error)

@@ -40,9 +40,10 @@ export function LiveBidsList() {
 
     if (accepted) {
       moveToEscrow(bid.price)
-      startSession(bid.tutorName, bid.durationMin, bid.price)
-      notifySuccess('Bid accepted. Starting your live session.')
-      router.push('/student/session/active')
+      startSession(bid.tutorName, bid.durationMin, bid.price, `session-${bid.problemId}`)
+      notifySuccess('Bid accepted. Opening live video call in window...')
+      const sessionUrl = '/student/session/active'
+      window.open(sessionUrl, 'QuickSolve_LiveSession', 'width=1280,height=750,resizable=yes,scrollbars=yes,status=no,location=no,toolbar=no')
     } else {
       notifyError('This bid could not be accepted. Please refresh and try again.')
     }
