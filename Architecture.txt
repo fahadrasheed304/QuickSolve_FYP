@@ -18,3 +18,4 @@ Development notes:
 - September 5, 2026: Created tutor profile edit page and bio update endpoints.
 - September 9, 2026: Added subject tags and search filtering for tutors.
 - September 13, 2026: Integrated session reminder email notifications.
+- September 17, 2026: Added database schema for user wallet transactions.
