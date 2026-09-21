@@ -1,5 +1,9 @@
 import Stripe from 'stripe'
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-02-24.acacia' as any,
-})
+let client: Stripe | undefined
+export function getStripe() {
+  const key = process.env.STRIPE_SECRET_KEY
+  if (!key?.startsWith('sk_test_')) throw new Error('Stripe sandbox is not configured. Add a test secret key.')
+  client ??= new Stripe(key)
+  return client
+}

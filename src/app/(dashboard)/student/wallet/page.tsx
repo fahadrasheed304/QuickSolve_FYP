@@ -1,68 +1,30 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { ArrowDown, ArrowUp, Lock, RefreshCw, WalletCards } from 'lucide-react'
+import { ArrowDown, ArrowUp, Lock, RefreshCw } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { useWalletStore } from '@/stores/wallet-store'
 import { notifyError, notifySuccess } from '@/lib/toast'
-import { sanitizePhoneDigits } from '@/lib/phone'
+
 
 const PRESET_AMOUNTS = ['500', '1000', '2000', '5000']
-const PAKISTAN_MOBILE_DIGITS = 11
 
-const PAYMENT_METHODS = [
-  {
-    id: 'stripe' as const,
-    label: 'Stripe Card',
-    subtitle: 'Credit / Debit Card (Visa, Mastercard)',
-    icon: <span className="font-black text-indigo-600 text-sm">CARD</span>,
-    iconBg: 'bg-indigo-50',
-    activeBorder: 'border-indigo-600 bg-indigo-50',
-    placeholder: '4242 •••• •••• 4242',
-    inputLabel: 'Card Number / Reference',
-  },
-  {
-    id: 'easypaisa' as const,
-    label: 'Easypaisa',
-    subtitle: 'Mobile Account',
-    icon: <span className="font-black text-success text-sm">EP</span>,
-    iconBg: 'bg-success-subtle',
-    activeBorder: 'border-success bg-success-subtle',
-    placeholder: '03XX-XXXXXXX',
-    inputLabel: 'Easypaisa Mobile Number',
-  },
-  {
-    id: 'jazzcash' as const,
-    label: 'JazzCash',
-    subtitle: 'Mobile Account',
-    icon: <span className="font-black text-red-600 text-sm">JC</span>,
-    iconBg: 'bg-red-50',
-    activeBorder: 'border-red-400 bg-red-50',
-    placeholder: '03XX-XXXXXXX',
-    inputLabel: 'JazzCash Mobile Number',
-  },
-  {
-    id: 'bank' as const,
-    label: 'Bank Transfer',
-    subtitle: 'HBL, UBL, Meezan, etc.',
-    icon: <WalletCards className="w-5 h-5 text-primary" />,
-    iconBg: 'bg-primary-subtle',
-    activeBorder: 'border-primary bg-primary-subtle',
-    placeholder: 'PK00 IBAN 0000 0000 0000 0000',
-    inputLabel: 'Bank Account IBAN',
-  },
-]
+
+const PAYMENT_METHODS = [{
+  id: 'stripe' as const, label: 'Stripe Card', subtitle: 'Visa / Mastercard - sandbox',
+  icon: <span className="font-black text-indigo-600 text-sm">CARD</span>,
+  iconBg: 'bg-indigo-50', activeBorder: 'border-indigo-600 bg-indigo-50',
+}]
 
 type TabType = 'all' | 'credit' | 'debit' | 'escrow'
 
 export default function WalletPage() {
   const { balance, transactions, isLoading, error, fetchWallet, topUp } = useWalletStore()
   const [amount, setAmount] = useState('1000')
-  const [method, setMethod] = useState<'stripe' | 'easypaisa' | 'jazzcash' | 'bank'>('stripe')
-  const [accountInput, setAccountInput] = useState('')
+  const [method, setMethod] = useState<'stripe'>('stripe')
   const [submitting, setSubmitting] = useState(false)
   const [activeTab, setActiveTab] = useState<TabType>('all')
 
@@ -78,41 +40,50 @@ export default function WalletPage() {
 
   const handleTopUp = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!accountInput.trim()) {
-      notifyError(`Please enter your ${selectedMethod.inputLabel.toLowerCase()} before topping up.`)
-      return
-    }
-
-    if (method !== 'bank' && method !== 'stripe' && !/^03\d{9}$/.test(sanitizePhoneDigits(accountInput, PAKISTAN_MOBILE_DIGITS))) {
-      notifyError('Please enter an 11-digit mobile number, for example 03XXXXXXXXX.')
-      return
-    }
-
     setSubmitting(true)
-    const result = await topUp(parseInt(amount), method)
+    const result = await topUp(Number(amount), method)
     setSubmitting(false)
 
     if (result.success) {
-      notifySuccess(result.message, 'Wallet topped up successfully.')
-      setAccountInput('')
+      if (result.checkoutUrl) window.location.assign(result.checkoutUrl)
     } else {
       notifyError(result.message, 'We could not top up your wallet. Please try again.')
     }
   }
 
-  const selectedMethod = PAYMENT_METHODS.find((m) => m.id === method)!
   const filteredTxs = transactions.filter((tx) => activeTab === 'all' ? true : tx.type === activeTab)
+  const handlePaymentMethodChange = (nextMethod: 'stripe') => setMethod(nextMethod)
 
-  const handlePaymentMethodChange = (nextMethod: typeof method) => {
-    setMethod(nextMethod)
-    setAccountInput((current) => (
-      (nextMethod === 'bank' || nextMethod === 'stripe') ? current : sanitizePhoneDigits(current, PAKISTAN_MOBILE_DIGITS)
-    ))
-  }
-
-  const handleAccountInputChange = (value: string) => {
-    setAccountInput((method === 'bank' || method === 'stripe') ? value.toUpperCase().slice(0, 34) : sanitizePhoneDigits(value, PAKISTAN_MOBILE_DIGITS))
-  }
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const checkoutId = params.get('checkout_session_id')
+    if (params.get('payment') === 'cancelled') {
+      notifyError('Payment cancelled. Your wallet was not credited.')
+      window.history.replaceState({}, '', '/student/wallet')
+    }
+    if (!checkoutId) return
+    let cancelled = false
+    let timer: ReturnType<typeof setTimeout>
+    let attempts = 0
+    const check = async () => {
+      try {
+        const res = await fetch('/api/wallet/payment-status?id=' + encodeURIComponent(checkoutId), { cache: 'no-store' })
+        const data = await res.json()
+        if (cancelled) return
+        if (res.ok && data.credited) {
+          await fetchWallet()
+          notifySuccess('Payment confirmed. Your wallet has been topped up.')
+          window.history.replaceState({}, '', '/student/wallet')
+          return
+        }
+      } catch { /* Retry while the payment confirmation is arriving. */ }
+      if (cancelled) return
+      if (++attempts < 15) timer = setTimeout(check, 2000)
+      else notifyError('Payment confirmation is still pending. Refresh your wallet shortly.')
+    }
+    void check()
+    return () => { cancelled = true; clearTimeout(timer) }
+  }, [fetchWallet])
 
   const formatDate = (iso: string) => {
     const d = new Date(iso)
@@ -204,20 +175,7 @@ export default function WalletPage() {
               </div>
 
               <form onSubmit={handleTopUp} className="space-y-4">
-                <div>
-                  <label className="mb-1.5 block text-sm font-bold text-text-main">
-                    {selectedMethod.inputLabel}
-                  </label>
-                  <Input
-                    type="text"
-                    inputMode={method === 'bank' ? 'text' : 'numeric'}
-                    maxLength={method === 'bank' ? 34 : PAKISTAN_MOBILE_DIGITS}
-                    placeholder={selectedMethod.placeholder}
-                    value={accountInput}
-                    onChange={(e) => handleAccountInputChange(e.target.value)}
-                    required
-                  />
-                </div>
+                <p className="text-sm text-text-muted">Enter your card details on Stripe&apos;s secure checkout page. Use a test card; no real money is charged.</p>
                 <div>
                   <label className="mb-1.5 block text-sm font-bold text-text-main">Amount (PKR)</label>
                   <Input

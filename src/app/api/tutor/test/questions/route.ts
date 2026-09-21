@@ -55,7 +55,7 @@ export async function GET() {
 
     // Fetch profile photo document for face verification
     const documents = await DB.getDocuments(session.email as string)
-    const profilePhotoDoc = documents.find((d: any) => d.document_type === 'profile_photo')
+    const profilePhotoDoc = documents.find((d) => d.document_type === 'profile_photo')
     const profilePhotoUrl = profilePhotoDoc ? profilePhotoDoc.document_url : null
 
     // Get questions for subjects (40 questions, 30 sec each = 20 minutes)
@@ -67,7 +67,7 @@ export async function GET() {
     }
 
     // Format to match UI expectations
-    const formattedQuestions = questions.map((q: any) => ({
+    const formattedQuestions = questions.map((q) => ({
       id: q.id,
       subject: q.subject,
       question: q.question_text,
@@ -76,7 +76,7 @@ export async function GET() {
       // but for this mock implementation we'll omit it or keep it undefined on client
     }))
 
-    const totalSeconds = questions.reduce((acc: number, q: any) => acc + (q.time_seconds || 30), 0)
+    const totalSeconds = questions.reduce((acc, q) => acc + (q.time_seconds || 30), 0)
 
     return NextResponse.json({
       questions: formattedQuestions,
@@ -85,7 +85,8 @@ export async function GET() {
       profilePhotoUrl
     })
 
-  } catch (error: any) {
+  } catch (caughtError: unknown) {
+    const error = caughtError instanceof Error ? caughtError : new Error("Unexpected error")
     console.error('Get test questions error:', error)
     return NextResponse.json(
       { error: error.message || 'Failed to get test questions' },

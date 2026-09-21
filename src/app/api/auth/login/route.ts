@@ -50,6 +50,8 @@ export async function POST(request: Request) {
       }, { status: 403 })
     }
 
+    await DB.ensureWallet(user.email, sessionRole)
+
     // Check if tutor profile is complete (for tutor role only)
     let profileComplete = true
     let verificationStage = 'not_started'
@@ -86,7 +88,8 @@ export async function POST(request: Request) {
     
     return response
 
-  } catch (error: any) {
+  } catch (caughtError: unknown) {
+    const error = caughtError instanceof Error ? caughtError : new Error("Unexpected error")
     console.error("Login error:", error)
     return NextResponse.json({ error: error.message || "Failed to login" }, { status: 500 })
   }

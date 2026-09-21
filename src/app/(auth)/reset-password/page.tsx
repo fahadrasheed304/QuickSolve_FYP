@@ -15,13 +15,13 @@ function ResetPasswordForm() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [submitError, setError] = useState('')
+  const error = !token ? 'This reset link is missing or invalid. Please request a new password reset link.' : submitError
   const [message, setMessage] = useState('')
 
   useEffect(() => {
     if (!token) {
       const message = "This reset link is missing or invalid. Please request a new password reset link."
-      setError(message)
       notifyError(message)
     }
   }, [token])
@@ -66,7 +66,7 @@ function ResetPasswordForm() {
         setError(message)
         notifyError(message)
       }
-    } catch (err) {
+    } catch {
       const message = "We could not reach the password reset service. Please check your connection and try again."
       setError(message)
       notifyError(message)

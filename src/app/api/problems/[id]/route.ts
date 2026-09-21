@@ -18,7 +18,7 @@ export async function PATCH(
     }
 
     const session = await decrypt(token)
-    if (!session?.email) {
+    if (!session?.email || session.role !== 'student') {
       return NextResponse.json({ error: 'Invalid session' }, { status: 401 })
     }
 
@@ -31,7 +31,7 @@ export async function PATCH(
     }
 
     const problem = action === 'accept'
-      ? await DB.acceptBidForStudent(id, session.email as string)
+      ? await DB.acceptBidForStudent(id, session.email as string, String(body.bidId || ''))
       : await DB.cancelProblemForStudent(id, session.email as string)
 
     return NextResponse.json({ success: true, problem })

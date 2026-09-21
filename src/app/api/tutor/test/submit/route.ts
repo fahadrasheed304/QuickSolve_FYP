@@ -1,10 +1,11 @@
+type TestResult = Awaited<ReturnType<typeof DB.getTestResults>>[number]
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { decrypt } from '@/lib/auth'
 import { DB } from '@/lib/db'
 import { getTestRetakeInfo } from '@/lib/test-retake'
 
-const getTestAttemptFingerprint = (result: any) => [
+const getTestAttemptFingerprint = (result: TestResult) => [
   result.total_questions,
   result.correct_answers,
   result.wrong_answers,
@@ -14,11 +15,11 @@ const getTestAttemptFingerprint = (result: any) => [
   result.time_taken_seconds || 0,
 ].join(':')
 
-const countUniqueTestAttempts = (results: any[]) => {
+const countUniqueTestAttempts = (results: TestResult[]) => {
   const sortedResults = [...results].sort((a, b) => {
     return new Date(a.test_date || 0).getTime() - new Date(b.test_date || 0).getTime()
   })
-  const uniqueAttempts: any[] = []
+  const uniqueAttempts: TestResult[] = []
 
   for (const result of sortedResults) {
     const resultTime = new Date(result.test_date || 0).getTime()
@@ -81,7 +82,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Answers are required' }, { status: 400 })
     }
     
-    const getCorrectAnswerValue = (question: any) => {
+    const getCorrectAnswerValue = (question: NonNullable<Awaited<ReturnType<typeof DB.getQuestionById>>>) => {
       const correct = String(question.correct_answer || '').trim()
       const optionMap: Record<string, string> = {
         A: question.option_a,
@@ -146,7 +147,7 @@ export async function POST(request: Request) {
       finalStatus,
       timeTakenSeconds || 0,
     ].join(':')
-    const recentDuplicate = priorResults.find((result: any) => {
+    const recentDuplicate = priorResults.find((result) => {
       const resultTime = new Date(result.test_date || 0).getTime()
       return Date.now() - resultTime <= 60_000 &&
         getTestAttemptFingerprint(result) === currentFingerprint
@@ -226,7 +227,8 @@ export async function POST(request: Request) {
       },
     })
     
-  } catch (error: any) {
+  } catch (caughtError: unknown) {
+    const error = caughtError instanceof Error ? caughtError : new Error("Unexpected error")
     console.error('Submit test error:', error)
     return NextResponse.json(
       { error: error.message || 'Failed to submit test' },

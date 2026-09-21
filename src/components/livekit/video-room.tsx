@@ -30,7 +30,8 @@ export default function VideoRoom({ roomName, onDisconnected }: VideoRoomProps) 
         }
         const data = await res.json()
         setToken(data.token)
-      } catch (err: any) {
+      } catch (caughtError: unknown) {
+    const err = caughtError instanceof Error ? caughtError : new Error('Unexpected error')
         console.error('Failed to fetch LiveKit token:', err)
         setError(err.message || 'Could not connect to video call')
       }

@@ -33,7 +33,7 @@ export default function TutorForgotPasswordPage() {
         setError(message)
         notifyError(message)
       }
-    } catch (err) {
+    } catch {
       const message = 'We could not reach the password reset service. Please check your connection and try again.'
       setError(message)
       notifyError(message)
@@ -53,7 +53,7 @@ export default function TutorForgotPasswordPage() {
             Get back to<br />teaching quickly
           </h1>
           <p className="text-blue-100 text-lg leading-relaxed">
-            Enter the email associated with your tutor account and we'll send you a secure link to reset your password.
+            Enter the email associated with your tutor account and we&apos;ll send you a secure link to reset your password.
           </p>
         </div>
         <div className="z-20 relative mt-auto">
@@ -65,7 +65,7 @@ export default function TutorForgotPasswordPage() {
                 <div className="w-full max-w-[480px]">
           <header className="mb-8 text-center lg:text-left">
             <h2 className="text-[32px] font-extrabold tracking-tight text-on-surface mb-2">Forgot Password</h2>
-            <p className="text-on-surface-variant font-medium">No worries, we'll send you reset instructions.</p>
+            <p className="text-on-surface-variant font-medium">No worries, we&apos;ll send you reset instructions.</p>
           </header>
 
           {message && (

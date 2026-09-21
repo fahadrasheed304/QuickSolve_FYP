@@ -22,6 +22,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        {/* eslint-disable @next/next/no-page-custom-font -- Root App Router layout shares these stylesheets across all routes. */}
         <link
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap"
           rel="stylesheet"
@@ -30,6 +31,7 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
           rel="stylesheet"
         />
+        {/* eslint-enable @next/next/no-page-custom-font */}
       </head>
       <body className="min-h-full flex flex-col font-inter bg-background text-text-main" suppressHydrationWarning>
         <GoogleWrapper>

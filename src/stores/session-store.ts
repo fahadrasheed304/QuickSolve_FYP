@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 
 interface SessionState {
   sessionId: string | null
@@ -9,11 +10,12 @@ interface SessionState {
   price: number
   startSession: (tutorName: string, durationMinutes: number, price: number, roomName?: string) => void
   endSession: () => void
+  clearSession: () => void
   extendSession: (minutes: number) => void
   tickTime: () => void
 }
 
-export const useSessionStore = create<SessionState>((set) => ({
+export const useSessionStore = create<SessionState>()(persist((set) => ({
   sessionId: null,
   roomName: null,
   isActive: false,
@@ -31,11 +33,12 @@ export const useSessionStore = create<SessionState>((set) => ({
       price
     })
   },
-  endSession: () => set({ isActive: false, sessionId: null, roomName: null }),
+  endSession: () => set({ isActive: false }),
+  clearSession: () => set({ isActive: false, sessionId: null, roomName: null, price: 0, tutorName: "", timeLeftSeconds: 0 }),
   extendSession: (minutes) => set((state) => ({ 
     timeLeftSeconds: state.timeLeftSeconds + (minutes * 60) 
   })),
   tickTime: () => set((state) => ({ 
     timeLeftSeconds: Math.max(0, state.timeLeftSeconds - 1) 
   }))
-}))
+}), { name: 'quicksolve-session', version: 1 }))

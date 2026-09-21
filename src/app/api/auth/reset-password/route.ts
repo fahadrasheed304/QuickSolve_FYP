@@ -31,7 +31,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, message: "Password reset successfully" })
 
-  } catch (error: any) {
+  } catch (caughtError: unknown) {
+    const error = caughtError instanceof Error ? caughtError : new Error("Unexpected error")
     console.error("Reset password error:", error)
     return NextResponse.json({ error: error.message || "Failed to process request" }, { status: 500 })
   }

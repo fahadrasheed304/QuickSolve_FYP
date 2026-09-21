@@ -21,7 +21,6 @@ export function LiveBidsList() {
   const acceptBid = useBidsStore((state) => state.acceptBid)
   const cancelProblem = useBidsStore((state) => state.cancelProblem)
   const balance = useWalletStore((state) => state.balance)
-  const moveToEscrow = useWalletStore((state) => state.moveToEscrow)
   const startSession = useSessionStore((state) => state.startSession)
   const [showWalletWarning, setShowWalletWarning] = useState(false)
   const [isCancelling, setIsCancelling] = useState(false)
@@ -40,8 +39,7 @@ export function LiveBidsList() {
     setAcceptingBidId(null)
 
     if (accepted) {
-      moveToEscrow(bid.price)
-      startSession(bid.tutorName, bid.durationMin, bid.price)
+      startSession(bid.tutorName, bid.durationMin, bid.price, `session-${bid.problemId}`)
       notifySuccess('Bid accepted. Starting your live session.')
       router.push('/student/session/active')
     } else {

@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useState, use } from 'react'
 import { useRouter } from 'next/navigation'
-import { Clock, ExternalLink, Send, Star } from 'lucide-react'
+import { ExternalLink, Send, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/stores/session-store'
 import dynamic from 'next/dynamic'
+import { useClientReady } from '@/hooks/use-client-ready'
 
 // Dynamically import VideoRoom to avoid SSR issues with LiveKit
 const VideoRoom = dynamic(() => import('@/components/livekit/video-room'), {
@@ -26,7 +27,8 @@ const VideoRoom = dynamic(() => import('@/components/livekit/video-room'), {
 export default function TutorSessionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: roomId } = use(params)
   const router = useRouter()
-  const { isActive, timeLeftSeconds, tutorName, price, endSession, tickTime } = useSessionStore()
+  const clientReady = useClientReady()
+  const { isActive, timeLeftSeconds, price, endSession, tickTime } = useSessionStore()
   const [chatMessage, setChatMessage] = useState("")
 
   const handleEndSession = useCallback(() => {
@@ -59,6 +61,7 @@ export default function TutorSessionPage({ params }: { params: Promise<{ id: str
   }
 
   const isEndingSoon = isActive && timeLeftSeconds <= 300
+  if (!clientReady) return null
 
   return (
     <div className="h-screen flex flex-col bg-[#101d32] text-white overflow-hidden">

@@ -190,7 +190,7 @@ const getPointCenter = (points: Array<{ x: number; y: number }>) => {
   return { x: total.x / points.length, y: total.y / points.length }
 }
 
-const isLookingAwayFromCamera = (landmarks: any) => {
+const isLookingAwayFromCamera = (landmarks: { getLeftEye(): Array<{x: number; y: number}>; getRightEye(): Array<{x: number; y: number}>; getNose(): Array<{x: number; y: number}>; getMouth(): Array<{x: number; y: number}> }) => {
   const leftEye = landmarks.getLeftEye?.()
   const rightEye = landmarks.getRightEye?.()
   const nose = landmarks.getNose?.()
@@ -747,10 +747,6 @@ export default function TakeTestPage() {
     setAnswers(prev => ({ ...prev, [questionId]: optionIndex }))
   }
 
-  useEffect(() => {
-    handleSubmitRef.current = handleSubmit;
-  });
-
   const handleSubmit = async (autoSubmit: boolean = false) => {
     if (submitInProgressRef.current) return
     submitInProgressRef.current = true
@@ -815,6 +811,10 @@ export default function TakeTestPage() {
     const secs = seconds % 60
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
+
+  useEffect(() => {
+    handleSubmitRef.current = handleSubmit
+  })
 
   if (loading) {
     return (

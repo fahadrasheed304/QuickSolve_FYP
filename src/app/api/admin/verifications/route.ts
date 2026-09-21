@@ -65,7 +65,7 @@ export async function GET(request: Request) {
     }
     
     // Fetch degree and document counts for each profile
-    const tutorsWithCounts = await Promise.all((profiles || []).map(async (p: any) => {
+    const tutorsWithCounts = await Promise.all((profiles || []).map(async (p) => {
       const { count: degreeCount } = await supabaseAdmin
         .from('tutor_degrees')
         .select('*', { count: 'exact', head: true })
@@ -86,7 +86,8 @@ export async function GET(request: Request) {
     
     return NextResponse.json({ tutors: tutorsWithCounts || [] })
     
-  } catch (error: any) {
+  } catch (caughtError: unknown) {
+    const error = caughtError instanceof Error ? caughtError : new Error("Unexpected error")
     console.error('Admin verifications error:', error)
     return NextResponse.json(
       { error: error.message || 'Failed to get verifications' },
@@ -237,7 +238,8 @@ export async function POST(request: Request) {
       newStatus,
     })
     
-  } catch (error: any) {
+  } catch (caughtError: unknown) {
+    const error = caughtError instanceof Error ? caughtError : new Error("Unexpected error")
     console.error('Admin update verification error:', error)
     return NextResponse.json(
       { error: error.message || 'Failed to update verification' },

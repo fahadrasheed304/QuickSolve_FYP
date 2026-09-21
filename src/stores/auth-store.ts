@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { useSessionStore } from './session-store'
 
 interface TutorProfile {
   id: string;
@@ -52,9 +53,8 @@ interface AuthState {
   updateActivity: () => void;
 }
 
-const INACTIVITY_TIMEOUT = 15 * 60 * 1000 // 15 minutes in milliseconds
 
-export const useAuthStore = create<AuthState>((set, get) => ({
+export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isLoading: true,
   lastActivity: Date.now(),
@@ -81,16 +81,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       } else {
         set({ isLoading: false })
       }
-    } catch (e) {
+    } catch {
       set({ isLoading: false })
     }
   },
   logout: async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' })
+      useSessionStore.getState().clearSession()
       set({ user: null, lastActivity: Date.now() })
       window.location.href = '/signin-page'
-    } catch (e) {}
+    } catch {}
   },
 
   updateActivity: () => {

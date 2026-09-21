@@ -20,7 +20,6 @@ export function LiveBidsList() {
   const acceptBid = useBidsStore((state) => state.acceptBid)
   const cancelProblem = useBidsStore((state) => state.cancelProblem)
   const balance = useWalletStore((state) => state.balance)
-  const moveToEscrow = useWalletStore((state) => state.moveToEscrow)
   const startSession = useSessionStore((state) => state.startSession)
   const [showWalletWarning, setShowWalletWarning] = useState(false)
   const [isCancelling, setIsCancelling] = useState(false)
@@ -39,11 +38,10 @@ export function LiveBidsList() {
     setAcceptingBidId(null)
 
     if (accepted) {
-      moveToEscrow(bid.price)
       startSession(bid.tutorName, bid.durationMin, bid.price, `session-${bid.problemId}`)
-      notifySuccess('Bid accepted. Opening live video call in window...')
+      notifySuccess('Bid accepted. Opening your session...')
       const sessionUrl = '/student/session/active'
-      window.open(sessionUrl, 'QuickSolve_LiveSession', 'width=1280,height=750,resizable=yes,scrollbars=yes,status=no,location=no,toolbar=no')
+      router.push(sessionUrl)
     } else {
       notifyError('This bid could not be accepted. Please refresh and try again.')
     }

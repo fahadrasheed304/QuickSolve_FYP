@@ -49,7 +49,7 @@ export async function POST(request: Request) {
 
     // Determine session role (allow role switching like regular login)
     const sessionRole = userRole || user.role || 'student'
-    await DB.getWalletBalance(user.email, sessionRole)
+    await DB.ensureWallet(user.email, sessionRole)
 
     if (sessionRole === 'tutor') {
       try {
@@ -66,7 +66,8 @@ export async function POST(request: Request) {
             experienceYears: 0,
           })
         }
-      } catch (profileErr: any) {
+      } catch (caughtError: unknown) {
+    const profileErr = caughtError instanceof Error ? caughtError : new Error('Unexpected error')
         console.error("Tutor profile creation error (Google):", profileErr)
         // Don't block signup if profile creation fails
       }
@@ -112,7 +113,8 @@ export async function POST(request: Request) {
 
     return response
 
-  } catch (error: any) {
+  } catch (caughtError: unknown) {
+    const error = caughtError instanceof Error ? caughtError : new Error("Unexpected error")
     console.error("Google Auth error:", error)
     return NextResponse.json({ error: error.message || "Failed to authenticate with Google" }, { status: 500 })
   }

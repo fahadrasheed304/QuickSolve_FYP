@@ -74,7 +74,7 @@ export default function TutorSignupPage() {
       } else {
         showError(getApiMessage(data, "We could not create your tutor account. Please review your details and try again."))
               }
-    } catch (err) {
+    } catch {
       showError("We could not reach the signup service. Please check your connection and try again.")
     } finally {
       setLoading(false)
@@ -118,7 +118,7 @@ export default function TutorSignupPage() {
           showError(getApiMessage(data, "Google signup could not be completed. Please try again."))
           setLoading(false)
         }
-      } catch (err) {
+      } catch {
         showError("Google signup is temporarily unavailable. Please try again or use email signup.")
         setLoading(false)
       }

@@ -92,7 +92,8 @@ export async function GET(request: Request) {
       },
     })
     
-  } catch (error: any) {
+  } catch (caughtError: unknown) {
+    const error = caughtError instanceof Error ? caughtError : new Error("Unexpected error")
     console.error('Get tutor detail error:', error)
     return NextResponse.json(
       { error: error.message || 'Failed to get tutor details' },

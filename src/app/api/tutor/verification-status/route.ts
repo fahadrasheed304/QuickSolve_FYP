@@ -1,3 +1,4 @@
+type TestResult = Awaited<ReturnType<typeof DB.getTestResults>>[number]
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { decrypt } from '@/lib/auth'
@@ -6,7 +7,7 @@ import { getTutorVerificationState } from '@/lib/tutor-verification'
 import { getCurrentTutorDocuments } from '@/lib/tutor-documents'
 import { getTestRetakeInfo } from '@/lib/test-retake'
 
-const getTestAttemptFingerprint = (result: any) => [
+const getTestAttemptFingerprint = (result: TestResult) => [
   result.total_questions,
   result.correct_answers,
   result.wrong_answers,
@@ -16,11 +17,11 @@ const getTestAttemptFingerprint = (result: any) => [
   result.time_taken_seconds || 0,
 ].join(':')
 
-const countUniqueTestAttempts = (results: any[]) => {
+const countUniqueTestAttempts = (results: TestResult[]) => {
   const sortedResults = [...results].sort((a, b) => {
     return new Date(a.test_date || 0).getTime() - new Date(b.test_date || 0).getTime()
   })
-  const uniqueAttempts: any[] = []
+  const uniqueAttempts: TestResult[] = []
 
   for (const result of sortedResults) {
     const resultTime = new Date(result.test_date || 0).getTime()
@@ -115,10 +116,11 @@ export async function GET() {
         documentsCount: uniqueDocumentsCount,
         testResultsCount: uniqueTestAttempts,
       },
-      adminNotes: notes.filter((n: any) => n.note_type === 'admin_to_tutor').map((n: any) => n.message),
+      adminNotes: notes.filter((n) => n.note_type === 'admin_to_tutor').map((n) => n.message),
     })
     
-  } catch (error: any) {
+  } catch (caughtError: unknown) {
+    const error = caughtError instanceof Error ? caughtError : new Error("Unexpected error")
     console.error('Get verification status error:', error)
     return NextResponse.json(
       { error: error.message || 'Failed to get status' },

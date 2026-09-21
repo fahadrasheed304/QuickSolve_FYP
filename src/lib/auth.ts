@@ -1,13 +1,14 @@
-import { SignJWT, jwtVerify } from 'jose'
+import { SignJWT, jwtVerify, type JWTPayload } from 'jose'
 
-const secretKey = process.env.JWT_SECRET || "quicksolve-secret-jwt-key!@#"
+const secretKey = process.env.JWT_SECRET
+if (!secretKey) throw new Error("JWT_SECRET must be configured")
 const encodedKey = new TextEncoder().encode(secretKey)
 
 // ============================================================
 // JWT functions — Edge-safe (no Node.js modules used here)
 // ============================================================
 
-export async function encrypt(payload: any) {
+export async function encrypt(payload: JWTPayload) {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
@@ -21,7 +22,7 @@ export async function decrypt(session: string | undefined = '') {
       algorithms: ['HS256'],
     })
     return payload
-  } catch (error) {
+  } catch {
     return null
   }
 }
@@ -45,7 +46,7 @@ export async function verifyResetToken(token: string) {
     const { payload } = await jwtVerify(token, encodedKey)
     if (payload.purpose !== 'reset_password') return null
     return payload.email as string
-  } catch (error) {
+  } catch {
     return null
   }
 }

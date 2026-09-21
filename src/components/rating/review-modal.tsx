@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
+import { useWalletStore } from '@/stores/wallet-store'
 import { useSessionStore } from '@/stores/session-store'
 import { notifyError, notifySuccess } from '@/lib/toast'
 
@@ -15,6 +16,7 @@ interface ReviewModalProps {
   isOpen: boolean
   onClose: () => void
   tutorName: string
+  problemId: string
 }
 
 const TAGS = [
@@ -26,7 +28,7 @@ const DISPUTE_REASONS = [
   "Tutor did not show up", "Poor explanation", "Technical issues", "Other"
 ]
 
-export function ReviewModal({ isOpen, onClose, tutorName }: ReviewModalProps) {
+export function ReviewModal({ isOpen, onClose, tutorName, problemId }: ReviewModalProps) {
   const router = useRouter()
   const [rating, setRating] = useState(0)
   const [hoveredRating, setHoveredRating] = useState(0)
@@ -35,7 +37,7 @@ export function ReviewModal({ isOpen, onClose, tutorName }: ReviewModalProps) {
   const [hasDispute, setHasDispute] = useState(false)
   const [disputeReason, setDisputeReason] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const { price } = useSessionStore()
+  const fetchWallet = useWalletStore(state => state.fetchWallet)
 
   const toggleTag = (tag: string) => {
     setSelectedTags((prev) => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
@@ -54,7 +56,7 @@ export function ReviewModal({ isOpen, onClose, tutorName }: ReviewModalProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: price,
+          problemId,
           tutorName,
           rating,
           tags: selectedTags,
@@ -63,18 +65,23 @@ export function ReviewModal({ isOpen, onClose, tutorName }: ReviewModalProps) {
         })
       })
       if (!res.ok) {
-        notifyError("We could not save the session review, but your session has ended.")
+        const data = await res.json()
+        notifyError(data.error || "Session payment failed. Please retry.")
+        return
       } else {
-        notifySuccess("Thanks for your feedback.")
+        useSessionStore.getState().clearSession()
+        await fetchWallet()
+        notifySuccess("Session payment completed.")
+        onClose()
+        router.push('/student/dashboard')
+        router.refresh()
       }
     } catch (e) {
       console.error("Failed to complete session:", e)
       notifyError("We could not save the session review right now. Please check your connection.")
     } finally {
               setIsSubmitting(false)
-      onClose()
-      router.push('/student/dashboard')
-      router.refresh()
+
     }
   }
 

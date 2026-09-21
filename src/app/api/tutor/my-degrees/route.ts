@@ -23,7 +23,8 @@ export async function GET() {
     
     return NextResponse.json({ degrees })
     
-  } catch (error: any) {
+  } catch (caughtError: unknown) {
+    const error = caughtError instanceof Error ? caughtError : new Error("Unexpected error")
     console.error('Get degrees error:', error)
     return NextResponse.json(
       { error: error.message || 'Failed to get degrees' },
@@ -64,7 +65,8 @@ export async function POST(request: Request) {
     
     return NextResponse.json({ success: true, degree })
     
-  } catch (error: any) {
+  } catch (caughtError: unknown) {
+    const error = caughtError instanceof Error ? caughtError : new Error("Unexpected error")
     console.error('Add degree error:', error)
     return NextResponse.json(
       { error: error.message || 'Failed to add degree' },
@@ -95,7 +97,8 @@ export async function DELETE(request: Request) {
     
     return NextResponse.json({ success: true, message: 'Degree deleted' })
     
-  } catch (error: any) {
+  } catch (caughtError: unknown) {
+    const error = caughtError instanceof Error ? caughtError : new Error("Unexpected error")
     console.error('Delete degree error:', error)
     return NextResponse.json(
       { error: error.message || 'Failed to delete degree' },

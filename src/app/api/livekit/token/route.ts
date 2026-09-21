@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   try {
     // Authenticate the user via session cookie
     const cookieStore = await cookies()
-    const sessionToken = cookieStore.get('session')?.value
+    const sessionToken = cookieStore.get('auth_token')?.value
     if (!sessionToken) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
@@ -48,7 +48,8 @@ export async function GET(req: NextRequest) {
 
     const token = await at.toJwt()
     return NextResponse.json({ token })
-  } catch (err: any) {
+  } catch (caughtError: unknown) {
+    const err = caughtError instanceof Error ? caughtError : new Error('Unexpected error')
     console.error('LiveKit token error:', err)
     return NextResponse.json(
       { error: err.message || 'Failed to generate token' },

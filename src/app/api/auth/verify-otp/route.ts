@@ -46,7 +46,7 @@ export async function POST(request: Request) {
       // This allows same email to be both student and tutor (role switching)
       await DB.updateUserRole(newUser.email, pending.user.role)
       newUser = { ...newUser, role: pending.user.role }
-      await DB.getWalletBalance(newUser.email, pending.user.role)
+      await DB.ensureWallet(newUser.email, pending.user.role)
     } else if (!newUser) {
       // Create new user
       newUser = await DB.createUser(pending.user)
@@ -68,7 +68,8 @@ export async function POST(request: Request) {
             experienceYears: pending.user.experienceYears || 0,
           })
         }
-      } catch (profileErr: any) {
+      } catch (caughtError: unknown) {
+    const profileErr = caughtError instanceof Error ? caughtError : new Error('Unexpected error')
         console.error("Tutor profile creation error:", profileErr)
         // Don't block signup if profile creation fails
       }
@@ -100,7 +101,8 @@ export async function POST(request: Request) {
 
     return response
 
-  } catch (error: any) {
+  } catch (caughtError: unknown) {
+    const error = caughtError instanceof Error ? caughtError : new Error("Unexpected error")
     console.error("OTP verification error:", error)
     return NextResponse.json({ error: error.message || "Failed to verify OTP" }, { status: 500 })
   }

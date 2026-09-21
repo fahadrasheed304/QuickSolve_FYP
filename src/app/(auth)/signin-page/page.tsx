@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useQueryRole } from '@/hooks/use-client-ready';
 import { useGoogleLogin } from '@react-oauth/google';
 import { AuthSidebar } from '@/components/layout/AuthSidebar';
 import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
@@ -11,8 +11,9 @@ import { PasswordInput } from '@/components/auth/PasswordInput';
 import { getApiMessage, notifyError, notifySuccess } from '@/lib/toast';
 import { ShieldCheck } from 'lucide-react';
 export default function SigninPage() {
-  const router = useRouter();
-  const [role, setRole] = useState<'student'|'tutor'>('student');
+  const [selectedRole, setRole] = useState<'student'|'tutor' | null>(null);
+  const queryRole = useQueryRole();
+  const role = selectedRole ?? queryRole;
   const roleRef = useRef(role);
   useEffect(() => { roleRef.current = role; }, [role]);
   const [email, setEmail] = useState('');
@@ -25,15 +26,7 @@ export default function SigninPage() {
     notifyError(message);
   };
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const searchParams = new URLSearchParams(window.location.search);
-      const roleParam = searchParams.get('role');
-      if (roleParam === 'tutor' || roleParam === 'student') {
-        setRole(roleParam);
-      }
-    }
-  }, []);
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,7 +82,7 @@ export default function SigninPage() {
           showError(getApiMessage(data, "We could not sign you in. Please check your email, password, and selected role."));
         }
       }
-    } catch (err) {
+    } catch {
       showError("We could not reach the login service. Please check your connection and try again.");
     } finally {
       setLoading(false);
@@ -139,7 +132,7 @@ export default function SigninPage() {
           showError(getApiMessage(data, "Google sign in could not be completed. Please try again."));
           setLoading(false);
         }
-      } catch (err) {
+      } catch {
         showError("Google sign in is temporarily unavailable. Please try again or use email login.");
         setLoading(false);
       }

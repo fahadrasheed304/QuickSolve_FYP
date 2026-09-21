@@ -38,7 +38,7 @@ export default function TutorDashboard() {
   const { user, logout } = useAuthStore()
   const startSession = useSessionStore((state) => state.startSession)
   const [showNotifications, setShowNotifications] = useState(false)
-  const [openProblems, setOpenProblems] = useState<OpenProblem[]>([])
+  const [loadedProblems, setOpenProblems] = useState<OpenProblem[]>([])
   const [isLoadingProblems, setIsLoadingProblems] = useState(false)
   const [bidPrices, setBidPrices] = useState<Record<string, string>>({})
   const [placingBidId, setPlacingBidId] = useState<string | null>(null)
@@ -52,6 +52,7 @@ export default function TutorDashboard() {
   const totalEarnings = profile?.totalEarnings || 0
   const subjects = profile?.subjects || []
   const isAvailable = localAvailability ?? profile?.isAvailable ?? true
+  const openProblems = isAvailable ? loadedProblems : []
   const displayName = (user?.fullname || user?.email || 'Tutor').split(' ')[0].split('@')[0]
 
   useEffect(() => {
@@ -60,11 +61,7 @@ export default function TutorDashboard() {
     }
   }, [user, router])
 
-  useEffect(() => {
-    if (profile?.isAvailable !== undefined) {
-      setLocalAvailability(profile.isAvailable)
-    }
-  }, [profile?.isAvailable])
+
 
   useEffect(() => {
     let cancelled = false
@@ -90,15 +87,13 @@ export default function TutorDashboard() {
     }
 
     if (user?.role === 'tutor' && user.tutorProfile && !user.tutorProfile.requiresProfileCompletion && isAvailable) {
-      loadOpenProblems()
+      const initial = setTimeout(loadOpenProblems, 0)
       const interval = window.setInterval(loadOpenProblems, 5000)
       return () => {
         cancelled = true
+        clearTimeout(initial)
         window.clearInterval(interval)
       }
-    } else if (!isAvailable) {
-      setOpenProblems([])
-      setBidPrices({})
     }
     return () => {
       cancelled = true

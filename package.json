@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "node --test --test-isolation=none tests/*.test.mjs",
+    "dev:stripe": "node scripts/run-stripe.mjs"
   },
   "dependencies": {
     "@livekit/components-react": "^2.9.24",
@@ -34,6 +36,8 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@stripe/cli": "1.51.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

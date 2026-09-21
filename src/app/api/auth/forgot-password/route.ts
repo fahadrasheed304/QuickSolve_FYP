@@ -41,7 +41,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, message: "If an account exists, a reset link has been sent." })
 
-  } catch (error: any) {
+  } catch (caughtError: unknown) {
+    const error = caughtError instanceof Error ? caughtError : new Error("Unexpected error")
     console.error("Forgot password error:", error)
     return NextResponse.json({ error: error.message || "Failed to process request" }, { status: 500 })
   }

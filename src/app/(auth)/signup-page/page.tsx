@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useQueryRole } from '@/hooks/use-client-ready';
 import { useRouter } from 'next/navigation';
 import { useGoogleLogin } from '@react-oauth/google';
 import { AuthSidebar } from '@/components/layout/AuthSidebar';
@@ -13,7 +14,9 @@ import { COUNTRY_PHONE_OPTIONS, formatCountryPhoneOption, getCountryPhoneOption,
 export default function SignupPagePage() {
   const router = useRouter();
   
-  const [role, setRole] = useState<'student'|'tutor'>('student');
+  const [selectedRole, setRole] = useState<'student'|'tutor' | null>(null);
+  const queryRole = useQueryRole();
+  const role = selectedRole ?? queryRole;
   const roleRef = useRef(role);
   useEffect(() => { roleRef.current = role; }, [role]);
   const [fullname, setFullname] = useState('');
@@ -31,17 +34,7 @@ export default function SignupPagePage() {
     notifyError(message);
   };
 
-  useEffect(() => {
-    // We use window.location.search instead of useSearchParams to avoid Suspense boundaries 
-    // requirement for a simple query param read on initial load
-    if (typeof window !== 'undefined') {
-      const searchParams = new URLSearchParams(window.location.search);
-      const roleParam = searchParams.get('role');
-      if (roleParam === 'tutor' || roleParam === 'student') {
-        setRole(roleParam);
-      }
-    }
-  }, []);
+
 
   const calculateStrength = () => {
     let score = 0;
@@ -86,7 +79,7 @@ export default function SignupPagePage() {
       } else {
         showError(getApiMessage(data, "We could not create your account. Please review your details and try again."));
       }
-    } catch (err) {
+    } catch {
       showError("We could not reach the signup service. Please check your connection and try again.");
     } finally {
       setLoading(false);
@@ -129,7 +122,7 @@ export default function SignupPagePage() {
           showError(getApiMessage(data, "Google signup could not be completed. Please try again."));
           setLoading(false);
         }
-      } catch (err) {
+      } catch {
         showError("Google signup is temporarily unavailable. Please try again or use email signup.");
         setLoading(false);
       }

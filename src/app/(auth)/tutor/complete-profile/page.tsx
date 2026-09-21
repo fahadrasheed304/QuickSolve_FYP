@@ -3,6 +3,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
+import NextImage from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { CheckCircle, BookOpen, GraduationCap, FileText, Camera, ChevronRight, ChevronLeft, Plus, X, Upload, Eye, AlertCircle, User, ShieldCheck, MapPin, Hash, ClipboardCheck, LogOut } from 'lucide-react'
@@ -877,9 +878,11 @@ export default function TutorCompleteProfilePage() {
     }
   }, [user, fetchUser])
 
-  useEffect(() => {
-    const profile = user?.tutorProfile
-        if (!profile) return
+  const [initializedProfile, setInitializedProfile] = useState<NonNullable<typeof user>["tutorProfile"] | null>(null)
+  const profileToInitialize = user?.tutorProfile
+  if (profileToInitialize && profileToInitialize !== initializedProfile) {
+    const profile = profileToInitialize
+    setInitializedProfile(profile)
 
     setPersonalDetails(prev => ({
       city: prev.city || profile.city || '',
@@ -890,7 +893,7 @@ export default function TutorCompleteProfilePage() {
     if (selectedSubjects.length === 0 && profile.subjects?.length) {
       setSelectedSubjects(profile.subjects)
     }
-  }, [user?.tutorProfile, selectedSubjects.length])
+  }
 
   useEffect(() => {
     if (!userId) return
@@ -1367,7 +1370,7 @@ export default function TutorCompleteProfilePage() {
                             <div className="flex items-center justify-between gap-3">
                               {(uploadedDoc.documentUrl.match(/\.(jpeg|jpg|gif|png|webp)$/i) || uploadedDoc.documentUrl.startsWith('data:image') || uploadedDoc.documentUrl.includes('supabase')) ? (
                                 <button type="button" onClick={() => setPreviewImage(uploadedDoc.documentUrl)} className="group flex items-center gap-2 text-left">
-                                  <img
+                                  <NextImage unoptimized width={800} height={600}
                                     src={uploadedDoc.documentUrl}
                                     alt={`${doc.label} preview`}
                                     className="h-12 w-16 rounded-lg border border-border object-cover shadow-sm transition-all group-hover:ring-2 group-hover:ring-primary/35"
@@ -1511,7 +1514,7 @@ export default function TutorCompleteProfilePage() {
                           <div key={type} className="flex items-center gap-3 rounded-lg border border-border bg-surface-container-low px-3 py-3">
                             {doc ? (
                               (doc.documentUrl.match(/\.(jpeg|jpg|gif|png|webp)$/i) || doc.documentUrl.startsWith('data:image') || doc.documentUrl.includes('supabase')) ? (
-                                <img
+                                <NextImage unoptimized width={800} height={600}
                                   src={doc.documentUrl}
                                   alt={documentLabels[type]}
                                   className="h-12 w-14 cursor-pointer rounded-lg border border-border object-cover"
@@ -1589,7 +1592,7 @@ export default function TutorCompleteProfilePage() {
             >
               <X className="h-8 w-8" />
             </button>
-            <img src={previewImage} alt="Document preview" className="max-h-[85vh] max-w-full rounded-lg object-contain shadow-2xl" />
+            <NextImage unoptimized width={800} height={600} src={previewImage} alt="Document preview" className="max-h-[85vh] max-w-full rounded-lg object-contain shadow-2xl" />
           </div>
         </div>
       )}

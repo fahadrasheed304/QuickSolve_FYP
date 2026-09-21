@@ -24,7 +24,8 @@ export async function GET() {
     
     return NextResponse.json({ documents })
     
-  } catch (error: any) {
+  } catch (caughtError: unknown) {
+    const error = caughtError instanceof Error ? caughtError : new Error("Unexpected error")
     console.error('Get documents error:', error)
     return NextResponse.json(
       { error: error.message || 'Failed to get documents' },

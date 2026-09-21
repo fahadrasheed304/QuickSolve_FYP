@@ -4,6 +4,7 @@ import { ADMIN_EMAIL, verifyAdminCredentials } from '@/lib/admin-auth'
 
 export async function POST(request: Request) {
   try {
+    if (!process.env.ADMIN_PASSWORD) return NextResponse.json({ error: 'Admin password is not configured' }, { status: 503 })
     const { email, password } = await request.json()
 
     if (!email || !password) {

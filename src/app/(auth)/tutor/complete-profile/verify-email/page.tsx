@@ -86,7 +86,7 @@ function TutorVerifyEmailForm() {
       } else {
         showError(getApiMessage(data, "That verification code is not valid. Please check the code and try again."))
       }
-    } catch (err) {
+    } catch {
       showError("We could not verify the code right now. Please check your connection and try again.")
     } finally {
       setLoading(false)
@@ -107,7 +107,7 @@ function TutorVerifyEmailForm() {
       } else {
         showError(getApiMessage(data, "We could not resend the code. Please wait a moment and try again."))
       }
-    } catch (err) {
+    } catch {
       showError("We could not resend the code right now. Please check your connection and try again.")
     }
   }
@@ -179,7 +179,7 @@ function TutorVerifyEmailForm() {
 
           <div className="mt-8 text-center lg:text-left">
             <p className="text-sm text-on-surface-variant font-medium">
-              Didn't receive the email? <button type="button" onClick={handleResend} className="text-[#006c4a] font-bold hover:underline ml-1">Resend code</button>
+              Didn&apos;t receive the email? <button type="button" onClick={handleResend} className="text-[#006c4a] font-bold hover:underline ml-1">Resend code</button>
             </p>
           </div>
         </div>

@@ -100,9 +100,9 @@ export default function HistoryPage() {
   }, [])
 
   useEffect(() => {
-    fetchHistory()
+    const initial = setTimeout(fetchHistory, 0)
     const intervalId = window.setInterval(() => fetchHistory(true), 15000)
-    return () => window.clearInterval(intervalId)
+    return () => { clearTimeout(initial); window.clearInterval(intervalId) }
   }, [fetchHistory])
 
   const filtered = useMemo(() => {

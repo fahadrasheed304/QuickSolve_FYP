@@ -88,7 +88,8 @@ export async function POST(request: Request) {
         ? "A new verification code is being sent"
         : "OTP email is being sent",
     });
-  } catch (error: any) {
+  } catch (caughtError: unknown) {
+    const error = caughtError instanceof Error ? caughtError : new Error("Unexpected error")
     console.error("Signup error:", error);
     return NextResponse.json(
       { error: error.message || "Failed to create account" },

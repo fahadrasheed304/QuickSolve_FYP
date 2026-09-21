@@ -1,18 +1,11 @@
 "use client"
 
-"use client"
-
-import * as React from "react"
+import { useClientReady } from "@/hooks/use-client-ready"
 import { useTheme } from "next-themes"
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = React.useState(false)
-
-  // Avoid hydration mismatch
-  React.useEffect(() => {
-    setMounted(true)
-  }, [])
+  const mounted = useClientReady()
 
   if (!mounted) return <div className="w-9 h-9" />
 

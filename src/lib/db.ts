@@ -26,7 +26,8 @@ export const DB = {
       .select('*')
       .eq('email', normalizedEmail)
       .single()
-    if (error || !data) return null
+    if (error && error.code !== 'PGRST116') throw new Error(error.message)
+    if (!data) return null
     return data
   },
 
@@ -54,151 +55,56 @@ export const DB = {
       .single()
     if (error) throw new Error(error.message)
     
-    // Create role-specific wallet for new user
-    try {
-      await supabaseAdmin
-        .from('role_wallets')
-        .insert({ user_email: normalizedEmail, role, balance: 0 })
-    } catch (walletErr) {
-      // Wallet might already exist, ignore error
-      console.log('Wallet creation skipped or error:', walletErr)
-    }
-    
+    const { error: walletError } = await supabaseAdmin.rpc('get_or_create_wallet', {
+      p_email: normalizedEmail, p_role: role,
+    })
+    if (walletError) throw new Error(walletError.message)
+
     return data
   },
 
   // ── ROLE-BASED WALLETS ──────────────────────────────────────
+  ensureWallet: async (email: string, role: string) => {
+    const { error } = await supabaseAdmin.rpc('get_or_create_wallet', { p_email: email.toLowerCase().trim(), p_role: role })
+    if (error) throw new Error(error.message)
+  },
+
   getWalletBalance: async (email: string, role: string) => {
     const normalizedEmail = email.toLowerCase().trim()
-    
-    // Get or create role-specific wallet using database function
-    const { data: wallet, error: walletErr } = await supabaseAdmin
-      .rpc('get_or_create_wallet', {
-        p_email: normalizedEmail,
-        p_role: role
-      })
-    
-    if (walletErr) {
-      console.error('Error getting wallet:', walletErr)
-      // Fallback: try direct query
-      const { data: existingWallet } = await supabaseAdmin
-        .from('role_wallets')
-        .select('*')
-        .eq('user_email', normalizedEmail)
-        .eq('role', role)
-        .single()
-      
-      if (existingWallet) {
-        return {
-          balance: existingWallet.balance ?? 0,
-          transactions: [],
-        }
-      }
-      
-      // Create wallet if not exists
-      const { data: newWallet } = await supabaseAdmin
-        .from('role_wallets')
-        .insert({ user_email: normalizedEmail, role, balance: 0 })
-        .select()
-        .single()
-      
-      return {
-        balance: newWallet?.balance ?? 0,
-        transactions: [],
-      }
-    }
-
-    // Fetch transactions for this role
-    const { data: txs } = await supabaseAdmin
-      .from('wallet_transactions')
-      .select('*')
-      .eq('user_email', normalizedEmail)
-      .eq('user_role', role)
+    const { data: wallet, error } = await supabaseAdmin
+      .from('role_wallets').select('balance')
+      .eq('user_email', normalizedEmail).eq('role', role).maybeSingle()
+    if (error) throw new Error(error.message)
+    if (!wallet) throw new Error('Wallet not found')
+    const { data: txs, error: txError } = await supabaseAdmin
+      .from('wallet_transactions').select('*')
+      .eq('user_email', normalizedEmail).eq('user_role', role)
       .order('created_at', { ascending: false })
-
+    if (txError) throw new Error(txError.message)
     return {
-      balance: wallet?.balance ?? 0,
-      transactions: (txs || []).map((tx: any) => ({
-        id: tx.id,
-        type: tx.type,
-        amount: tx.amount,
-        method: tx.method || '',
-        description: tx.description,
-        status: tx.status,
-        date: tx.created_at,
+      balance: Number(wallet.balance),
+      transactions: (txs || []).map((tx) => ({
+        id: tx.id, type: tx.type, amount: Number(tx.amount),
+        method: tx.method || '', description: tx.description,
+        status: tx.status, date: tx.created_at,
       })),
     }
   },
 
-  updateWalletBalance: async (email: string, role: string, amount: number) => {
-    const normalizedEmail = email.toLowerCase().trim()
-    
-    // Use database function to update wallet
-    const { data: wallet, error } = await supabaseAdmin
-      .rpc('update_wallet_balance', {
-        p_email: normalizedEmail,
-        p_role: role,
-        p_amount: amount
-      })
-    
-    if (error) {
-      console.error('Error updating wallet:', error)
-      
-      // Fallback: manual update
-      const { data: existing } = await supabaseAdmin
-        .from('role_wallets')
-        .select('balance')
-        .eq('user_email', normalizedEmail)
-        .eq('role', role)
-        .single()
-      
-      if (existing) {
-        const newBalance = (existing.balance ?? 0) + amount
-        const { error: updateErr } = await supabaseAdmin
-          .from('role_wallets')
-          .update({ balance: newBalance, updated_at: new Date().toISOString() })
-          .eq('user_email', normalizedEmail)
-          .eq('role', role)
-        
-        return !updateErr
-      } else {
-        // Create new wallet with initial amount
-        const { error: insertErr } = await supabaseAdmin
-          .from('role_wallets')
-          .insert({ user_email: normalizedEmail, role, balance: amount })
-        
-        return !insertErr
-      }
-    }
-
-    return !!wallet
+  requireWalletMigration: async () => {
+    const { error } = await supabaseAdmin.from('wallet_transactions').select('id,method,payment_reference').limit(0)
+    if (error) throw new Error('Wallet database migration is not available')
   },
 
-  updateWallet: async (
-    email: string,
-    role: string,
-    newBalance: number,
-    newTransaction: Transaction
-  ): Promise<boolean> => {
-    // Update balance
-    const updated = await DB.updateWalletBalance(email, role, newBalance - (await DB.getWalletBalance(email, role)).balance)
-    if (!updated) return false
-
-    // Insert transaction record
-    const { error: txErr } = await supabaseAdmin
-      .from('wallet_transactions')
-      .insert({
-        id: newTransaction.id,
-        user_email: email,
-        user_role: role,
-        type: newTransaction.type,
-        amount: newTransaction.amount,
-        description: newTransaction.description,
-        status: newTransaction.status,
-      })
-    if (txErr) return false
-
-    return true
+  applyWalletTransaction: async (email: string, role: string, transaction: Transaction, reference: string) => {
+    const { data, error } = await supabaseAdmin.rpc('apply_wallet_transaction', {
+      p_email: email.toLowerCase().trim(), p_role: role,
+      p_amount: transaction.amount, p_type: transaction.type,
+      p_method: transaction.method, p_description: transaction.description,
+      p_reference: reference,
+    })
+    if (error) throw new Error(error.message)
+    return data as { balance: number; duplicate: boolean }
   },
 
   updateUserPassword: async (email: string, password: string) => {
@@ -256,10 +162,10 @@ export const DB = {
     await DB.expireOldOpenProblems()
     const { data, error } = await supabaseAdmin
       .from('problems')
-      .select('*, bids(*)')
+      .select('*, bids:bids!bids_problem_id_fkey(*)')
       .eq('student_email', normalizedEmail)
       .order('created_at', { ascending: false })
-    if (error) return []
+    if (error) throw new Error(error.message)
     return data
   },
 
@@ -279,7 +185,7 @@ export const DB = {
     }
 
     const { data, error } = await query
-    if (error) return []
+    if (error) throw new Error(error.message)
     return data
   },
 
@@ -331,7 +237,7 @@ export const DB = {
       .select('*')
       .eq('problem_id', problemId)
       .order('created_at', { ascending: true })
-    if (error) return []
+    if (error) throw new Error(error.message)
     return data
   },
 
@@ -345,7 +251,7 @@ export const DB = {
       .eq('status', 'open')
       .gte('created_at', cutoff)
       .order('created_at', { ascending: false })
-    if (error) return []
+    if (error) throw new Error(error.message)
     return data
   },
 
@@ -365,20 +271,10 @@ export const DB = {
     return data
   },
 
-  acceptBidForStudent: async (problemId: string, studentEmail: string) => {
-    const normalizedEmail = studentEmail.toLowerCase().trim()
-    await DB.expireOldOpenProblems()
-    const cutoff = new Date(Date.now() - PROBLEM_EXPIRY_MINUTES * 60 * 1000).toISOString()
-    const { data, error } = await supabaseAdmin
-      .from('problems')
-      .update({ status: 'accepted' })
-      .eq('id', problemId)
-      .eq('student_email', normalizedEmail)
-      .eq('status', 'open')
-      .gte('created_at', cutoff)
-      .select()
-      .single()
-
+  acceptBidForStudent: async (problemId: string, studentEmail: string, bidId: string) => {
+    const { data, error } = await supabaseAdmin.rpc('accept_student_bid', {
+      p_problem_id: problemId, p_email: studentEmail.toLowerCase().trim(), p_bid_id: bidId,
+    })
     if (error) throw new Error(error.message)
     return data
   },
@@ -419,11 +315,12 @@ export const DB = {
       .select('*')
       .eq('user_email', email)
       .single()
-    if (error || !data) return null
+    if (error && error.code !== 'PGRST116') throw new Error(error.message)
+    if (!data) return null
     return data
   },
 
-  updateTutorProfile: async (email: string, updates: Record<string, any>) => {
+  updateTutorProfile: async (email: string, updates: Record<string, unknown>) => {
     const { data, error } = await supabaseAdmin
       .from('tutor_profiles')
       .update(updates)
@@ -453,12 +350,13 @@ export const DB = {
     const user = await DB.findUserByEmail(normalizedEmail)
     if (String(user?.role || '').toLowerCase().trim() === normalizedRole) return true
 
-    const { data: wallet } = await supabaseAdmin
+    const { data: wallet, error: walletError } = await supabaseAdmin
       .from('role_wallets')
       .select('id')
       .eq('user_email', normalizedEmail)
       .eq('role', normalizedRole)
       .maybeSingle()
+    if (walletError) throw new Error(walletError.message)
     if (wallet) return true
 
     if (normalizedRole === 'tutor') {
@@ -475,7 +373,7 @@ export const DB = {
       .select('*')
       .eq('verification_status', status)
       .order('created_at', { ascending: true })
-    if (error) return []
+    if (error) throw new Error(error.message)
     return data
   },
 
@@ -520,7 +418,7 @@ export const DB = {
       .select('*')
       .eq('tutor_email', email)
       .order('year_completed', { ascending: false })
-    if (error) return []
+    if (error) throw new Error(error.message)
     return data
   },
 
@@ -562,7 +460,7 @@ export const DB = {
       .select('*')
       .eq('tutor_email', email)
       .order('uploaded_at', { ascending: false })
-    if (error) return []
+    if (error) throw new Error(error.message)
     return data
   },
 
@@ -592,10 +490,11 @@ export const DB = {
       .in('subject', subjects)
       .eq('is_active', true)
 
-    if (error || !data) return []
+    if (error) throw new Error(error.message)
+    if (!data) return []
 
     // Group questions by subject
-    const questionsBySubject: Record<string, any[]> = {}
+    const questionsBySubject: Record<string, typeof data> = {}
     subjects.forEach(sub => {
       questionsBySubject[sub] = []
     })
@@ -611,7 +510,7 @@ export const DB = {
     const basePerSubject = Math.floor(limit / numSubjects)
     let remainder = limit % numSubjects
 
-    const selectedQuestions: any[] = []
+    const selectedQuestions: typeof data = []
     let shortfall = 0
 
     // First pass: Try to pick equally from each subject
@@ -657,14 +556,15 @@ export const DB = {
       .select('*')
       .eq('id', id)
       .single()
-    if (error || !data) return null
+    if (error && error.code !== 'PGRST116') throw new Error(error.message)
+    if (!data) return null
     return data
   },
 
   // ── TEST RESULTS ─────────────────────────────────────────────
   saveTestResult: async (result: {
     tutorEmail: string;
-    questions: any[];
+    questions: Record<string, unknown>[];
     totalQuestions: number;
     correctAnswers: number;
     wrongAnswers: number;
@@ -704,7 +604,7 @@ export const DB = {
       .select('*')
       .eq('tutor_email', email)
       .order('test_date', { ascending: false })
-    if (error) return []
+    if (error) throw new Error(error.message)
     return data
   },
 
@@ -734,7 +634,7 @@ export const DB = {
       .select('*')
       .eq('tutor_email', email)
       .order('created_at', { ascending: true })
-    if (error) return []
+    if (error) throw new Error(error.message)
     return data
   },
 
@@ -842,7 +742,7 @@ export const DB = {
 // ── PENDING SIGNUPS (in-memory, OTP flow) ───────────────────
 // Uses globalThis so it survives Next.js hot-reloads in dev
 const globalForPending = globalThis as unknown as {
-  pendingSignups: Record<string, { otp: string; user: any; expires: number }>
+  pendingSignups: Record<string, { otp: string; user: { fullname: string; email: string; password: string; role: string; phone?: string; city?: string; subjects?: string[]; highestEducation?: string; university?: string; experienceYears?: number }; expires: number }>
 }
 if (!globalForPending.pendingSignups) {
   globalForPending.pendingSignups = {}

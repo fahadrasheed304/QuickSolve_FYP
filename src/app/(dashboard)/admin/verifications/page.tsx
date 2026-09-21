@@ -281,7 +281,8 @@ export default function AdminVerificationsPage() {
   }, [router])
 
   useEffect(() => {
-    fetchTutors()
+    const initial = setTimeout(fetchTutors, 0)
+    return () => clearTimeout(initial)
   }, [fetchTutors])
 
   const updateStatus = useCallback(async (tutorEmail: string, newStage: string, newStatus: string, action = newStage) => {
@@ -325,7 +326,7 @@ export default function AdminVerificationsPage() {
     } finally {
       setUpdating(null)
     }
-  }, [fetchTutorDetail, noteText, selectedTutor?.user_email])
+  }, [fetchTutorDetail, noteText, selectedTutor])
 
   const handleLogout = useCallback(async () => {
     try {

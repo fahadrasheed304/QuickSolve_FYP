@@ -2,7 +2,6 @@
 
 import React, { useState, useRef, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
 import { AuthSidebar } from '@/components/layout/AuthSidebar'
 import { getApiMessage, notifyError, notifySuccess } from '@/lib/toast'
 
@@ -102,7 +101,7 @@ function VerifyEmailForm() {
       } else {
         showError(getApiMessage(data, "That verification code is not valid. Please check the code and try again."))
       }
-    } catch (err) {
+    } catch {
       showError("We could not verify the code right now. Please check your connection and try again.")
     } finally {
       setLoading(false)
@@ -123,7 +122,7 @@ function VerifyEmailForm() {
       } else {
         showError(getApiMessage(data, "We could not resend the code. Please wait a moment and try again."))
       }
-    } catch (err) {
+    } catch {
       showError("We could not resend the code right now. Please check your connection and try again.")
     }
   }
@@ -183,7 +182,7 @@ function VerifyEmailForm() {
 
           <div className="mt-8 text-center lg:text-left">
             <p className="text-sm text-on-surface-variant font-medium">
-              Didn't receive the email? <button type="button" onClick={handleResend} className="text-primary font-bold hover:underline ml-1">Resend code</button>
+              Didn&apos;t receive the email? <button type="button" onClick={handleResend} className="text-primary font-bold hover:underline ml-1">Resend code</button>
             </p>
           </div>
         </div>

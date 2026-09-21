@@ -47,7 +47,8 @@ export async function POST(request: Request) {
       message: 'Profile updated successfully' 
     })
 
-  } catch (error: any) {
+  } catch (caughtError: unknown) {
+    const error = caughtError instanceof Error ? caughtError : new Error("Unexpected error")
     console.error('Complete profile error:', error)
     return NextResponse.json(
       { error: error.message || 'Failed to update profile' },

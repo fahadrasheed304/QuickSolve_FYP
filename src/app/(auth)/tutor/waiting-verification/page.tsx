@@ -145,9 +145,9 @@ export default function WaitingVerificationPage() {
   }, [router])
 
   useEffect(() => {
-    fetchStatus()
+    const initial = setTimeout(fetchStatus, 0)
     const interval = setInterval(fetchStatus, 30000)
-    return () => clearInterval(interval)
+    return () => { clearTimeout(initial); clearInterval(interval) }
   }, [fetchStatus])
 
   const currentIndex = getStepIndex(status?.stage || 'pending')
@@ -170,7 +170,7 @@ export default function WaitingVerificationPage() {
       eyebrow: 'Retake pending',
       tone: 'bg-amber-50 text-amber-700 border-amber-200',
     }
-  }, [currentMeta, status?.canRetakeTest, status?.stage])
+  }, [currentMeta, status])
 
   if (loading) {
     return (

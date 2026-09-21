@@ -48,10 +48,10 @@ export async function GET() {
           : (typeof user.email === 'string' ? user.email.split('@')[0] : 'API_GUEST'),
         email: user.email,
         role: effectiveRole,
-        class: (user as any).class || null,
-        group: (user as any).group || null,
-        sessions: (user as any).sessions || 0,
-        rating: (user as any).rating || null,
+        class: user.class || null,
+        group: user.group || null,
+        sessions: user.sessions || 0,
+        rating: user.rating || null,
         walletBalance: wallet.balance ?? 0,
         tutorProfile: tutorProfile ? {
           id: tutorProfile.id,
@@ -83,7 +83,8 @@ export async function GET() {
         } : null,
       } 
     })
-  } catch (error: any) {
+  } catch (caughtError: unknown) {
+    const error = caughtError instanceof Error ? caughtError : new Error("Unexpected error")
     console.error('Auth /me error:', error.stack)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }

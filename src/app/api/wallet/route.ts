@@ -29,7 +29,8 @@ export async function GET() {
       balance: wallet.balance,
       transactions: wallet.transactions,
     })
-  } catch (error: any) {
+  } catch (caughtError: unknown) {
+    const error = caughtError instanceof Error ? caughtError : new Error("Unexpected error")
     console.error('Wallet GET error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

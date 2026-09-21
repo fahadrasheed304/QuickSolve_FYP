@@ -6,13 +6,11 @@ import { Clock, ExternalLink, Send, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/stores/session-store'
-import { useWalletStore } from '@/stores/wallet-store'
 import { ReviewModal } from '@/components/rating/review-modal'
-import { notifyError, notifySuccess } from '@/lib/toast'
 import dynamic from 'next/dynamic'
+import { useClientReady } from '@/hooks/use-client-ready'
 
 // Dynamically import VideoRoom to avoid SSR issues with LiveKit
 const VideoRoom = dynamic(() => import('@/components/livekit/video-room'), {
@@ -29,13 +27,11 @@ const VideoRoom = dynamic(() => import('@/components/livekit/video-room'), {
 
 export default function SessionPage() {
   const router = useRouter()
-  const { isActive, timeLeftSeconds, tutorName, price, sessionId, roomName, endSession, extendSession, tickTime } = useSessionStore()
-  const { balance, moveToEscrow } = useWalletStore()
+  const clientReady = useClientReady()
+  const { isActive, timeLeftSeconds, tutorName, price, sessionId, roomName, endSession, tickTime } = useSessionStore()
   const [chatMessage, setChatMessage] = useState("")
-  const [showExtensionModal, setShowExtensionModal] = useState(false)
-  const [extensionAmount, setExtensionAmount] = useState(250)
-  const [extensionTime, setExtensionTime] = useState(30)
   const [showReview, setShowReview] = useState(false)
+  const reviewOpen = showReview || (!isActive && !!roomName)
 
   const handleEndSession = useCallback(() => {
     endSession()
@@ -66,22 +62,11 @@ export default function SessionPage() {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
   }
 
-  const handleRequestExtension = () => {
-    if (balance >= extensionAmount) {
-      moveToEscrow(extensionAmount)
-      extendSession(extensionTime)
-      setShowExtensionModal(false)
-      notifySuccess(`Session extended by ${extensionTime} minutes.`)
-    } else {
-      notifyError("Your wallet balance is too low to extend this session. Please top up and try again.")
-    }
-  }
-
   useEffect(() => {
-    if (!isActive && !showReview) {
+    if (clientReady && !isActive && !reviewOpen) {
       router.push('/student/dashboard')
     }
-      }, [isActive, showReview, router])
+      }, [clientReady, isActive, reviewOpen, router])
 
   if (!isActive && !showReview) return null
 
@@ -160,22 +145,7 @@ export default function SessionPage() {
                 <Clock className="w-5 h-5 text-amber-600" />
                 <span className="text-sm font-black text-amber-800">Session ending soon</span>
               </div>
-              <div className="flex gap-2">
-                <select
-                  className="flex-1 rounded-lg border border-amber-200 bg-white px-2 text-sm font-semibold text-text-main"
-                                   value={extensionTime}
-                  onChange={(e) => {
-                    const time = parseInt(e.target.value)
-                    setExtensionTime(time)
-                    setExtensionAmount(time === 15 ? 125 : time === 30 ? 250 : 375)
-                  }}
-                >
-                  <option value={15}>+15 min (Rs. 125)</option>
-                  <option value={30}>+30 min (Rs. 250)</option>
-                  <option value={45}>+45 min (Rs. 375)</option>
-                </select>
-                <Button onClick={() => setShowExtensionModal(true)} size="sm" className="bg-amber-600 hover:bg-amber-700">Extend</Button>
-              </div>
+              <p className="text-xs text-amber-800">Start a new session if you need more time. Paid extensions are not available yet.</p>
             </div>
           )}
 
@@ -195,36 +165,7 @@ export default function SessionPage() {
         </aside>
       </main>
 
-      <Dialog open={showExtensionModal} onOpenChange={setShowExtensionModal}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="text-center text-xl">Extend Session?</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4 text-center">
-            <p className="text-text-muted">Additional {extensionTime} minutes</p>
-            <p className="text-3xl font-black text-text-main">Rs. {extensionAmount}</p>
-            <div className={cn(
-              "rounded-lg border p-3 text-sm font-bold",
-              balance >= extensionAmount ? "bg-success-subtle text-success border-green-200" : "bg-red-50 text-red-700 border-red-200"
-            )}>
-              Current Balance: Rs. {balance}
-            </div>
-            {balance >= extensionAmount ? (
-              <Button onClick={handleRequestExtension} className="h-12 w-full text-base">Confirm & Pay</Button>
-            ) : (
-              <div className="space-y-3">
-                <p className="text-sm font-semibold text-red-600">Insufficient balance. Please recharge wallet.</p>
-                <div className="flex gap-2">
-                  <Button variant="outline" className="flex-1" onClick={() => setShowExtensionModal(false)}>Cancel</Button>
-                  <Button className="flex-1" onClick={() => router.push('/student/wallet')}>Recharge</Button>
-                </div>
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <ReviewModal isOpen={showReview} onClose={() => setShowReview(false)} tutorName={tutorName} />
+      <ReviewModal isOpen={reviewOpen} onClose={() => setShowReview(false)} tutorName={tutorName} problemId={(roomName || "").replace(/^session-/, "")} />
     </div>
   )
 }

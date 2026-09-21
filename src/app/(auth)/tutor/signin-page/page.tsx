@@ -73,7 +73,7 @@ export default function TutorSigninPage() {
       } else {
         showError(getApiMessage(data, "We could not sign you in. Please check your email and password."))
       }
-    } catch (err) {
+    } catch {
       showError("We could not reach the login service. Please check your connection and try again.")
     } finally {
       setLoading(false)
@@ -127,7 +127,7 @@ export default function TutorSigninPage() {
           showError(getApiMessage(data, "Google sign in could not be completed. Please try again."))
           setLoading(false)
         }
-      } catch (err) {
+      } catch {
         showError("Google sign in is temporarily unavailable. Please try again or use email login.")
         setLoading(false)
       }
@@ -215,7 +215,7 @@ export default function TutorSigninPage() {
 
             <div className="text-center mt-8">
               <p className="text-sm text-on-surface-variant font-medium">
-                Don't have a tutor account? <Link className="text-[#006c4a] font-bold hover:underline ml-1" href="/tutor/signup">Apply to Teach</Link>
+                Don&apos;t have a tutor account? <Link className="text-[#006c4a] font-bold hover:underline ml-1" href="/tutor/signup">Apply to Teach</Link>
               </p>
             </div>
 

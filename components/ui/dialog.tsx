@@ -1,15 +1,12 @@
 "use client"
 import * as React from "react"
+import { useClientReady } from "@/hooks/use-client-ready"
 import { createPortal } from "react-dom"
 import { cn } from "@/lib/utils"
 import { X } from "lucide-react"
 
 export function Dialog({ open, onOpenChange, children }: { open: boolean; onOpenChange: (open: boolean) => void; children: React.ReactNode }) {
-  const [isMounted, setIsMounted] = React.useState(false)
-
-  React.useEffect(() => {
-    setIsMounted(true)
-  }, [])
+  const isMounted = useClientReady()
 
   if (!open) return null;
   if (!isMounted) return null

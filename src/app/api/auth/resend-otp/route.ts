@@ -42,7 +42,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Failed to send email. Please try again later." }, { status: 500 })
     }
 
-  } catch (error: any) {
+  } catch (caughtError: unknown) {
+    const error = caughtError instanceof Error ? caughtError : new Error("Unexpected error")
     console.error("Resend OTP error:", error)
     return NextResponse.json({ error: error.message || "Failed to resend OTP" }, { status: 500 })
   }

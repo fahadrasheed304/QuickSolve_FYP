@@ -19,7 +19,7 @@ export default function TutorSubjectsPage() {
           </div>
           <h1 className="mt-4 text-4xl font-black text-text-main">Teaching subjects</h1>
           <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-text-muted">
-            Subjects linked with {displayName}'s verified tutor profile.
+            Subjects linked with {displayName}&apos;s verified tutor profile.
           </p>
         </div>
 
