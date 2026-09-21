@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createSession } from '@/lib/auth'
-import { DB, pendingSignups } from '@/lib/db'
+import { DB } from '@/lib/db'
+
+import { getPendingSignup, removePendingSignup, matchesOtp } from '@/lib/pending-signups'
 
 // Admin emails that get automatic admin access
 const ADMIN_EMAILS = ['quicksolve.officials@gmail.com']
@@ -14,24 +16,24 @@ export async function POST(request: Request) {
     }
 
     const normalizedEmail = email.toLowerCase().trim()
-    const pending = pendingSignups[normalizedEmail]
+    const pending = await getPendingSignup(normalizedEmail)
 
     if (!pending) {
       return NextResponse.json({ error: "No pending signup found or OTP expired." }, { status: 400 })
     }
 
     if (Date.now() > pending.expires) {
-      delete pendingSignups[normalizedEmail]
+      await removePendingSignup(normalizedEmail, pending.otpHash)
       return NextResponse.json({ error: "OTP expired, please sign up again." }, { status: 400 })
     }
 
-    if (pending.otp !== otp) {
+    if (typeof otp !== 'string' || !matchesOtp(otp, pending.otpHash)) {
       return NextResponse.json({ error: "Incorrect OTP code." }, { status: 401 })
     }
 
     const hasRequestedRole = await DB.userHasRole(pending.user.email, pending.user.role)
     if (hasRequestedRole) {
-      delete pendingSignups[normalizedEmail]
+      await removePendingSignup(normalizedEmail, pending.otpHash)
       return NextResponse.json({
         error: "Email already registered for this role",
         message: `This email is already registered as a ${pending.user.role}. Please log in instead.`,
@@ -76,7 +78,7 @@ export async function POST(request: Request) {
     }
 
     // Remove from pending
-    delete pendingSignups[normalizedEmail]
+    await removePendingSignup(normalizedEmail, pending.otpHash)
 
     // Create session cookie
     const { session, expiresAt } = await createSession(newUser.email, newUser.email, newUser.role)

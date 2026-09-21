@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { pendingSignups } from '@/lib/db'
+import { getPendingSignup, savePendingSignup, generateOtp } from '@/lib/pending-signups'
 import { sendMail } from '@/lib/mail'
 
 export async function POST(request: Request) {
@@ -11,21 +11,17 @@ export async function POST(request: Request) {
     }
 
     const normalizedEmail = email.toLowerCase().trim()
-    const pending = pendingSignups[normalizedEmail]
+    const pending = await getPendingSignup(normalizedEmail)
 
     if (!pending) {
       return NextResponse.json({ error: "No pending signup found for this email." }, { status: 400 })
     }
 
     // Generate new 6 digit OTP
-    const newOtp = Math.floor(100000 + Math.random() * 900000).toString()
+    const newOtp = generateOtp()
 
     // Update pending signup with new OTP and refresh expiry
-    pendingSignups[normalizedEmail] = {
-      ...pending,
-      otp: newOtp,
-      expires: Date.now() + 15 * 60 * 1000
-    }
+    await savePendingSignup(normalizedEmail, pending.user, newOtp)
 
     const html = `<div style="font-family: Arial, sans-serif; padding: 20px;">
                     <h2>QuickSolve Update</h2>

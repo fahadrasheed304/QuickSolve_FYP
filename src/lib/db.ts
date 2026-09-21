@@ -738,13 +738,3 @@ export const DB = {
     return { success: true }
   },
 }
-
-// ── PENDING SIGNUPS (in-memory, OTP flow) ───────────────────
-// Uses globalThis so it survives Next.js hot-reloads in dev
-const globalForPending = globalThis as unknown as {
-  pendingSignups: Record<string, { otp: string; user: { fullname: string; email: string; password: string; role: string; phone?: string; city?: string; subjects?: string[]; highestEducation?: string; university?: string; experienceYears?: number }; expires: number }>
-}
-if (!globalForPending.pendingSignups) {
-  globalForPending.pendingSignups = {}
-}
-export const pendingSignups = globalForPending.pendingSignups

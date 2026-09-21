@@ -1,6 +1,7 @@
 import { after, NextResponse } from "next/server";
-import { DB, pendingSignups } from "@/lib/db";
+import { DB } from "@/lib/db";
 import { sendMail } from "@/lib/mail";
+import { getPendingSignup, savePendingSignup, generateOtp } from "@/lib/pending-signups";
 import { hashPassword } from "@/lib/password";
 
 export const runtime = "nodejs";
@@ -36,28 +37,17 @@ export async function POST(request: Request) {
       );
     }
 
-    const pending = pendingSignups[normalizedEmail];
+    const pending = await getPendingSignup(normalizedEmail);
     const isRetryingPendingSignup =
       pending?.user?.role === requestedRole && Date.now() <= pending.expires;
 
     // Generate 6 digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = generateOtp();
 
-    // Store temporarily for 15 minutes. If the user is retrying an unfinished
-    // signup, refresh the pending details and send a fresh OTP instead of
-    // blocking them with an error.
-    // Include tutor-specific fields so verify-otp can create tutor_profile
-    pendingSignups[normalizedEmail] = {
-      otp,
-      user: {
-        fullname,
-        email: normalizedEmail,
-        phone,
-        password: hashPassword(password),
-        role: requestedRole,
-      },
-      expires: Date.now() + 15 * 60 * 1000,
-    };
+    await savePendingSignup(normalizedEmail, {
+      fullname, email: normalizedEmail, phone,
+      password: hashPassword(password), role: requestedRole,
+    }, otp);
 
     const html = `<div style="font-family: Arial, sans-serif; padding: 20px;">
                     <h2>Welcome to QuickSolve!</h2>
@@ -74,10 +64,9 @@ export async function POST(request: Request) {
         html,
       );
 
-      const latestPending = pendingSignups[normalizedEmail];
-      if (!sent && latestPending?.otp === otp) {
-        delete pendingSignups[normalizedEmail];
-        console.error(`Failed to send signup OTP email to ${normalizedEmail}`);
+      if (!sent) {
+        // Keep the durable record so Resend code can retry delivery.
+        console.error("Failed to send signup OTP email");
       }
     });
 
