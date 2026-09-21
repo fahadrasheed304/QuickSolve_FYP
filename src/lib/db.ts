@@ -174,7 +174,7 @@ export const DB = {
     const cutoff = new Date(Date.now() - PROBLEM_EXPIRY_MINUTES * 60 * 1000).toISOString()
     let query = supabaseAdmin
       .from('problems')
-      .select('*, bids(*)')
+      .select('*, bids:bids!bids_problem_id_fkey(*)')
       .eq('status', 'open')
       .gte('created_at', cutoff)
       .order('created_at', { ascending: false })

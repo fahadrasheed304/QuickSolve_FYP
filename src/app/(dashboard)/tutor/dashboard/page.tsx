@@ -40,6 +40,7 @@ export default function TutorDashboard() {
   const [showNotifications, setShowNotifications] = useState(false)
   const [loadedProblems, setOpenProblems] = useState<OpenProblem[]>([])
   const [isLoadingProblems, setIsLoadingProblems] = useState(false)
+  const [problemsError, setProblemsError] = useState<string | null>(null)
   const [bidPrices, setBidPrices] = useState<Record<string, string>>({})
   const [placingBidId, setPlacingBidId] = useState<string | null>(null)
   const [bidMessage, setBidMessage] = useState<string | null>(null)
@@ -72,6 +73,7 @@ export default function TutorDashboard() {
         const data = await res.json()
         if (cancelled) return
         if (res.ok) {
+          setProblemsError(null)
           const problems = data.problems || []
           setOpenProblems(problems)
                     setBidPrices((current) =>
@@ -80,7 +82,11 @@ export default function TutorDashboard() {
               return acc
             }, {})
           )
+        } else {
+          setProblemsError('Student requests could not be loaded. Retrying automatically…')
         }
+      } catch {
+        if (!cancelled) setProblemsError('Connection failed. Retrying student requests automatically…')
       } finally {
         if (!cancelled) setIsLoadingProblems(false)
       }
@@ -427,6 +433,10 @@ export default function TutorDashboard() {
                 {isUpdatingAvailability && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Go Available
               </Button>
+            </div>
+          ) : problemsError ? (
+            <div role="alert" className="rounded-lg border border-border bg-surface p-8 text-center">
+              <p className="text-text-muted">{problemsError}</p>
             </div>
           ) : isLoadingProblems ? (
             <div className="flex min-h-48 items-center justify-center rounded-lg border border-border bg-surface/70">
