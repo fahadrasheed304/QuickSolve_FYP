@@ -19,3 +19,4 @@ Development notes:
 - September 9, 2026: Added subject tags and search filtering for tutors.
 - September 13, 2026: Integrated session reminder email notifications.
 - September 17, 2026: Added database schema for user wallet transactions.
+- September 21, 2026: Fixed payment callback timeout and retry logic.
