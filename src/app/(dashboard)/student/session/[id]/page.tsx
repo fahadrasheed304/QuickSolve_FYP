@@ -2,9 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Clock, ExternalLink, Send, Star } from 'lucide-react'
+import { ExternalLink, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/stores/session-store'
@@ -29,7 +28,7 @@ export default function SessionPage() {
   const router = useRouter()
   const clientReady = useClientReady()
   const { isActive, timeLeftSeconds, tutorName, price, sessionId, roomName, endSession, tickTime } = useSessionStore()
-  const [chatMessage, setChatMessage] = useState("")
+
   const [showReview, setShowReview] = useState(false)
   const reviewOpen = showReview || (!isActive && !!roomName)
 
@@ -46,7 +45,7 @@ export default function SessionPage() {
     if (!isActive) return
     const interval = setInterval(() => {
       const currentTimeLeft = useSessionStore.getState().timeLeftSeconds
-      if (currentTimeLeft <= 1) {
+      if (useSessionStore.getState().endsAt && currentTimeLeft <= 1) {
         handleEndSession()
         return
       }
@@ -110,7 +109,7 @@ export default function SessionPage() {
       <main className="flex-1 flex overflow-hidden">
         {/* ── LiveKit Video Room ── */}
         <div className="flex-1 relative flex flex-col">
-          <VideoRoom roomName={liveKitRoomName} onDisconnected={handleEndSession} />
+          <VideoRoom roomName={liveKitRoomName} />
         </div>
 
         <aside className="hidden w-80 shrink-0 flex-col border-l border-border bg-surface text-text-main md:flex">
@@ -126,42 +125,7 @@ export default function SessionPage() {
             </div>
           </div>
 
-          <div className="flex-1 space-y-4 overflow-y-auto bg-surface p-4">
-            <div className="flex justify-start">
-              <div className="max-w-[85%] rounded-lg rounded-tl-sm bg-surface-hover px-4 py-2.5 text-sm font-semibold shadow-sm">
-                Salam, apko detail samaj aagai problem ki?
-              </div>
-            </div>
-            <div className="flex justify-end">
-              <div className="max-w-[85%] rounded-lg rounded-tr-sm bg-primary px-4 py-2.5 text-sm font-semibold leading-relaxed text-white shadow-sm">
-                Walaikumsalam. Yes I have seen the question. I will solve it on the whiteboard now.
-              </div>
-            </div>
-          </div>
-
-          {isEndingSoon && (
-            <div className="border-t border-amber-200 bg-amber-50 p-4">
-              <div className="mb-3 flex items-center gap-2">
-                <Clock className="w-5 h-5 text-amber-600" />
-                <span className="text-sm font-black text-amber-800">Session ending soon</span>
-              </div>
-              <p className="text-xs text-amber-800">Start a new session if you need more time. Paid extensions are not available yet.</p>
-            </div>
-          )}
-
-          <div className="border-t border-border bg-surface p-4">
-            <div className="flex gap-2">
-              <Input
-                placeholder="Type your message..."
-                value={chatMessage}
-                onChange={(e) => setChatMessage(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') setChatMessage('') }}
-              />
-              <Button size="icon" onClick={() => setChatMessage('')} className="shrink-0">
-                <Send className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
+          <p className="p-4 text-sm text-text-muted">Use the Chat button in the call controls to message the other participant.</p>
         </aside>
       </main>
 

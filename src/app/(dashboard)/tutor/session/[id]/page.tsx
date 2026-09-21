@@ -1,10 +1,9 @@
 "use client"
 
-import { useCallback, useEffect, useState, use } from 'react'
+import { useCallback, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
-import { ExternalLink, Send, Star } from 'lucide-react'
+import { ExternalLink, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/stores/session-store'
@@ -29,7 +28,7 @@ export default function TutorSessionPage({ params }: { params: Promise<{ id: str
   const router = useRouter()
   const clientReady = useClientReady()
   const { isActive, timeLeftSeconds, price, endSession, tickTime } = useSessionStore()
-  const [chatMessage, setChatMessage] = useState("")
+
 
   const handleEndSession = useCallback(() => {
     endSession()
@@ -44,7 +43,7 @@ export default function TutorSessionPage({ params }: { params: Promise<{ id: str
     if (!isActive) return
     const interval = setInterval(() => {
       const currentTimeLeft = useSessionStore.getState().timeLeftSeconds
-      if (currentTimeLeft <= 1) {
+      if (useSessionStore.getState().endsAt && currentTimeLeft <= 1) {
         handleEndSession()
         return
       }
@@ -102,7 +101,7 @@ export default function TutorSessionPage({ params }: { params: Promise<{ id: str
       <main className="flex-1 flex overflow-hidden">
         {/* ── LiveKit Video Room ── */}
         <div className="flex-1 relative flex flex-col">
-          <VideoRoom roomName={roomId} onDisconnected={handleEndSession} />
+          <VideoRoom roomName={roomId} />
         </div>
 
         <aside className="hidden w-80 shrink-0 flex-col border-l border-border bg-surface text-text-main md:flex">
@@ -120,27 +119,7 @@ export default function TutorSessionPage({ params }: { params: Promise<{ id: str
             )}
           </div>
 
-          <div className="flex-1 space-y-4 overflow-y-auto bg-surface p-4">
-            <div className="flex justify-center">
-              <div className="rounded-lg bg-surface-hover px-4 py-2.5 text-sm font-semibold text-text-muted shadow-sm">
-                Session started. Use video/audio to communicate.
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-border bg-surface p-4">
-            <div className="flex gap-2">
-              <Input
-                placeholder="Type your message..."
-                value={chatMessage}
-                onChange={(e) => setChatMessage(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') setChatMessage('') }}
-              />
-              <Button size="icon" onClick={() => setChatMessage('')} className="shrink-0">
-                <Send className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
+          <p className="p-4 text-sm text-text-muted">Use the Chat button in the call controls to message the other participant.</p>
         </aside>
       </main>
     </div>
