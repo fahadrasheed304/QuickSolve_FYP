@@ -22,7 +22,7 @@ const PAYMENT_METHODS = [{
 type TabType = 'all' | 'credit' | 'debit' | 'escrow'
 
 export default function WalletPage() {
-  const { balance, transactions, isLoading, error, fetchWallet, topUp } = useWalletStore()
+  const { balance, escrowBalance, transactions, isLoading, error, fetchWallet, topUp } = useWalletStore()
   const [amount, setAmount] = useState('1000')
   const [method, setMethod] = useState<'stripe'>('stripe')
   const [submitting, setSubmitting] = useState(false)
@@ -128,6 +128,11 @@ export default function WalletPage() {
               ) : (
                 <h2 className="my-5 text-5xl font-black">Rs. {balance.toLocaleString()}</h2>
               )}
+              <div className="mb-5 rounded-lg border border-white/20 bg-white/10 p-3">
+                <p className="flex items-center gap-2 text-sm font-bold"><Lock className="h-4 w-4" />Reserved for sessions</p>
+                <p className="mt-1 text-xl font-black">{isLoading ? 'Loading…' : `Rs. ${escrowBalance.toLocaleString()}`}</p>
+                <p className="mt-1 text-xs text-white/70">Already excluded from your available balance. Held until the session payment is released.</p>
+              </div>
               <p className="mb-3 text-xs font-black uppercase text-white/55">Quick Add</p>
               <div className="flex flex-wrap gap-2">
                 {PRESET_AMOUNTS.map((val) => (

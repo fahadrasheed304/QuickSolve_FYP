@@ -1,5 +1,6 @@
 "use client"
 
+import { useNotifications } from '@/hooks/use-notifications'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { LayoutDashboard, BookOpen, History, LogOut, Shield, Menu, X } from 'lucide-react'
@@ -17,6 +18,7 @@ export default function TutorLayout({
   const router = useRouter()
   const { user, isLoading, fetchUser, logout } = useAuthStore()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  useNotifications(user?.email, user?.role)
 
   useEffect(() => {
     fetchUser()

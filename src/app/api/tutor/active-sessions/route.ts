@@ -18,23 +18,15 @@ export async function GET() {
 
     const tutorEmail = (payload.email as string).toLowerCase().trim()
 
-    // Find the tutor's name from their profile
-    const { data: profile } = await supabaseAdmin
-      .from('tutor_profiles')
-      .select('fullname')
-      .eq('user_email', tutorEmail)
-      .single()
-
-    const tutorName = profile?.fullname || tutorEmail
-
     // Find bids placed by this tutor on problems that have been accepted
     const { data: bids, error } = await supabaseAdmin
       .from('bids')
       .select('id, problem_id, price, duration_min, problems!bids_problem_id_fkey!inner(id, subject, class, status, student_email)')
-      .eq('tutor_name', tutorName)
+      .eq('tutor_email', tutorEmail)
       .eq('status', 'accepted')
       .eq('problems.status', 'accepted')
       .is('problems.settled_at', null)
+      .is('problems.session_ended_at', null)
       .order('created_at', { ascending: false })
       .limit(5)
 

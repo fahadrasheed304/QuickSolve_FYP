@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { decrypt } from '@/lib/auth'
 import { DB } from '@/lib/db'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,9 +26,19 @@ export async function GET() {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
+    let escrowBalance = 0
+    if (session.role === 'student') {
+      const { data, error } = await supabaseAdmin.from('session_escrows').select('amount')
+        .eq('student_email', String(session.email).toLowerCase().trim()).eq('status', 'reserved')
+      if (error) return NextResponse.json({ error: 'Wallet escrow is temporarily unavailable' }, { status: 503 })
+      escrowBalance = (data || []).reduce((sum, row) => sum + Number(row.amount), 0)
+    }
     return NextResponse.json({
       balance: wallet.balance,
-      transactions: wallet.transactions,
+      escrowBalance: Math.round(escrowBalance * 100) / 100,
+      transactions: wallet.transactions.map(tx => ({ ...tx,
+        type: tx.method === 'Session escrow' || tx.method === 'Session escrow extension' ? 'escrow' : tx.type,
+      })),
     })
   } catch (caughtError: unknown) {
     const error = caughtError instanceof Error ? caughtError : new Error("Unexpected error")

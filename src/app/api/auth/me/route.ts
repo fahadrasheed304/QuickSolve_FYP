@@ -73,6 +73,8 @@ export async function GET() {
           documentsUploaded: tutorProfile.documents_uploaded,
           subjectTestScore: tutorProfile.subject_test_score,
           subjectTestPassed: tutorProfile.subject_test_passed,
+          rating: tutorProfile.rating,
+          reviewCount: tutorProfile.review_count,
           availableDays: tutorProfile.available_days,
           availableHoursStart: tutorProfile.available_hours_start,
           availableHoursEnd: tutorProfile.available_hours_end,

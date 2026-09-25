@@ -25,9 +25,9 @@ problem/bid for the demo rather than guessing which historical bid was accepted.
 The new functions atomically save balance changes and transaction history, reject
 overdrafts, and deduplicate Stripe/session references. Only the server's
 `service_role` may execute them. Session settlement uses the stored accepted bid
-price, not an amount supplied by the browser. This is payment on completion;
-funds are not reserved at bid acceptance. Insufficient funds at completion return
-an error without changing the balance; top up and retry settlement.
+price, not an amount supplied by the browser. This initial migration used payment
+on completion; the session escrow migration below supersedes that behavior for
+newly accepted sessions. Older accepted sessions retain their original billing path.
 
 Confirm the migration in SQL Editor (read-only):
 
@@ -86,3 +86,100 @@ rollback on insert failure, overdrafts, owner checks, stored session prices, and
 Stripe webhook signatures. They do not charge cards or modify the hosted database.
 An actual sandbox checkout still requires your Stripe credentials and applied
 Supabase migration.
+## Live request and bid notifications
+
+After the notification migration, apply
+[`202609250004_reject_unselected_bids.sql`](supabase/migrations/202609250004_reject_unselected_bids.sql).
+Selecting a tutor now accepts that bid and rejects the other pending bids in one transaction.
+Unselected bidders receive a saved rejection alert; tutors who did not bid only receive a
+request-closed notice. Late bids on selected/expired requests are rejected by the database.
+The migration also repairs pending losing bids on already accepted requests without sending
+historical alerts. It does not alter payments or delete bid history.
+
+Apply [`202609250003_realtime_notifications.sql`](supabase/migrations/202609250003_realtime_notifications.sql)
+in the project's Supabase SQL Editor after the existing session/payment migrations.
+It creates the protected notification table, transactional triggers and Realtime publication entry.
+Reapplying this migration is safe. No additional environment variables are required.
+The local app's service-role key is not a database administration credential; this migration
+must be applied using SQL Editor or an authorized database connection.
+
+- Verified, available tutors receive new requests matching their subjects.
+- Students receive new-bid alerts; selected tutors receive acceptance alerts.
+- The notification bell shows the latest 50 saved notifications, unread badges and mark-read actions.
+- Database events travel through an authenticated server-sent event endpoint. Email and role
+  come from the signed cookie; the service-role key never reaches the browser.
+- Reconnects reload the saved inbox and refresh request/bid lists. A 30-second fallback
+  runs while disconnected, and a 60-second list reconciliation handles expiry/recovery.
+- These are in-app notifications while the application is open, not operating-system push alerts.
+
+The deployment must support streaming Node.js route responses without proxy buffering.
+Streams rotate after 55 seconds and reauthenticate automatically. If Realtime is unavailable,
+the bell displays a reconnecting state and fallback refreshes continue.
+See [Supabase's database-change documentation](https://supabase.com/docs/guides/realtime/postgres-changes).
+
+Acceptance check after applying the migration: open a student and a verified, available
+tutor with a matching subject in separate browsers. Post a problem, submit a bid, then accept
+it. Check immediate list updates, toast alerts, unread badges and accepted-session availability.
+Repeat with a different subject and an unavailable tutor: neither should receive the new request.
+Mark alerts read, refresh, and briefly disconnect/reconnect to check persistence and recovery.
+
+## Session escrow (Stripe sandbox)
+
+After all preceding migrations, apply
+[`202609250005_session_escrow.sql`](supabase/migrations/202609250005_session_escrow.sql).
+Acceptance atomically moves the bid amount out of the available student balance into
+a protected session reserve. Other bids are still rejected and notifications still
+created in the same transaction. A failure rolls the entire action back.
+
+Extensions reserve only their additional cost. Reviews do not charge the base amount
+again. The existing scheduled payout checks the reserve against the payment, credits
+the tutor once and marks the escrow released. Disputed/low-rated sessions remain held.
+The later payment-resolution migration adds admin decisions and automatic no-review
+settlement. The wallet displays available and reserved balances separately, and labels
+reserve ledger debits as escrow movements.
+
+The migration does not retroactively debit existing accepted sessions. They follow
+the previous completion billing path. Stripe remains test-only; the escrow represents
+internal sandbox wallet funds, not a Stripe bank transfer or external escrow service.
+Do not reapply older function migrations after this migration.
+
+Demo check: top up a sandbox wallet to Rs. 1,000, accept a Rs. 500 bid, and confirm
+Rs. 500 available / Rs. 500 reserved. Submit a review after the session: available
+balance must not be charged again. A qualifying scheduled payout reduces reserved
+balance and credits the tutor once. Repeat acceptance/review requests and check no
+duplicate charges. Test insufficient funds, extensions and a disputed session too.
+
+## Automatic payouts and admin resolution
+
+Apply [`202609250006_payment_resolution.sql`](supabase/migrations/202609250006_payment_resolution.sql)
+after the escrow migration. Run the complete script, including the Cron statements.
+The existing `quicksolve-release-session-payments` job checks once per minute:
+
+- Completed/expired escrow-funded sessions get a payment row even without a review.
+- The 5-minute dispute window starts when that row is created. No-review payments
+  are eligible for release after that window; the next scheduled check pays them.
+- Low ratings and disputes hold payment. Unstarted reservations older than 30 minutes,
+  or explicitly ended before starting, also go on hold for an admin decision.
+- A late review is allowed after automatic payment, but does not reverse a resolved payment.
+- Existing legacy sessions without a funded escrow retain their previous billing path;
+  already funded legacy review payments can be released/refunded by the admin.
+
+Admin: use **Session payments & disputes** from the verification page, or visit
+`/admin/payments`. The default list is held payments, with session times, participants,
+agreed duration, extensions, feedback and dispute details. Choose full release to the
+tutor or full refund to the student wallet, provide a note and confirm. Decisions are
+saved with admin identity/time; retries cannot move money twice and opposing decisions
+are rejected. Refunds are internal wallet credits, not refunds to the original Stripe card.
+Recordings and partial refunds are not part of this workflow.
+
+Verify the scheduler after migration:
+
+```sql
+select jobname, schedule, active from cron.job
+where jobname = 'quicksolve-release-session-payments';
+```
+
+Live check: finish an escrow-funded session without reviewing it. Confirm its pending
+payment appears by the next scheduled check, then is released after the 5-minute window.
+Repeat with a dispute or low rating; use the admin page to refund one and release another.
+Confirm wallet totals, terminal statuses and resolution history from both accounts.

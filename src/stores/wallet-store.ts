@@ -12,6 +12,7 @@ export interface WalletTransaction {
 
 interface WalletState {
   balance: number
+  escrowBalance: number
   transactions: WalletTransaction[]
   isLoading: boolean
   error: string | null
@@ -21,6 +22,7 @@ interface WalletState {
 
 export const useWalletStore = create<WalletState>((set) => ({
   balance: 0,
+  escrowBalance: 0,
   transactions: [],
   isLoading: false,
   error: null,
@@ -37,6 +39,7 @@ export const useWalletStore = create<WalletState>((set) => ({
       const data = await res.json()
       set({
         balance: data.balance ?? 0,
+        escrowBalance: data.escrowBalance ?? 0,
         transactions: data.transactions ?? [],
         isLoading: false,
       })

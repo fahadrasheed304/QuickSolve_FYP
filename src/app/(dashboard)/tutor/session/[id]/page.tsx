@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/stores/session-store'
 import dynamic from 'next/dynamic'
+import { useEndSession } from '@/hooks/use-end-session'
 import { useClientReady } from '@/hooks/use-client-ready'
 
 // Dynamically import VideoRoom to avoid SSR issues with LiveKit
@@ -30,10 +31,30 @@ export default function TutorSessionPage({ params }: { params: Promise<{ id: str
   const { isActive, timeLeftSeconds, price, endSession, tickTime } = useSessionStore()
 
 
-  const handleEndSession = useCallback(() => {
+  const closeLocalSession = useCallback(() => {
     endSession()
     router.push('/tutor/dashboard')
   }, [endSession, router])
+
+  const { endCall: handleEndSession, isEnding } = useEndSession(roomId, closeLocalSession)
+
+  useEffect(() => {
+    if (!isActive || !roomId) return
+    let cancelled = false
+    const check = async () => {
+      try {
+        const res = await fetch('/api/sessions/state?problemId=' + encodeURIComponent(roomId.replace(/^session-/, '')), { cache: 'no-store' })
+        if (!res.ok) return
+        const data = await res.json()
+        if (cancelled) return
+        if (data.ended) closeLocalSession()
+        else if (data.endsAt) useSessionStore.getState().syncClock(data.endsAt, data.serverNow)
+      } catch { /* Retry on the next poll. */ }
+    }
+    void check()
+    const timer = setInterval(check, 3000)
+    return () => { cancelled = true; clearInterval(timer) }
+  }, [isActive, roomId, closeLocalSession])
 
   const handlePopOutWindow = () => {
     window.open(window.location.href, 'QuickSolve_LiveSession', 'width=1280,height=750,resizable=yes,scrollbars=yes,status=no,location=no,toolbar=no')
@@ -42,16 +63,11 @@ export default function TutorSessionPage({ params }: { params: Promise<{ id: str
   useEffect(() => {
     if (!isActive) return
     const interval = setInterval(() => {
-      const currentTimeLeft = useSessionStore.getState().timeLeftSeconds
-      if (useSessionStore.getState().endsAt && currentTimeLeft <= 1) {
-        handleEndSession()
-        return
-      }
       tickTime()
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [handleEndSession, isActive, tickTime])
+  }, [isActive, tickTime])
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60)
@@ -92,8 +108,8 @@ export default function TutorSessionPage({ params }: { params: Promise<{ id: str
             <ExternalLink className="w-4 h-4 mr-1.5" />
             Pop Out Window
           </Button>
-          <Button onClick={handleEndSession} variant="destructive" size="sm" className="font-bold px-5">
-            End Session
+          <Button onClick={handleEndSession} disabled={isEnding} variant="destructive" size="sm" className="font-bold px-5">
+            {isEnding ? 'Ending...' : 'End Call'}
           </Button>
         </div>
       </header>
@@ -101,7 +117,7 @@ export default function TutorSessionPage({ params }: { params: Promise<{ id: str
       <main className="flex-1 flex overflow-hidden">
         {/* ── LiveKit Video Room ── */}
         <div className="flex-1 relative flex flex-col">
-          <VideoRoom roomName={roomId} />
+          <VideoRoom roomName={roomId} onEndSession={handleEndSession} isEnding={isEnding} />
         </div>
 
         <aside className="hidden w-80 shrink-0 flex-col border-l border-border bg-surface text-text-main md:flex">

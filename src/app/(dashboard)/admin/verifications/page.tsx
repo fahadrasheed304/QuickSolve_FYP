@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   AlertCircle,
@@ -458,6 +459,7 @@ export default function AdminVerificationsPage() {
                 Admin verification
               </div>
               <h1 className="text-3xl font-black md:text-4xl">Tutor verification desk</h1>
+              <Link href="/admin/payments" className="mt-3 inline-block font-bold text-white underline">Session payments & disputes →</Link>
               <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-white/78">
                 <span>{filteredTutors.length} visible</span>
                 <span>/</span>

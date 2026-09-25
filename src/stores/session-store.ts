@@ -14,14 +14,16 @@ interface SessionState {
   startSession: (tutorName: string, durationMinutes: number, price: number, roomName?: string) => void
   endSession: () => void
   clearSession: () => void
-  extendSession: (minutes: number) => void
   tickTime: () => void
 }
 
 export const useSessionStore = create<SessionState>()(persist((set) => ({
   endsAt: null,
   clockOffset: 0,
-  syncClock: (endsAt, serverNow) => set({ endsAt, clockOffset: serverNow - Date.now(), timeLeftSeconds: Math.max(0, Math.ceil((endsAt - serverNow) / 1000)) }),
+  syncClock: (endsAt, serverNow) => set((state) => {
+    const deadline = Math.max(state.endsAt || 0, endsAt)
+    return { endsAt: deadline, clockOffset: serverNow - Date.now(), timeLeftSeconds: Math.max(0, Math.ceil((deadline - serverNow) / 1000)) }
+  }),
   sessionId: null,
   roomName: null,
   isActive: false,
@@ -42,9 +44,6 @@ export const useSessionStore = create<SessionState>()(persist((set) => ({
   },
   endSession: () => set({ isActive: false }),
   clearSession: () => set({ endsAt: null, clockOffset: 0, isActive: false, sessionId: null, roomName: null, price: 0, tutorName: "", timeLeftSeconds: 0 }),
-  extendSession: (minutes) => set((state) => ({
-    timeLeftSeconds: state.timeLeftSeconds + (minutes * 60)
-  })),
   tickTime: () => set((state) => ({
     timeLeftSeconds: state.endsAt ? Math.max(0, Math.ceil((state.endsAt - Date.now() - state.clockOffset) / 1000)) : state.timeLeftSeconds
   }))

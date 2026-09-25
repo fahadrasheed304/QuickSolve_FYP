@@ -50,8 +50,9 @@ export async function POST(request: Request) {
 
     const bid = await DB.createBid({
       problemId,
+      tutorEmail: String(session.email).toLowerCase().trim(),
       tutorName: profile.fullname || user.fullname || user.email.split('@')[0],
-      tutorRating: profile.rating || 5,
+      tutorRating: profile.rating ?? 0,
       tutorSessions: profile.total_sessions || 0,
       tutorSubject: Array.isArray(profile.subjects) && profile.subjects.length > 0
         ? profile.subjects[0]

@@ -1,4 +1,5 @@
 "use client"
+import { SessionPayments } from '@/components/session-payments'
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { AlertCircle, CheckCircle2, Clock, History, Loader2, RefreshCw, Search, XCircle } from 'lucide-react'
@@ -119,6 +120,7 @@ export default function HistoryPage() {
 
   return (
     <div className="p-4 md:p-8 pb-20 qs-page-enter">
+      <SessionPayments student />
       <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <div className="qs-kicker rounded-full px-3 py-1.5">

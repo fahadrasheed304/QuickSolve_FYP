@@ -38,8 +38,9 @@ export function LiveBidsList() {
     setAcceptingBidId(null)
 
     if (accepted) {
+      void useWalletStore.getState().fetchWallet()
       startSession(bid.tutorName, bid.durationMin, bid.price, `session-${bid.problemId}`)
-      notifySuccess('Bid accepted. Opening your session...')
+      notifySuccess('Bid accepted. Session funds reserved. Opening your session...')
       const sessionUrl = '/student/session/active'
       router.push(sessionUrl)
     } else {
@@ -115,7 +116,7 @@ export function LiveBidsList() {
                 <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
                   <span className="flex items-center gap-1 font-bold text-accent">
                     <Star className="h-3.5 w-3.5 fill-current" />
-                    {bid.tutorRating}
+                    {bid.tutorRating > 0 ? bid.tutorRating : 'New'}
                   </span>
                   <span className="text-text-muted">({bid.tutorSessions} sessions)</span>
                   <span className="h-1 w-1 rounded-full bg-border" />

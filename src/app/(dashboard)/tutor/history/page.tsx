@@ -1,4 +1,5 @@
 "use client"
+import { SessionPayments } from '@/components/session-payments'
 
 import { CalendarClock, CheckCircle2, Clock3, History, Star, Users } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth-store'
@@ -18,6 +19,7 @@ export default function TutorHistoryPage() {
 
   return (
     <div className="p-4 pb-20 md:p-8 qs-stagger">
+      <SessionPayments  />
       <div className="mb-8">
         <div className="qs-kicker rounded-full px-3 py-1.5">
           <History className="h-4 w-4" />

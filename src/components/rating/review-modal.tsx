@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Star, Flag } from 'lucide-react'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
@@ -17,6 +17,7 @@ interface ReviewModalProps {
   onClose: () => void
   tutorName: string
   problemId: string
+  fromHistory?: boolean
 }
 
 const TAGS = [
@@ -28,7 +29,7 @@ const DISPUTE_REASONS = [
   "Tutor did not show up", "Poor explanation", "Technical issues", "Other"
 ]
 
-export function ReviewModal({ isOpen, onClose, tutorName, problemId }: ReviewModalProps) {
+export function ReviewModal({ isOpen, onClose, tutorName, problemId, fromHistory = false }: ReviewModalProps) {
   const router = useRouter()
   const [rating, setRating] = useState(0)
   const [hoveredRating, setHoveredRating] = useState(0)
@@ -37,6 +38,7 @@ export function ReviewModal({ isOpen, onClose, tutorName, problemId }: ReviewMod
   const [hasDispute, setHasDispute] = useState(false)
   const [disputeReason, setDisputeReason] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const submitting = useRef(false)
   const fetchWallet = useWalletStore(state => state.fetchWallet)
 
   const toggleTag = (tag: string) => {
@@ -44,11 +46,14 @@ export function ReviewModal({ isOpen, onClose, tutorName, problemId }: ReviewMod
   }
 
   const handleSubmit = async () => {
+    if (submitting.current) return
     if (rating === 0 && !hasDispute) {
       notifyError("Please choose a star rating before submitting your review.")
       return
     }
 
+    if (hasDispute && !disputeReason) { notifyError('Please choose a dispute reason.'); return }
+    submitting.current = true
     setIsSubmitting(true)
 
     try {
@@ -64,22 +69,25 @@ export function ReviewModal({ isOpen, onClose, tutorName, problemId }: ReviewMod
           dispute: hasDispute ? disputeReason : null
         })
       })
+      const data = await res.json()
       if (!res.ok) {
-        const data = await res.json()
         notifyError(data.error || "Session payment failed. Please retry.")
         return
       } else {
-        useSessionStore.getState().clearSession()
+        if (!fromHistory) useSessionStore.getState().clearSession()
         await fetchWallet()
-        notifySuccess("Session payment completed.")
+        notifySuccess(data.status === 'held' ? "Review saved. Payment held for admin review." : data.status === 'released' ? "Review saved. Tutor payment has already been released." : data.status === 'refunded' ? "Review saved. This payment was refunded to your wallet." : "Review saved. Payment will release after the dispute window unless held.")
         onClose()
-        router.push('/student/dashboard')
-        router.refresh()
+        if (!fromHistory) {
+          router.push('/student/dashboard')
+          router.refresh()
+        }
       }
     } catch (e) {
       console.error("Failed to complete session:", e)
       notifyError("We could not save the session review right now. Please check your connection.")
     } finally {
+      submitting.current = false
               setIsSubmitting(false)
 
     }
@@ -98,7 +106,7 @@ export function ReviewModal({ isOpen, onClose, tutorName, problemId }: ReviewMod
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={() => { if (!isSubmitting) onClose() }}>
       <DialogContent className="sm:max-w-md p-0 overflow-hidden">
         <div className="bg-hero-gradient surface-grid p-6 text-center text-white">
           <h2 className="mb-1 text-2xl font-black">Session Completed</h2>
@@ -112,7 +120,7 @@ export function ReviewModal({ isOpen, onClose, tutorName, problemId }: ReviewMod
             </Avatar>
             <div>
               <p className="font-black text-text-main">{tutorName}</p>
-              <p className="text-sm text-text-muted">Physics / Class 10</p>
+              <p className="text-sm text-text-muted">Rate your tutoring session</p>
             </div>
           </div>
 
@@ -123,6 +131,9 @@ export function ReviewModal({ isOpen, onClose, tutorName, problemId }: ReviewMod
                 <button
                   key={star}
                   type="button"
+                  aria-label={`Rate ${star} out of 5 stars`}
+                  aria-pressed={rating === star}
+                  disabled={isSubmitting}
                   onMouseEnter={() => setHoveredRating(star)}
                   onMouseLeave={() => setHoveredRating(0)}
                   onClick={() => setRating(star)}
@@ -131,7 +142,7 @@ export function ReviewModal({ isOpen, onClose, tutorName, problemId }: ReviewMod
                   <Star
                     className={cn(
                       "h-10 w-10 transition-colors",
-                      (hoveredRating >= star || rating >= star)
+                      ((hoveredRating || rating) >= star)
                         ? "fill-amber-500 text-amber-500"
                         : "fill-surface-hover text-border"
                     )}
@@ -209,9 +220,9 @@ export function ReviewModal({ isOpen, onClose, tutorName, problemId }: ReviewMod
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className={cn("h-12 w-full text-base", (hasDispute || (rating > 0 && rating < 3)) && "bg-amber-600 hover:bg-amber-700")}
+            className={cn("h-12 w-full text-base", (hasDispute || (rating > 0 && rating < 4)) && "bg-amber-600 hover:bg-amber-700")}
           >
-            {isSubmitting ? "Processing..." : (hasDispute || (rating > 0 && rating < 3)) ? (
+            {isSubmitting ? "Processing..." : hasDispute ? (
               <>
                 <Flag className="mr-2 h-5 w-5" />
                 Submit & Report Issue

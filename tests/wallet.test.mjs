@@ -62,6 +62,32 @@ test('wallet migration, retries, failures and session authorization', async (t) 
       const result = await db.query("select has_function_privilege('anon','apply_wallet_transaction(text,text,numeric,text,text,text,text)','execute') allowed")
       assert.equal(result.rows[0].allowed, false)
     })
+    await t.test('review holds, delayed credits, duplicate retries and disputes are atomic', async () => {
+      await db.exec("create table tutor_profiles(fullname text,user_email text,total_earnings numeric default 0,total_sessions integer default 0); insert into tutor_profiles(fullname,user_email) values ('Tutor','tutor@example.test'); insert into users values ('tutor@example.test',0); insert into role_wallets(user_email,role,balance) values ('tutor@example.test','tutor',0);")
+      await db.exec(await readFile('supabase/migrations/202609220003_session_end.sql','utf8'))
+      const sql = (await readFile('supabase/migrations/202609220004_session_payments.sql','utf8')).split('-- Supabase Cron')[0]
+      await db.exec(sql)
+      const make = async (rating, dispute = null) => {
+        const id = (await db.query("insert into problems(student_email) values ('student@example.test') returning id")).rows[0].id
+        const bid = (await db.query("insert into bids(problem_id,tutor_name,tutor_email,price) values ($1,'Tutor','tutor@example.test',200) returning id",[id])).rows[0].id
+        await db.query('select accept_student_bid($1,$2,$3)',[id,'student@example.test',bid])
+        await db.query('select submit_session_review($1,$2,$3,$4,$5)',[id,'student@example.test',rating,'Good',dispute])
+        return id
+      }
+      const id = await make(5)
+      await db.query("select submit_session_review($1,$2,5,'',null)",[id,'student@example.test'])
+      assert.equal(await balance(),800)
+      assert.equal((await db.query('select release_session_payments() n')).rows[0].n,0)
+      const disputed = await make(5)
+      await db.query("select submit_session_review($1,$2,5,'','Technical issues')",[disputed,'student@example.test'])
+      await make(2)
+      await db.exec("update session_payments set release_at=now()-interval '1 minute'")
+      assert.equal((await db.query('select release_session_payments() n')).rows[0].n,1)
+      assert.equal((await db.query('select release_session_payments() n')).rows[0].n,0)
+      assert.equal(Number((await db.query("select balance from role_wallets where user_email='tutor@example.test'")).rows[0].balance),200)
+      assert.equal((await db.query("select count(*) from session_payments where status='held'")).rows[0].count,2)
+      await assert.rejects(db.query("select submit_session_review($1,$2,5,'','late')",[id,'student@example.test']),/already released/)
+    })
   } finally {
     await db.close()
   }

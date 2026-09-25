@@ -2,14 +2,16 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ExternalLink, Star } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/stores/session-store'
 import { ReviewModal } from '@/components/rating/review-modal'
 import dynamic from 'next/dynamic'
+import { useEndSession } from '@/hooks/use-end-session'
 import { useClientReady } from '@/hooks/use-client-ready'
+import { SessionExtension } from '@/components/session-extension'
 
 // Dynamically import VideoRoom to avoid SSR issues with LiveKit
 const VideoRoom = dynamic(() => import('@/components/livekit/video-room'), {
@@ -30,12 +32,36 @@ export default function SessionPage() {
   const { isActive, timeLeftSeconds, tutorName, price, sessionId, roomName, endSession, tickTime } = useSessionStore()
 
   const [showReview, setShowReview] = useState(false)
+  const [rate, setRate] = useState<{ bidPrice: number; durationMin: number; extensionMinutes: number } | null>(null)
   const reviewOpen = showReview || (!isActive && !!roomName)
 
-  const handleEndSession = useCallback(() => {
+  const closeLocalSession = useCallback(() => {
     endSession()
     setShowReview(true)
   }, [endSession])
+
+  const { endCall: handleEndSession, isEnding } = useEndSession(roomName, closeLocalSession)
+
+  useEffect(() => {
+    if (!isActive || !roomName) return
+    let cancelled = false
+    const check = async () => {
+      try {
+        const res = await fetch('/api/sessions/state?problemId=' + encodeURIComponent(roomName.replace(/^session-/, '')), { cache: 'no-store' })
+        if (!res.ok) return
+        const data = await res.json()
+        if (cancelled) return
+        if (data.ended) closeLocalSession()
+        else {
+          if (data.endsAt) useSessionStore.getState().syncClock(data.endsAt, data.serverNow)
+          setRate(data)
+        }
+      } catch { /* Retry on the next poll. */ }
+    }
+    void check()
+    const timer = setInterval(check, 3000)
+    return () => { cancelled = true; clearInterval(timer) }
+  }, [isActive, roomName, closeLocalSession])
 
   const handlePopOutWindow = () => {
     window.open(window.location.href, 'QuickSolve_LiveSession', 'width=1280,height=750,resizable=yes,scrollbars=yes,status=no,location=no,toolbar=no')
@@ -44,16 +70,11 @@ export default function SessionPage() {
   useEffect(() => {
     if (!isActive) return
     const interval = setInterval(() => {
-      const currentTimeLeft = useSessionStore.getState().timeLeftSeconds
-      if (useSessionStore.getState().endsAt && currentTimeLeft <= 1) {
-        handleEndSession()
-        return
-      }
       tickTime()
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [handleEndSession, isActive, tickTime])
+  }, [isActive, tickTime])
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60)
@@ -67,7 +88,7 @@ export default function SessionPage() {
     }
       }, [clientReady, isActive, reviewOpen, router])
 
-  if (!isActive && !showReview) return null
+  if (!isActive && !reviewOpen) return null
 
   const isEndingSoon = isActive && timeLeftSeconds <= 300
   const liveKitRoomName = roomName || sessionId || 'default-room'
@@ -82,8 +103,7 @@ export default function SessionPage() {
           <div>
             <h2 className="text-sm font-black">{tutorName || 'Active Session'}</h2>
             <div className="flex items-center gap-1 text-xs text-amber-300 font-bold">
-              <Star className="h-3 w-3 fill-current" />
-              4.9 Expert
+              Live tutoring session
             </div>
           </div>
         </div>
@@ -100,16 +120,18 @@ export default function SessionPage() {
             <ExternalLink className="w-4 h-4 mr-1.5" />
             Pop Out Window
           </Button>
-          <Button onClick={handleEndSession} variant="destructive" size="sm" className="font-bold px-5">
-            End
+          <Button onClick={handleEndSession} disabled={isEnding} variant="destructive" size="sm" className="font-bold px-5">
+            {isEnding ? 'Ending...' : 'End Call'}
           </Button>
         </div>
       </header>
 
+      {isActive && rate && roomName && <SessionExtension key={roomName} problemId={roomName.replace(/^session-/, '')} rate={rate} />}
+
       <main className="flex-1 flex overflow-hidden">
         {/* ── LiveKit Video Room ── */}
         <div className="flex-1 relative flex flex-col">
-          <VideoRoom roomName={liveKitRoomName} />
+          {isActive && <VideoRoom roomName={liveKitRoomName} onEndSession={handleEndSession} isEnding={isEnding} />}
         </div>
 
         <aside className="hidden w-80 shrink-0 flex-col border-l border-border bg-surface text-text-main md:flex">

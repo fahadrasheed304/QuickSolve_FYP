@@ -1,5 +1,6 @@
 "use client"
 
+import { useNotifications } from '@/hooks/use-notifications'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { LayoutDashboard, PlusCircle, Wallet, History, LogOut, Menu, X } from 'lucide-react'
@@ -19,6 +20,7 @@ export default function StudentLayout({
   const { balance, fetchWallet } = useWalletStore()
   const { user, isLoading, fetchUser, logout } = useAuthStore()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  useNotifications(user?.email, user?.role)
 
   useEffect(() => {
     fetchUser()

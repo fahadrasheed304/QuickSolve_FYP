@@ -2,13 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Wallet, BookOpen, Users, Star, Zap, Bell, Shield, Clock, CheckCircle, AlertCircle, GraduationCap, FileText, Send, Loader2, MapPin, Award, Video } from 'lucide-react'
+import { Wallet, BookOpen, Users, Star, Zap, Shield, Clock, CheckCircle, AlertCircle, GraduationCap, FileText, Send, Loader2, MapPin, Award, Video } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuthStore } from '@/stores/auth-store'
 import { useSessionStore } from '@/stores/session-store'
 import { getApiMessage, notifyError, notifySuccess } from '@/lib/toast'
+import { NotificationBell } from '@/components/notification-bell'
+import { subscribeToRequestUpdates } from '@/hooks/use-notifications'
 import Link from 'next/link'
 
 interface OpenProblem {
@@ -35,9 +37,19 @@ interface ActiveSession {
 
 export default function TutorDashboard() {
   const router = useRouter()
-  const { user, logout } = useAuthStore()
+  const { user, logout, fetchUser } = useAuthStore()
+  useEffect(() => {
+    void fetchUser()
+    const refresh = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void fetchUser()
+    }, 15000)
+    window.addEventListener('focus', fetchUser)
+    return () => {
+      window.clearInterval(refresh)
+      window.removeEventListener('focus', fetchUser)
+    }
+  }, [fetchUser])
   const startSession = useSessionStore((state) => state.startSession)
-  const [showNotifications, setShowNotifications] = useState(false)
   const [loadedProblems, setOpenProblems] = useState<OpenProblem[]>([])
   const [isLoadingProblems, setIsLoadingProblems] = useState(false)
   const [problemsError, setProblemsError] = useState<string | null>(null)
@@ -94,11 +106,11 @@ export default function TutorDashboard() {
 
     if (user?.role === 'tutor' && user.tutorProfile && !user.tutorProfile.requiresProfileCompletion && isAvailable) {
       const initial = setTimeout(loadOpenProblems, 0)
-      const interval = window.setInterval(loadOpenProblems, 5000)
+      const unsubscribe = subscribeToRequestUpdates(loadOpenProblems)
       return () => {
         cancelled = true
         clearTimeout(initial)
-        window.clearInterval(interval)
+        unsubscribe()
       }
     }
     return () => {
@@ -106,7 +118,7 @@ export default function TutorDashboard() {
     }
   }, [user, isAvailable])
 
-  // Poll for accepted sessions (bids that students have accepted)
+  // Refresh accepted sessions when their notification arrives.
   useEffect(() => {
     let cancelled = false
     const checkActiveSessions = async () => {
@@ -124,10 +136,10 @@ export default function TutorDashboard() {
 
     if (user?.role === 'tutor') {
       checkActiveSessions()
-      const interval = window.setInterval(checkActiveSessions, 5000)
+      const unsubscribe = subscribeToRequestUpdates(checkActiveSessions)
       return () => {
         cancelled = true
-        window.clearInterval(interval)
+        unsubscribe()
       }
     }
     return () => { cancelled = true }
@@ -135,9 +147,7 @@ export default function TutorDashboard() {
 
   const handleJoinSession = (session: ActiveSession) => {
     startSession('Student', session.durationMin, session.price, session.roomName)
-    notifySuccess('Joining live video call in new window...')
-    const url = `/tutor/session/${session.roomName}`
-    window.open(url, 'QuickSolve_LiveSession', 'width=1280,height=750,resizable=yes,scrollbars=yes,status=no,location=no,toolbar=no')
+    router.push(`/tutor/session/${session.roomName}`)
   }
 
   const handleAvailabilityToggle = async () => {
@@ -271,17 +281,7 @@ export default function TutorDashboard() {
             Logout
           </button>
 
-          <div className="relative">
-            <button onClick={() => setShowNotifications(!showNotifications)} className="rounded-lg border border-border bg-surface p-2.5 text-text-muted shadow-sm transition-all hover:bg-surface-hover">
-              <Bell className="w-5 h-5" />
-            </button>
-            {showNotifications && (
-              <div className="absolute right-0 mt-2 w-72 rounded-lg border border-border bg-surface shadow-2xl z-50 overflow-hidden animate-scale-in">
-                <div className="border-b border-border p-4 font-bold text-text-main">Notifications</div>
-                <div className="p-6 text-center text-text-muted text-sm">No new notifications.</div>
-              </div>
-            )}
-          </div>
+          <NotificationBell />
         </div>
       </div>
 

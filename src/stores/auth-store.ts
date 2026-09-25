@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { useSessionStore } from './session-store'
 
 interface TutorProfile {
+  reviewCount: number;
   id: string;
   fullname: string;
   phone: string;

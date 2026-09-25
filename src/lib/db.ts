@@ -180,9 +180,8 @@ export const DB = {
       .order('created_at', { ascending: false })
 
     const cleanedSubjects = (subjects || []).filter(Boolean)
-    if (cleanedSubjects.length > 0) {
-      query = query.in('subject', cleanedSubjects)
-    }
+    if (cleanedSubjects.length === 0) return []
+    query = query.in('subject', cleanedSubjects)
 
     const { data, error } = await query
     if (error) throw new Error(error.message)
@@ -193,6 +192,7 @@ export const DB = {
   createBid: async (bid: {
     problemId: string
     tutorName: string
+    tutorEmail: string
     tutorRating: number
     tutorSessions: number
     tutorSubject: string
@@ -218,6 +218,7 @@ export const DB = {
       .insert({
         problem_id: bid.problemId,
         tutor_name: bid.tutorName,
+        tutor_email: bid.tutorEmail,
         tutor_rating: bid.tutorRating,
         tutor_sessions: bid.tutorSessions,
         tutor_subject: bid.tutorSubject,
@@ -317,7 +318,9 @@ export const DB = {
       .single()
     if (error && error.code !== 'PGRST116') throw new Error(error.message)
     if (!data) return null
-    return data
+    const { data: reviews, error: reviewError } = await supabaseAdmin.rpc('get_tutor_rating', { p_email: email.toLowerCase().trim() })
+    if (reviewError) throw new Error('Tutor ratings unavailable. Apply the tutor ratings migration.')
+    return { ...data, rating: reviews.rating, review_count: reviews.review_count }
   },
 
   updateTutorProfile: async (email: string, updates: Record<string, unknown>) => {

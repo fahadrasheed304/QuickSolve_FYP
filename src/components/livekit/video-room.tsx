@@ -5,16 +5,17 @@ import { useEffect, useState } from 'react'
 import {
   LiveKitRoom,
   VideoConference,
-  RoomAudioRenderer,
 } from '@livekit/components-react'
 import '@livekit/components-styles'
 
 interface VideoRoomProps {
   roomName: string
   onDisconnected?: () => void
+  onEndSession: () => Promise<void>
+  isEnding?: boolean
 }
 
-export default function VideoRoom({ roomName, onDisconnected }: VideoRoomProps) {
+export default function VideoRoom({ roomName, onDisconnected, onEndSession, isEnding }: VideoRoomProps) {
   const [token, setToken] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [serverUrl, setServerUrl] = useState<string | undefined>(undefined)
@@ -99,8 +100,14 @@ export default function VideoRoom({ roomName, onDisconnected }: VideoRoomProps) 
         style={{ height: '100%' }}
         data-lk-theme="default"
       >
-        <VideoConference />
-        <RoomAudioRenderer />
+        <VideoConference aria-busy={isEnding} onClickCapture={event => {
+          // Route pointer and keyboard clicks through the same server action as
+          // the header button, before LiveKit disconnects this browser locally.
+          if (!(event.target instanceof Element) || !event.target.closest('.lk-disconnect-button')) return
+          event.preventDefault()
+          event.stopPropagation()
+          if (!isEnding) void onEndSession()
+        }} />
       </LiveKitRoom>
     </div>
   )

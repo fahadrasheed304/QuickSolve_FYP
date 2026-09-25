@@ -1,14 +1,17 @@
 "use client"
 
 import { useEffect, useState } from 'react'
+import { NotificationBell } from '@/components/notification-bell'
+import { subscribeToRequestUpdates } from '@/hooks/use-notifications'
 import Link from 'next/link'
-import { Wallet, FileText, CheckCircle, Star, Zap, Bell, PlusCircle, ArrowRight, Sparkles, Clock3, XCircle, Loader2 } from 'lucide-react'
+import { Wallet, FileText, CheckCircle, Star, Zap, PlusCircle, ArrowRight, Sparkles, Clock3, XCircle, Loader2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useWalletStore } from '@/stores/wallet-store'
 import { useBidsStore } from '@/stores/bids-store'
 import { useAuthStore } from '@/stores/auth-store'
 import { LiveBidsList } from '@/components/bids/live-bids-list'
+import { StudentActiveSessions } from '@/components/student-active-sessions'
 import { notifyError, notifySuccess } from '@/lib/toast'
 
 export default function StudentDashboard() {
@@ -19,14 +22,12 @@ export default function StudentDashboard() {
   const cancelProblem = useBidsStore((state) => state.cancelProblem)
   const bidsError = useBidsStore((state) => state.error)
   const { user, logout } = useAuthStore()
-  const [showNotifications, setShowNotifications] = useState(false)
   const [cancellingProblemId, setCancellingProblemId] = useState<string | null>(null)
   const displayName = (user?.fullname || user?.email || 'Student').split(' ')[0].split('@')[0]
 
   useEffect(() => {
     fetchStudentBids()
-    const interval = window.setInterval(fetchStudentBids, 5000)
-    return () => window.clearInterval(interval)
+    return subscribeToRequestUpdates(fetchStudentBids)
   }, [fetchStudentBids])
 
   useEffect(() => {
@@ -70,28 +71,11 @@ export default function StudentDashboard() {
           <button onClick={logout} className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-bold text-red-600 transition-colors hover:bg-red-100">
             Logout
           </button>
-                    <div className="relative">
-            <button
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="relative rounded-lg border border-border bg-surface p-2.5 text-text-muted shadow-sm transition-all hover:bg-surface-hover"
-              aria-label="Notifications"
-            >
-              <Bell className="w-5 h-5" />
-            </button>
-
-            {showNotifications && (
-              <div className="absolute right-0 mt-2 w-72 rounded-lg border border-border bg-surface shadow-2xl z-50 overflow-hidden animate-scale-in">
-                <div className="border-b border-border p-4 font-bold text-text-main">
-                  Notifications
-                </div>
-                <div className="p-6 text-center text-text-muted text-sm">
-                  No new notifications.
-                </div>
-              </div>
-            )}
-          </div>
+          <NotificationBell />
         </div>
       </div>
+
+      <StudentActiveSessions />
 
       <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         {metrics.map((metric) => {
