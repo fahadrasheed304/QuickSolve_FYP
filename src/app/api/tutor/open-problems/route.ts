@@ -28,7 +28,7 @@ export async function GET() {
       return NextResponse.json({ problems: [] })
     }
 
-    if (profile.is_available === false) {
+    if (profile.is_available === false || profile.conduct_status === 'restricted') {
       return NextResponse.json({ problems: [] })
     }
 

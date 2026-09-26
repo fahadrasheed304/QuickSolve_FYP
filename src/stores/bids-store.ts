@@ -1,6 +1,8 @@
 import { create } from 'zustand'
+import type { BidRanking } from '@/lib/bid-ranking'
 
 interface Bid {
+  ranking?: BidRanking
   id: string
   problemId: string
   tutorName: string
@@ -15,6 +17,7 @@ interface Bid {
 }
 
 interface SupabaseBid {
+  ranking?: BidRanking
   id: string
   problem_id: string
   tutor_name: string
@@ -131,6 +134,7 @@ export const useBidsStore = create<BidsState>((set) => ({
           durationMin: b.duration_min,
           problemSubject: problem.subject,
           problemClass: problem.class,
+          ranking: b.ranking,
         }))
       )
 

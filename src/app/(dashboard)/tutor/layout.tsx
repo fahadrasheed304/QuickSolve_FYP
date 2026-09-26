@@ -3,7 +3,7 @@
 import { useNotifications } from '@/hooks/use-notifications'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, BookOpen, History, LogOut, Shield, Menu, X } from 'lucide-react'
+import { LayoutDashboard, BookOpen, History, Wallet, LogOut, Shield, Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useAuthStore } from '@/stores/auth-store'
@@ -47,6 +47,7 @@ export default function TutorLayout({
     { name: 'Dashboard', href: '/tutor/dashboard', icon: LayoutDashboard },
     { name: 'My Subjects', href: '/tutor/subjects', icon: BookOpen },
     { name: 'History', href: '/tutor/history', icon: History },
+    { name: 'Wallet', href: '/tutor/wallet', icon: Wallet },
   ]
 
   if (isLoading) {

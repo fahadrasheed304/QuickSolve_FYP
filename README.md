@@ -2,6 +2,115 @@
 
 ## Local setup
 
+### Subject matching at bid submission (FR-40)
+
+The bid API loads the saved problem subject and checks the authenticated tutor's
+profile subjects, using exact matching consistent with request delivery. Empty or
+missing subjects deny bidding. The bid card subject comes from the problem, not the
+tutor's first subject or client input. Apply local, Git-ignored migration
+`supabase/migrations/202609260004_bid_subject_match.sql` for database enforcement.
+The trigger rechecks locked problem/profile rows on insertion or identity/problem
+changes, preventing a stale API check from authorizing a mismatched new bid.
+Existing bids are retained as historical records; status-only updates do not
+retroactively revalidate subjects. Live deployment verification remains pending.
+
+### Persistent tutor conduct policy (FR-54)
+
+Apply local, Git-ignored `supabase/migrations/202609260003_tutor_conduct.sql` after
+payment resolution and before deploying these application changes. It evaluates
+existing ratings during application, so qualifying existing tutors can be flagged
+or restricted immediately. Subsequent saved reviews run the same database policy.
+
+The latest 20 rated reviews since the last admin clearance determine actions:
+at least 5 reviews, at least 3 ratings of 1–3 and average below 3.5 create a flag;
+at least 8 reviews, at least 5 ratings of 1–3 and average below 3 restrict new bookings.
+Pending disputes and refund counts alone do not trigger this policy. The first
+admin-confirmed violation flags; the second since clearance restricts. Admins can
+also restrict immediately after reviewing evidence. A reason is required for every
+admin decision, and request IDs deduplicate retried decisions.
+
+Flags/restrictions persist until admin clearance; later good ratings cannot silently
+remove them. Clearance preserves audit history and starts a fresh review/violation
+period so old reviewed evidence does not immediately reapply the restriction.
+Review timestamps, not payment-release times, determine the fresh evidence window.
+This policy is separate from FR-38's advisory evaluation and FR-53 ranking weights.
+
+The tutor dashboard shows status, reasons and paginated decision history. Admins
+use `/admin/conduct` (linked from verifications) or the tutor-detail panel to review
+and clear/restrict/record confirmed violations. Only authenticated, allowlisted
+admin-role accounts can mutate decisions. The queue and panel refresh every 30 seconds.
+Database triggers block new bids and acceptance of previously pending bids for
+restricted tutors, with transactional rollback of attempted reservations. The feed,
+ranking and new-request notifications exclude restricted tutors. Existing accepted
+sessions, payouts, wallets and verification status remain available; the intentional
+admin test bypass does not remove a conduct restriction. A flagged tutor may still bid.
+Live deployment and browser acceptance verification remain pending.
+
+### Tutor visibility and recommended bids (FR-53)
+
+Student bid lists are ranked independently within each open request on every fetch.
+Server-loaded evidence determines the score: 60% lifetime review rating, 25% resolved
+payment outcomes within the latest 20 session payments, 15% qualifying subject test.
+Ratings use five prior reviews at 3.5/5; outcomes use four prior releases out of five
+resolved payments. These baselines reduce small-sample extremes. No-rating tutors
+receive 70/100 for ratings; admin verification without a qualifying passed test
+receives a neutral 70/100 test component. Only passed scores between 80 and 100 count.
+Pending disputes do not count as adverse resolved outcomes. Refunds are a ranking
+signal requiring context, not a finding of tutor fault. Equal scores use oldest bid
+then bid ID. Price does not influence the recommendation score.
+
+Only pending bids from currently verified profiles are listed for open requests;
+all such bids remain selectable. Cards show the score and its evidence. Fresh review
+ratings replace bid-time rating snapshots. The existing notification refresh and
+periodic reconciliation refresh the ordering. Failed ranking queries return errors
+rather than fabricate evidence. No new migration is needed; existing tutor-rating
+and session-payment migrations must be applied. Live UI verification remains pending.
+
+### Tutor wallet and complete payment history (FR-51)
+
+Apply local `supabase/migrations/202609260002_tutor_wallet_history.sql` after the
+wallet integrity/session payment migrations. This migration is Git-ignored per
+the project's local-migration policy; supply it separately for deployment.
+It adds read-only reporting and history indexes, without changing balances.
+
+`/tutor/wallet` displays the tutor-role balance, lifetime completed session-payout
+credits, pending payments and held payments. Lifetime totals are aggregated in SQL
+over all records, not the visible page or profile counters. Other credits are
+included in transaction totals but not session earnings. Refunds to students are
+not tutor earnings; pending/held sessions are not yet credited. Missing wallets and
+database errors are shown explicitly rather than as a zero balance.
+
+Transaction filters cover credit/debit and inclusive UTC calendar dates; displayed
+timestamps use the viewer's local timezone. All matching records can be traversed
+in pages of 25 using timestamp/UUID cursors that preserve microsecond precision.
+Newer inserts do not shift the next transaction page. Refresh restarts from the
+latest page. Summary and filtered totals are current as of each query, not a frozen
+multi-page statement. Tutor history and wallet also offer paginated session payments,
+status filters, reviews and resolution notes. Session-payment pages refresh every
+30 seconds; their offset-based pages reflect the current data and may shift when
+new payments arrive or status filters change. The previous 50-row cutoff and
+static tutor activity placeholders have been removed.
+
+The authenticated tutor identity scopes every wallet query; public database roles
+cannot execute the report function. This feature displays existing wallet records;
+it does not add withdrawals. Verify the deployed wallet with a tutor account after
+applying the SQL, including credits, held payments, date filters and older pages.
+
+### Continuous tutor evaluation (FR-38)
+
+Tutor dashboard and admin tutor details show an evaluation of the latest 20 session
+payment records, ordered by release window and session ID. The server recalculates
+from saved ratings and current payment outcomes on every request; the UI refreshes
+every 30 seconds, on focus and on manual refresh. No new migration is needed.
+At least 5 ratings are required for a rating assessment: below 3.5 needs attention;
+4.5 or higher with no refunds/open disputes is excellent; otherwise good standing.
+Separately, at least 5 resolved payments with 30% or more refunded needs contextual
+review. Unrated sessions are excluded from the average. Pending disputes do not
+prove fault. Recent written feedback and outcome counts accompany the assessment.
+This is advisory evaluation, not automatic account restriction or visibility ranking.
+New feedback and payment resolutions affect the next refresh. No live browser
+acceptance verification has been performed for this feature yet.
+
 ### Tutor join notifications (FR-27)
 
 Apply local `supabase/migrations/202609260001_tutor_join_notifications.sql` after

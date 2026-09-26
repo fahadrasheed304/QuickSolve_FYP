@@ -39,3 +39,6 @@ next-env.d.ts
 # Keep the payment resolution migration local.
 /supabase/migrations/202609250006_payment_resolution.sql
 /supabase/migrations/202609260001_tutor_join_notifications.sql
+/supabase/migrations/202609260002_tutor_wallet_history.sql
+/supabase/migrations/202609260003_tutor_conduct.sql
+/supabase/migrations/202609260004_bid_subject_match.sql

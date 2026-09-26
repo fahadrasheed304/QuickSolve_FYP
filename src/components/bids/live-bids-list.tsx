@@ -104,6 +104,7 @@ export function LiveBidsList() {
       </div>
 
       <div className="grid gap-3">
+        <p className="text-sm text-text-muted">Recommended order within each request: ratings 60%, recent resolved session outcomes 25%, subject test 15%. New and admin-verified tutors receive neutral baselines. All eligible bids remain selectable.</p>
         {bids.map((bid) => (
           <div key={bid.id} className="qs-card rounded-lg p-5 transition-all hover:border-primary/40">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -113,6 +114,11 @@ export function LiveBidsList() {
 
               <div className="min-w-0 flex-1">
                 <h4 className="text-lg font-black text-text-main">{bid.tutorName}</h4>
+                {bid.ranking && <details className="mt-2 text-sm">
+                  <summary className="cursor-pointer font-semibold text-primary">Recommendation score: {bid.ranking.score}/100</summary>
+                  <ul className="mt-2 list-disc pl-5">{bid.ranking.reasons.map(reason => <li key={reason}>{reason}</li>)}</ul>
+                  <p className="mt-1 text-text-muted">Payment outcomes are a ranking signal, not proof of tutor fault.</p>
+                </details>}
                 <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
                   <span className="flex items-center gap-1 font-bold text-accent">
                     <Star className="h-3.5 w-3.5 fill-current" />

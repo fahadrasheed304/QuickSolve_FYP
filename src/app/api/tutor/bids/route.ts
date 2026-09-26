@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { decrypt } from '@/lib/auth'
 import { DB } from '@/lib/db'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,6 +41,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Tutor profile not found' }, { status: 404 })
     }
 
+    if (profile.conduct_status === 'restricted') return NextResponse.json({ error: 'New bookings are restricted. See your dashboard for the review reason.' }, { status: 403 })
+
     if (profile.verification_status !== 'verified' && profile.verification_stage !== 'verified') {
       return NextResponse.json({ error: 'Only verified tutors can place bids' }, { status: 403 })
     }
@@ -48,15 +51,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Turn availability on before placing a bid' }, { status: 403 })
     }
 
+    const { data: problem, error: problemError } = await supabaseAdmin.from('problems')
+      .select('subject').eq('id', problemId).maybeSingle()
+    if (problemError) return NextResponse.json({ error: 'Problem could not be loaded. Please retry.' }, { status: 503 })
+    if (!problem) return NextResponse.json({ error: 'Problem request not found' }, { status: 404 })
+    // Use the same exact subject matching as the request feed and notifications.
+    // Neither the tutor identity nor the subject is trusted from the request body.
+    if (!Array.isArray(profile.subjects) || !profile.subjects.includes(problem.subject)) {
+      return NextResponse.json({ error: 'You can only bid on problems in your profile subjects.' }, { status: 403 })
+    }
+
     const bid = await DB.createBid({
       problemId,
       tutorEmail: String(session.email).toLowerCase().trim(),
       tutorName: profile.fullname || user.fullname || user.email.split('@')[0],
       tutorRating: profile.rating ?? 0,
       tutorSessions: profile.total_sessions || 0,
-      tutorSubject: Array.isArray(profile.subjects) && profile.subjects.length > 0
-        ? profile.subjects[0]
-        : 'Subject Tutor',
+      tutorSubject: problem.subject,
       responseTimeMin: profile.response_time_min || 3,
       price,
       durationMin,
@@ -66,6 +77,7 @@ export async function POST(request: Request) {
   } catch (error: unknown) {
     console.error('Tutor bid error:', error)
     const message = error instanceof Error ? error.message : 'Internal server error'
+    if (message === 'Tutor subject does not match problem') return NextResponse.json({ error: 'You can only bid on problems in your profile subjects.' }, { status: 403 })
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

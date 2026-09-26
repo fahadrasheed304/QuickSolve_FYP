@@ -1,4 +1,5 @@
 "use client"
+import { TutorPerformance } from '@/components/tutor-performance'
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
@@ -450,6 +451,7 @@ export default function AdminVerificationsPage() {
 
   return (
     <main className="min-h-screen bg-background px-4 py-6 qs-page-enter lg:px-6">
+      <a href="/admin/conduct" className="mb-4 inline-block font-bold text-primary">Tutor conduct review queue</a>
       <div className="mx-auto max-w-[1500px]">
         <header className="mb-5 overflow-hidden rounded-lg bg-hero-gradient surface-grid text-white shadow-2xl shadow-primary/10">
           <div className="flex flex-col gap-5 p-5 lg:flex-row lg:items-end lg:justify-between">
@@ -686,6 +688,7 @@ export default function AdminVerificationsPage() {
 
                 <div className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_360px]">
                   <div className="space-y-5">
+                    <TutorPerformance key={selectedTutor.user_email} tutorEmail={selectedTutor.user_email} />
                     <section className="qs-panel rounded-lg p-5">
                       <div className="flex items-center justify-between border-b border-border/80 pb-4">
                         <div className="flex items-center gap-3">

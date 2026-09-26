@@ -22,6 +22,11 @@ export async function PATCH(request: Request) {
     const body = await request.json()
     const isAvailable = Boolean(body.isAvailable)
 
+    if (isAvailable) {
+      const current = await DB.getTutorProfile(String(session.email))
+      if (current?.conduct_status === 'restricted') return NextResponse.json({ error: 'New bookings are restricted pending admin review.' }, { status: 403 })
+    }
+
     const profile = await DB.updateTutorProfile(session.email as string, {
       is_available: isAvailable,
     })

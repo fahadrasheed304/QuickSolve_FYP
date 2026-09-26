@@ -12,6 +12,7 @@ import { getApiMessage, notifyError, notifySuccess } from '@/lib/toast'
 import { NotificationBell } from '@/components/notification-bell'
 import { subscribeToRequestUpdates } from '@/hooks/use-notifications'
 import Link from 'next/link'
+import { TutorPerformance } from '@/components/tutor-performance'
 
 interface OpenProblem {
   id: string
@@ -236,6 +237,7 @@ export default function TutorDashboard() {
 
   return (
     <div className="p-4 md:p-8 pb-20 qs-stagger">
+      <TutorPerformance />
       <div className="relative z-50 mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="qs-kicker rounded-full px-3 py-1.5">

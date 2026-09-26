@@ -1,5 +1,35 @@
 # QuickSolve requirements audit — 25 September 2026
 
+> FR-40 follow-up: bid API now checks the stored problem subject against the signed-in
+> tutor's saved subjects. Empty/mismatched subjects return 403; matching bids display
+> the actual problem subject. Local `202609260004_bid_subject_match.sql` enforces
+> the same rule on new database writes. Live migration/browser verification pending.
+>
+> FR-54 follow-up: persistent review-triggered flags/restrictions, confirmed violation
+> decisions, admin clearance with retained audit history, paginated admin queue and
+> tutor status panel are implemented. New bidding/acceptance is database-enforced;
+> existing accepted sessions/wallets remain available. Apply local
+> `202609260003_tutor_conduct.sql`; live verification remains pending.
+>
+> FR-53 follow-up: server-side bid recommendations now combine current ratings,
+> recent resolved payment outcomes and qualifying test scores, with neutral baselines
+> for new/admin-verified tutors. Cards show reasons and scores; ordering refreshes
+> with the bid feed. No new migration; live UI verification remains pending.
+>
+> FR-51 follow-up: dedicated tutor wallet, SQL lifetime earnings, pending/held totals,
+> date/type filters, cursor-paginated ledger and paginated session payments are
+> implemented. Static tutor activity placeholders were removed. Apply local
+> `202609260002_tutor_wallet_history.sql`; live browser/deployment verification is
+> pending. The historical FR-51 row below predates this implementation.
+>
+> FR-38 follow-up: advisory evaluation is implemented in the tutor dashboard and
+> admin tutor detail using the latest 20 payment records, ratings and written feedback.
+> Five-rating minimum, low-average and resolved-refund thresholds, automatic refresh
+> and server-scoped access are implemented; no new migration. Live UI verification
+> remains pending. The historical FR-38 row below predates this implementation.
+> FR-33 is Complete under the user's accepted FYP scope: admin verification without
+> a test is an intentional override and must remain available.
+>
 > FR-27 follow-up (26 September 2026): signed LiveKit participant-joined webhook,
 > selected-tutor validation, one saved student alert per active session and a direct
 > session link are implemented. Apply local, Git-ignored

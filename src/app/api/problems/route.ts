@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { decrypt } from '@/lib/auth'
 import { DB } from '@/lib/db'
 import { supabaseAdmin } from '@/lib/supabase'
+import { rankStudentBids } from '@/lib/rank-student-bids'
 
 export async function POST(request: Request) {
   try {
@@ -90,7 +91,7 @@ export async function GET() {
 
   try {
     const problems = await DB.getProblemsForStudent(session.email as string)
-    return NextResponse.json({ problems })
+    return NextResponse.json({ problems: await rankStudentBids(problems) }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Internal server error'
     return NextResponse.json({ error: message }, { status: 500 })
