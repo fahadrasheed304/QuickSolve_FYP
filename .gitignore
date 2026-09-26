@@ -35,3 +35,6 @@ env.download
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Keep the payment resolution migration local.
+/supabase/migrations/202609250006_payment_resolution.sql
