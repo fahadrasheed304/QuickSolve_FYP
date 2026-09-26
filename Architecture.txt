@@ -20,3 +20,4 @@ Development notes:
 - September 13, 2026: Integrated session reminder email notifications.
 - September 17, 2026: Added database schema for user wallet transactions.
 - September 21, 2026: Fixed payment callback timeout and retry logic.
+- September 26, 2026: Improved dashboard UI responsiveness for tablet screens.
