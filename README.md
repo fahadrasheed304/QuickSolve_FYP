@@ -2,6 +2,28 @@
 
 ## Local setup
 
+### Tutor join notifications (FR-27)
+
+Apply local `supabase/migrations/202609260001_tutor_join_notifications.sql` after
+the notification, bid rejection and session clock/extension migrations. This SQL
+file is intentionally Git-ignored; obtain the local file separately when deploying.
+Configure a LiveKit webhook pointing to `https://YOUR_APP_DOMAIN/api/livekit/webhook`,
+using the same API key as `LIVEKIT_API_KEY` / `LIVEKIT_API_SECRET` on the app server.
+Enable `participant_joined` delivery if selecting individual events. Local testing
+requires a publicly reachable HTTPS URL forwarded to the local app.
+
+The signed webhook confirms the selected tutor actually connected. It creates one
+saved student notification per active session, delivered through the existing
+realtime inbox/toast with a link to the session. Token requests, student joins,
+unselected tutors and ended/expired sessions do not create join alerts. Rejoins
+and webhook retries do not repeat the alert. Database failures return 503 for retry.
+See [LiveKit webhook setup](https://docs.livekit.io/intro/basics/rooms-participants-tracks/webhooks-events/).
+
+Acceptance check: select a tutor, join with that tutor in a second browser, confirm
+one student alert and working session link, then reconnect the tutor and confirm
+there is still only one alert. Verify offline students see the saved alert on return.
+Live deployment verification is still required after SQL and webhook configuration.
+
 Copy `.env.example` to `.env.local` and enter credentials locally. Keep existing
 Supabase and SMTP values. `ADMIN_PASSWORD` and `JWT_SECRET` must be set explicitly;
 there is no shared fallback password. LiveKit requires all three values shown in

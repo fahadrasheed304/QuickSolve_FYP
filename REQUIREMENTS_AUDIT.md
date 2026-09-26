@@ -1,5 +1,12 @@
 # QuickSolve requirements audit — 25 September 2026
 
+> FR-27 follow-up (26 September 2026): signed LiveKit participant-joined webhook,
+> selected-tutor validation, one saved student alert per active session and a direct
+> session link are implemented. Apply local, Git-ignored
+> `supabase/migrations/202609260001_tutor_join_notifications.sql` and configure
+> `/api/livekit/webhook` in LiveKit. Live two-browser acceptance testing remains
+> pending; the historical FR-27 Missing row below predates this implementation.
+>
 > Implementation follow-up: live request/bid notifications, saved inbox/read state,
 > acceptance alerts and reconnect recovery have now been added in code. Apply
 > `supabase/migrations/202609250003_realtime_notifications.sql` before live use.

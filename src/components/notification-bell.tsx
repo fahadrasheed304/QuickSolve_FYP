@@ -55,7 +55,9 @@ export function NotificationBell() {
       <p role="status" className="px-4 py-2 text-xs text-text-muted">{error || (connected ? 'Latest 50 notifications' : 'Reconnecting to live updates…')}</p>
       <div className="max-h-80 overflow-y-auto">
         {!visible.length && !error && <p className="p-6 text-center text-sm text-text-muted">No notifications yet.</p>}
-        {visible.map(item => <Link key={item.id} href={`/${user?.role === 'tutor' ? 'tutor' : 'student'}/dashboard`}
+        {visible.map(item => <Link key={item.id} href={item.kind === 'tutor_joined' && user?.role === 'student'
+          ? `/student/session/${item.problem_id}`
+          : `/${user?.role === 'tutor' ? 'tutor' : 'student'}/dashboard`}
           onClick={() => { if (!item.read_at) void markRead([item.id]); setOpen(false) }}
           className={`block border-t border-border px-4 py-3 hover:bg-surface-hover ${!item.read_at ? 'bg-primary-subtle' : ''}`}>
           <p className="text-sm text-text-main">{!item.read_at && <span className="mr-1 text-primary" aria-label="Unread">●</span>}{item.message}</p>
