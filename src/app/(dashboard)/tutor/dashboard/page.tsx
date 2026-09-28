@@ -237,7 +237,6 @@ export default function TutorDashboard() {
 
   return (
     <div className="p-4 md:p-8 pb-20 qs-stagger">
-      <TutorPerformance />
       <div className="relative z-50 mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="qs-kicker rounded-full px-3 py-1.5">
@@ -367,6 +366,8 @@ export default function TutorDashboard() {
           return metric.href ? <Link key={metric.label} href={metric.href}>{card}</Link> : <div key={metric.label}>{card}</div>
         })}
       </div>
+
+      <TutorPerformance />
 
       <Card className="mesh-sheen mb-8 overflow-hidden border-transparent bg-hero-gradient text-white shadow-2xl">
         <CardContent className="grid gap-8 p-8 md:grid-cols-[1fr_auto] md:items-center">

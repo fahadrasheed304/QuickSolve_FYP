@@ -1,5 +1,6 @@
 "use client"
 import { useEffect, useState } from 'react'
+import { ShieldCheck, RefreshCw } from 'lucide-react'
 
 type Record = { conduct: { status: string; reason: string; violations: number }; events: { id: string; action: string; reason: string; created_at: string }[]; count: number }
 export function TutorConduct({ tutorEmail }: { tutorEmail?: string }) {
@@ -38,20 +39,20 @@ export function TutorConduct({ tutorEmail }: { tutorEmail?: string }) {
     } catch (error) { setError(error instanceof Error ? error.message : 'Decision failed. Retry.') }
     finally { setSaving(false) }
   }
-  return <section className="mb-5 space-y-3 rounded-lg border border-border bg-surface p-5">
-    <h2 className="text-xl font-bold">Account conduct review</h2>
-    <button className="text-primary" onClick={() => setRevision(value => value + 1)}>Refresh status</button>
-    {error && <p role="alert">{error}</p>}
+  return <section className="space-y-4 rounded-lg border border-border bg-surface p-5 shadow-sm">
+    <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-3"><span className="rounded-lg bg-primary-subtle p-2.5 text-primary"><ShieldCheck className="h-5 w-5" /></span><div><h2 className="font-bold">Account conduct review</h2><p className="mt-0.5 text-xs text-text-muted">Account status and review decisions</p></div></div><button className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-xs font-bold text-text-muted hover:bg-surface-hover" onClick={() => setRevision(value => value + 1)}><RefreshCw className="h-3.5 w-3.5" />Refresh status</button></div>
+    {error && <p role="alert" className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{error}</p>}
+    {!data && !error && <p role="status" className="text-sm text-text-muted">Loading account status...</p>}
     {data && <>
-      <p className="font-bold">Status: {data.conduct.status} · Confirmed violations since last clearance: {data.conduct.violations}</p>
+      <div className="flex flex-wrap items-center gap-3"><span className={"rounded-full px-3 py-1.5 text-xs font-bold capitalize " + (data.conduct.status === "restricted" ? "bg-red-50 text-red-700" : data.conduct.status === "flagged" ? "bg-amber-50 text-amber-800" : "bg-primary-subtle text-primary-dark")}>{data.conduct.status}</span><span className="text-xs text-text-muted">Confirmed violations since last clearance: <strong className="text-text-main">{data.conduct.violations}</strong></span></div>
       {data.conduct.reason && <p className="whitespace-pre-wrap break-words">{data.conduct.reason}</p>}
       {data.conduct.status === 'restricted' && <p>New bids and bookings are blocked until admin review. Existing sessions and wallet access remain available. Contact support to request review.</p>}
       {data.conduct.status === 'flagged' && <p>Your account needs review. New bookings remain available; review recent student feedback.</p>}
-      <details><summary>Decision history ({data.count})</summary>
+      <details className="rounded-lg border border-border bg-surface-container-low p-3 text-sm"><summary className="font-semibold text-text-muted">Decision history ({data.count})</summary>
         {data.events.map(event => <article key={event.id} className="my-2 border-t border-border py-2 text-sm"><p>{event.action} · {new Date(event.created_at).toLocaleString()}</p><p className="whitespace-pre-wrap break-words">{event.reason}</p></article>)}
-        <button disabled={!page} onClick={() => { setData(null); setPage(value => value - 1) }}>Previous</button>
+        <button className="rounded-lg border border-border px-3 py-2 text-xs font-bold disabled:opacity-40" disabled={!page} onClick={() => { setData(null); setPage(value => value - 1) }}>Previous</button>
         <span className="mx-3">Page {page + 1}</span>
-        <button disabled={(page + 1) * 20 >= data.count} onClick={() => { setData(null); setPage(value => value + 1) }}>Next</button>
+        <button className="rounded-lg border border-border px-3 py-2 text-xs font-bold disabled:opacity-40" disabled={(page + 1) * 20 >= data.count} onClick={() => { setData(null); setPage(value => value + 1) }}>Next</button>
       </details>
     </>}
     {tutorEmail && <div className="space-y-3 border-t border-border pt-3">
