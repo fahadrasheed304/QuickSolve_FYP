@@ -15,17 +15,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid admin credentials' }, { status: 401 })
     }
 
-    const { session, expiresAt } = await createSession(ADMIN_EMAIL, ADMIN_EMAIL, 'admin')
+    const { session } = await createSession(ADMIN_EMAIL, ADMIN_EMAIL, 'admin')
     const response = NextResponse.json({
       success: true,
       role: 'admin',
-      redirectTo: '/admin/verifications',
+      redirectTo: '/admin/dashboard',
     })
 
     response.cookies.set('auth_token', session, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      expires: expiresAt,
+      // Session cookie: do not persist login across normal browser restarts.
       sameSite: 'lax',
       path: '/',
     })

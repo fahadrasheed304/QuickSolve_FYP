@@ -1,3 +1,4 @@
+import { assertAccountAccess } from '@/lib/account-access'
 import { NextResponse } from 'next/server'
 import { createSession } from '@/lib/auth'
 import { DB } from '@/lib/db'
@@ -34,6 +35,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
     }
 
+    await assertAccountAccess(user.email)
+
     // Seamlessly migrate old plaintext passwords after a successful login.
     if (user.password && !isPasswordHash(user.password)) {
       await DB.updateUserPassword(user.email, hashPassword(password))
@@ -66,7 +69,7 @@ export async function POST(request: Request) {
     }
 
     // Create secure HTTP only cookie params
-    const { session, expiresAt } = await createSession(user.email, user.email, sessionRole)
+    const { session } = await createSession(user.email, user.email, sessionRole)
 
     const response = NextResponse.json({ 
       success: true, 
@@ -76,12 +79,12 @@ export async function POST(request: Request) {
       verificationStage,
       requiresProfileCompletion: sessionRole === 'tutor' && !profileComplete,
       isAdmin: isAdminEmail,
-      redirectTo: isAdminEmail ? '/admin/verifications' : null
+      redirectTo: isAdminEmail ? '/admin/dashboard' : null
     })
     response.cookies.set('auth_token', session, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      expires: expiresAt,
+      // Session cookie: do not persist login across normal browser restarts.
       sameSite: 'lax',
       path: '/',
     })
@@ -91,6 +94,6 @@ export async function POST(request: Request) {
   } catch (caughtError: unknown) {
     const error = caughtError instanceof Error ? caughtError : new Error("Unexpected error")
     console.error("Login error:", error)
-    return NextResponse.json({ error: error.message || "Failed to login" }, { status: 500 })
+    return NextResponse.json({ error: error.message || "Failed to login" }, { status: error.name === 'AccountRestrictedError' ? 403 : 500 })
   }
 }

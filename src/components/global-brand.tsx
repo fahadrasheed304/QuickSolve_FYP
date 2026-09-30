@@ -13,7 +13,7 @@ const hiddenBrandRoutes = new Set([
 export function GlobalBrand() {
   const pathname = usePathname()
 
-  const isDashboardShell = pathname.startsWith('/tutor/') || pathname.startsWith('/student/')
+  const isDashboardShell = pathname.startsWith('/tutor/') || pathname.startsWith('/student/') || pathname.startsWith('/admin/')
 
   if (hiddenBrandRoutes.has(pathname) || isDashboardShell) return null
 

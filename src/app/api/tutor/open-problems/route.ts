@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { decrypt } from '@/lib/auth'
 import { DB } from '@/lib/db'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,7 +36,13 @@ export async function GET() {
     const subjects = Array.isArray(profile.subjects) ? profile.subjects : []
     const problems = await DB.getOpenProblemsForTutors(subjects)
 
-    return NextResponse.json({ problems })
+    const emails = [...new Set(problems.map(problem => problem.student_email))]
+    const { data: ratings, error: ratingsError } = emails.length
+      ? await supabaseAdmin.rpc('get_student_ratings', { p_emails: emails }) : { data: [], error: null }
+    return NextResponse.json({ problems: problems.map(problem => {
+      const rating = ratings?.find((row: { student_email: string }) => row.student_email === problem.student_email)
+      return { ...problem, student_rating: rating?.rating ?? null, student_review_count: rating?.review_count ?? 0, student_rating_available: !ratingsError }
+    }) }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (error: unknown) {
     console.error('Tutor open problems error:', error)
     const message = error instanceof Error ? error.message : 'Internal server error'

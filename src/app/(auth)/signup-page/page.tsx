@@ -101,7 +101,7 @@ export default function SignupPagePage() {
         if (res.ok) {
           // Check if admin email - redirect to admin panel (overrides everything)
           if (data.isAdmin) {
-            window.location.href = '/admin/verifications';
+            window.location.href = '/admin/dashboard';
             return;
           }
           

@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { BookOpen, ChevronLeft, ChevronRight, Clock, RefreshCw, ReceiptText } from 'lucide-react'
 import { RatingStars } from '@/components/rating/rating-stars'
+import { StudentReview } from '@/components/student-review'
 import { ReviewModal } from '@/components/rating/review-modal'
 type Payment = { problem_id: string; amount: number; rating: number; feedback: string; status: string; release_at: string; review_submitted_at: string | null; hold_reason: string | null; resolution_note: string | null }
 export function SessionPayments({ student = false }: { student?: boolean }) {
@@ -63,12 +64,13 @@ export function SessionPayments({ student = false }: { student?: boolean }) {
         <div className="sm:text-right"><p className="text-xl font-black">Rs. {Number(payment.amount).toLocaleString()}</p><span className={'mt-2 inline-flex rounded-full px-3 py-1 text-xs font-bold capitalize ' + (tones[payment.status] || 'bg-surface-hover text-text-muted')}>{payment.status === 'held' ? 'On hold' : payment.status}</span></div>
       </div>
       <div className="mt-4 rounded-lg bg-surface-container-low p-4">
-        <div className="flex flex-wrap items-center gap-3"><span className="text-xs font-semibold text-text-muted">{student ? 'Your rating' : 'Student rating'}</span><RatingStars value={payment.rating} /><span className="text-xs font-bold">{payment.rating > 0 ? payment.rating + '/5' : 'Awaiting review'}</span></div>
+        <div className="flex flex-wrap items-center gap-3"><span className="text-xs font-semibold text-text-muted">{student ? 'Your rating of tutor' : 'Rating received from student'}</span><RatingStars value={payment.rating} /><span className="text-xs font-bold">{payment.rating > 0 ? payment.rating + '/5' : 'Awaiting review'}</span></div>
         {payment.feedback && <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed">{payment.feedback}</p>}
       </div>
       {payment.status === 'pending' && <p className="mt-3 flex items-center gap-2 text-xs text-text-muted"><Clock className="h-4 w-4 shrink-0" />Eligible for release {new Date(payment.release_at).toLocaleString()}</p>}
       {payment.status === 'held' && payment.hold_reason && <p className="mt-3 whitespace-pre-wrap break-words rounded-lg bg-amber-50 p-3 text-sm text-amber-900"><span className="font-bold">Hold reason: </span>{payment.hold_reason}</p>}
       {payment.resolution_note && <p className="mt-3 whitespace-pre-wrap break-words rounded-lg bg-primary-subtle p-3 text-sm"><span className="font-bold">Resolution: </span>{payment.resolution_note}</p>}
+      {!student && <StudentReview problemId={payment.problem_id} />}
       {student && <div className="mt-3 flex flex-wrap gap-3">{payment.status === 'pending' && <button disabled={busy} onClick={() => dispute(payment)} className={buttonClass + ' text-red-700'}>Open dispute</button>}{!payment.review_submitted_at && <button onClick={() => setReviewId(payment.problem_id)} className={buttonClass + ' text-primary'}>Leave a review</button>}</div>}
     </article>)}
     {!loading && !error && !payments.length && <div className="rounded-lg border border-dashed border-border px-5 py-12 text-center"><ReceiptText className="mx-auto mb-4 h-10 w-10 text-primary/50" /><h3 className="font-bold">No session payments here yet</h3><p className="mx-auto mt-2 max-w-sm text-sm text-text-muted">Completed session payments will appear here. Try another status if you are looking for a specific payment.</p></div>}

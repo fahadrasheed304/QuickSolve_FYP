@@ -314,3 +314,49 @@ Live check: finish an escrow-funded session without reviewing it. Confirm its pe
 payment appears by the next scheduled check, then is released after the 5-minute window.
 Repeat with a dispute or low rating; use the admin page to refund one and release another.
 Confirm wallet totals, terminal statuses and resolution history from both accounts.
+# Account suspension and permanent bans (FR-57)
+
+Apply `supabase/migrations/202609300001_account_moderation.sql` in the Supabase SQL
+Editor before running this version. The service-role API key cannot execute schema
+migrations. The SQL is transactional and rerunnable. Until it is applied, regular
+account access checks fail closed; the configured administrator can still sign in.
+
+Open **Admin → Registered users → View details → Safety & restrictions**. Review
+the user's open disputes, tutor conduct records and decision history, then choose
+suspend (1–365 days), permanently ban, or restore. A reason is required; permanent
+ban also requires typing the account email and confirming the decision. Restrictions
+apply to all roles belonging to the email. No accounts, wallets or evidence are deleted.
+Disputes remain allegations until reviewed. Missing conduct data is shown as unavailable,
+not as a clean record; the existing tutor-conduct schema must be deployed separately.
+
+New logins and existing authenticated API requests check live account status.
+Expired suspensions automatically permit access; permanent bans require explicit
+admin restoration. LiveKit disconnection is attempted after restrictions are saved;
+if it fails, the admin sees a warning and can retry the same decision. The configured
+LiveKit webhook also rejects restricted participants reconnecting with old room tokens.
+LiveKit delivery can be delayed, so this is not a guarantee of instantaneous media cutoff.
+Decisions are version-checked and idempotent, with an append-only audit history.
+
+Validation: `node --test --test-isolation=none tests/account-moderation.test.mjs`.
+Live Supabase and LiveKit verification is required after deployment.
+# Session attendance
+
+Apply `supabase/migrations/202609300002_session_attendance.sql` in Supabase SQL Editor.
+The LiveKit webhook at `/api/livekit/webhook` must receive `participant_joined`,
+`participant_left`, and `room_finished` events. Admin session history now offers
+Student / tutor time with separate connected durations and join/leave timelines.
+Reconnects are combined without counting overlapping intervals twice. Pending or
+missing events are marked partial; historical sessions without events say Not tracked.
+Room closure can supply the endpoint when a participant leave event is absent; the
+timeline labels that source. These durations describe recorded connection intervals,
+not attention or speaking time. No historical attendance is fabricated.
+# Tutor-to-student ratings
+
+Apply `supabase/migrations/202609300003_student_reviews.sql` in Supabase SQL Editor.
+Tutors can rate their assigned student after a started session has ended, from the
+end screen or session payment history. Reviews are immutable, one per session;
+identical retries are safe. They do not affect payment release or disputes.
+Open request cards show the student's aggregate rating and review count. Unrated
+students are labelled as new/unrated; unavailable ratings are not shown as zero.
+Admin student activity uses received tutor ratings separately from reviews given
+to tutors. Live verification is pending after applying the migration.

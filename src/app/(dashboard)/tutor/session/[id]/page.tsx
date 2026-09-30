@@ -1,6 +1,7 @@
 "use client"
 
-import { useCallback, useEffect, use } from 'react'
+import { StudentReview } from '@/components/student-review'
+import { useCallback, useEffect, use, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ExternalLink, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -27,14 +28,15 @@ const VideoRoom = dynamic(() => import('@/components/livekit/video-room'), {
 export default function TutorSessionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: roomId } = use(params)
   const router = useRouter()
+  const [ended, setEnded] = useState(false)
   const clientReady = useClientReady()
   const { isActive, timeLeftSeconds, price, endSession, tickTime } = useSessionStore()
 
 
   const closeLocalSession = useCallback(() => {
     endSession()
-    router.push('/tutor/dashboard')
-  }, [endSession, router])
+    setEnded(true)
+  }, [endSession])
 
   const { endCall: handleEndSession, isEnding } = useEndSession(roomId, closeLocalSession)
 
@@ -53,7 +55,8 @@ export default function TutorSessionPage({ params }: { params: Promise<{ id: str
     }
     void check()
     const timer = setInterval(check, 3000)
-    return () => { cancelled = true; clearInterval(timer) }
+
+  return () => { cancelled = true; clearInterval(timer) }
   }, [isActive, roomId, closeLocalSession])
 
   const handlePopOutWindow = () => {
@@ -66,7 +69,7 @@ export default function TutorSessionPage({ params }: { params: Promise<{ id: str
       tickTime()
     }, 1000)
 
-    return () => clearInterval(interval)
+  return () => clearInterval(interval)
   }, [isActive, tickTime])
 
   const formatTime = (seconds: number) => {
@@ -77,6 +80,7 @@ export default function TutorSessionPage({ params }: { params: Promise<{ id: str
 
   const isEndingSoon = isActive && timeLeftSeconds <= 300
   if (!clientReady) return null
+  if (ended) return <main className="mx-auto max-w-xl p-6"><h1 className="text-2xl font-bold">Session ended</h1><StudentReview problemId={roomId.replace(/^session-/, "")} /><Button className="mt-4" onClick={() => router.push("/tutor/dashboard")}>Back to dashboard</Button></main>
 
   return (
     <div className="h-screen flex flex-col bg-[#101d32] text-white overflow-hidden">

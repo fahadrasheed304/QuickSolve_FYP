@@ -1,3 +1,4 @@
+import { assertAccountAccess } from '@/lib/account-access'
 import { NextResponse } from 'next/server'
 import { createSession } from '@/lib/auth'
 import { DB } from '@/lib/db'
@@ -31,6 +32,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Incorrect OTP code." }, { status: 401 })
     }
 
+    await assertAccountAccess(pending.user.email)
     const hasRequestedRole = await DB.userHasRole(pending.user.email, pending.user.role)
     if (hasRequestedRole) {
       await removePendingSignup(normalizedEmail, pending.otpHash)
@@ -81,7 +83,7 @@ export async function POST(request: Request) {
     await removePendingSignup(normalizedEmail, pending.otpHash)
 
     // Create session cookie
-    const { session, expiresAt } = await createSession(newUser.email, newUser.email, newUser.role)
+    const { session } = await createSession(newUser.email, newUser.email, newUser.role)
 
     // Check if admin email
     const isAdmin = ADMIN_EMAILS.includes(newUser.email.toLowerCase())
@@ -91,12 +93,12 @@ export async function POST(request: Request) {
       message: "Account verified successfully!", 
       role: newUser.role,
       isAdmin,
-      redirectTo: isAdmin ? '/admin/verifications' : null
+      redirectTo: isAdmin ? '/admin/dashboard' : null
     })
     response.cookies.set('auth_token', session, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      expires: expiresAt,
+      // Session cookie: do not persist login across normal browser restarts.
       sameSite: 'lax',
       path: '/',
     })
@@ -106,6 +108,6 @@ export async function POST(request: Request) {
   } catch (caughtError: unknown) {
     const error = caughtError instanceof Error ? caughtError : new Error("Unexpected error")
     console.error("OTP verification error:", error)
-    return NextResponse.json({ error: error.message || "Failed to verify OTP" }, { status: 500 })
+    return NextResponse.json({ error: error.message || "Failed to verify OTP" }, { status: error.name === 'AccountRestrictedError' ? 403 : 500 })
   }
 }

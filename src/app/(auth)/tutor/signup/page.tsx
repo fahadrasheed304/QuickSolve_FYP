@@ -96,7 +96,7 @@ export default function TutorSignupPage() {
         if (res.ok) {
           // Check if admin email - redirect to admin panel
           if (data.isAdmin) {
-            window.location.href = '/admin/verifications'
+            window.location.href = '/admin/dashboard'
             return
           }
           
