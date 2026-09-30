@@ -2,7 +2,7 @@
 import { TutorPerformance } from '@/components/tutor-performance'
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import Link from 'next/link'
+
 import { useRouter } from 'next/navigation'
 import {
   AlertCircle,
@@ -415,7 +415,7 @@ export default function AdminVerificationsPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-background px-4">
+      <main className="flex min-h-[40vh] items-center justify-center bg-background px-4">
         <div className="qs-panel flex w-full max-w-sm flex-col items-center rounded-lg p-8 text-center">
           <Loader2 className="mb-4 h-8 w-8 animate-spin text-primary" />
           <p className="font-semibold text-text-main">Loading verification desk</p>
@@ -427,7 +427,7 @@ export default function AdminVerificationsPage() {
 
   if (error) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
+      <main className="flex min-h-[40vh] items-center justify-center bg-background px-4 py-12">
         <div className="qs-panel w-full max-w-lg rounded-lg p-8 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-red-50 text-error">
             <AlertCircle className="h-7 w-7" />
@@ -450,52 +450,11 @@ export default function AdminVerificationsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background px-4 py-6 qs-page-enter lg:px-6">
-      <a href="/admin/conduct" className="mb-4 inline-block font-bold text-primary">Tutor conduct review queue</a>
-      <div className="mx-auto max-w-[1500px]">
-        <header className="mb-5 overflow-hidden rounded-lg bg-hero-gradient surface-grid text-white shadow-2xl shadow-primary/10">
-          <div className="flex flex-col gap-5 p-5 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-black uppercase">
-                <ShieldCheck className="h-3.5 w-3.5" />
-                Admin verification
-              </div>
-              <h1 className="text-3xl font-black md:text-4xl">Tutor verification desk</h1>
-              <Link href="/admin/payments" className="mt-3 inline-block font-bold text-white underline">Session payments & disputes →</Link>
-              <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-white/78">
-                <span>{filteredTutors.length} visible</span>
-                <span>/</span>
-                <span>{tutors.length} total applications</span>
-                <span>/</span>
-                <span>{stageCounts.rejected || 0} rejected</span>
-              </div>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="mt-4 inline-flex h-10 items-center gap-2 rounded-lg border border-white/24 bg-white/12 px-4 text-sm font-black text-white transition hover:-translate-y-0.5 hover:bg-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
-              >
-                <LogOut className="h-4 w-4" />
-                Logout
-              </button>
-            </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:min-w-[520px]">
-              {queueStats.map(stat => {
-                const Icon = stat.icon
-                return (
-                  <div key={stat.label} className={`rounded-lg border p-3 ${stat.tone}`}>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold uppercase text-white/68">{stat.label}</span>
-                      <Icon className="h-4 w-4 text-white/78" />
-                    </div>
-                    <p className="mt-2 text-2xl font-black">{stat.value}</p>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </header>
-
-        <section className="qs-panel mb-5 rounded-lg p-3">
+    <main className="qs-page-enter">
+      <div>
+        <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {queueStats.map(stat => <div key={stat.label} className="qs-panel rounded-xl border border-border p-4"><div className="flex items-center justify-between text-text-muted"><span className="text-xs font-bold uppercase">{stat.label}</span><stat.icon className="h-4 w-4 text-primary" /></div><p className="mt-2 text-2xl font-black">{stat.value}</p></div>)}
+        </div>        <section className="qs-panel mb-5 rounded-lg p-3">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
             <div className="relative min-w-[220px] flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />

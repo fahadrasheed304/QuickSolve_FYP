@@ -15,6 +15,9 @@ import Link from 'next/link'
 import { TutorPerformance } from '@/components/tutor-performance'
 
 interface OpenProblem {
+  student_rating?: number | null
+  student_review_count?: number
+  student_rating_available?: boolean
   id: string
   subject: string
   class: string
@@ -464,7 +467,7 @@ export default function TutorDashboard() {
                         <span className="rounded-full bg-secondary-subtle px-3 py-1 text-xs font-black text-secondary-dark">{problem.class}</span>
                         <span className="rounded-full bg-surface-hover px-3 py-1 text-xs font-bold text-text-muted">{problem.duration_min} min</span>
                       </div>
-                      <h4 className="text-lg font-black text-text-main">Rs. {Number(problem.offer_price || 0).toLocaleString()} student offer</h4>
+                      <p className="flex items-center gap-2 text-sm font-semibold text-text-muted"><Star className="h-4 w-4 text-amber-500" />Student: {problem.student_rating_available === false ? "Rating unavailable" : problem.student_rating != null ? `${Number(problem.student_rating).toFixed(2)}/5 (${problem.student_review_count} reviews)` : "New student · No ratings yet"}</p><h4 className="text-lg font-black text-text-main">Rs. {Number(problem.offer_price || 0).toLocaleString()} student offer</h4>
                       <p className="mt-2 line-clamp-2 text-sm leading-6 text-text-muted">
                         {problem.details || 'Student uploaded a problem and is waiting for tutor bids.'}
                       </p>

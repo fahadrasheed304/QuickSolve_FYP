@@ -79,7 +79,7 @@ function TutorVerifyEmailForm() {
         notifySuccess(data.message, "Your email has been verified successfully.")
         // Check if admin email - redirect to admin panel
         if (data.isAdmin) {
-          window.location.href = '/admin/verifications'
+          window.location.href = '/admin/dashboard'
           return
         }
         window.location.href = '/tutor/complete-profile';

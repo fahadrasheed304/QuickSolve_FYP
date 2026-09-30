@@ -28,7 +28,7 @@ export default function AdminSigninPage() {
 
       if (res.ok) {
         notifySuccess('Admin access verified. Opening the dashboard.')
-        window.location.href = data.redirectTo || '/admin/verifications'
+        window.location.href = data.redirectTo || '/admin/dashboard'
         return
       }
 

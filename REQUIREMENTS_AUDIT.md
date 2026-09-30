@@ -132,10 +132,10 @@ Equal-weight estimate: Complete = 1, Partial = 0.5, Missing = 0. This measures r
 | FR-52 | Complete | Tutor history payment/review section saved stars aur feedback dikhata hai. |
 | FR-53 | Partial | Rating bid card par visible; ratings, performance aur test results se combined ranking/visibility rules nahi. |
 | FR-54 | Missing | Persistent poor-performance/violation restriction policy implementation nahi mili. |
-| FR-55 | Partial | Admin tutor verification list/manage kar sakta hai; all-student/all-user management missing. |
+| FR-55 | Implemented | Admin /admin/users provides searchable accounts and a read-only profile popup with student/tutor sessions, reviews, qualifications and assessment history. Student ratings are available after applying the student reviews migration. |
 | FR-56 | Complete | Admin tutor approve/reject actions aur notes implemented; test-pass prerequisite gap FR-33 mein counted. |
-| FR-57 | Missing | User suspend/permanent-ban workflow nahi mila. |
-| FR-58 | Partial | Tutor profile/docs/test records available; all-user activity records missing. |
+| FR-57 | Implemented locally; migration pending | Account-wide timed suspension, permanent ban and restore with evidence review, reasons, confirmation, audit history and session enforcement. Apply 202609300001_account_moderation.sql before use; live verification pending. |
+| FR-58 | Implemented locally | Admin-only student/tutor profiles, document previews, assessments, paginated sessions/reviews, all-status student requests and tutor bids, role-filtered wallet transactions, disputes and moderation history. Live database/browser verification pending. |
 | FR-59 | Missing | Automatic audio/video/whiteboard session recording implementation nahi mili. |
 | FR-60 | Missing | Session recording storage/access-control implementation nahi mili. |
 | FR-61 | Missing | Admin recording access interface/API nahi mila. |

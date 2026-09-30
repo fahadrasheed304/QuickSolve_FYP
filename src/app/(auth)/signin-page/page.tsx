@@ -49,7 +49,7 @@ export default function SigninPage() {
         notifySuccess(data.message, "Signed in successfully.");
         // Check if admin email - redirect to admin panel
         if (data.isAdmin) {
-          window.location.href = '/admin/verifications';
+          window.location.href = '/admin/dashboard';
           return;
         }
         
@@ -104,7 +104,7 @@ export default function SigninPage() {
         if (res.ok) {
           // Check if admin email - redirect to admin panel
           if (data.isAdmin) {
-            window.location.href = '/admin/verifications';
+            window.location.href = '/admin/dashboard';
             return;
           }
           

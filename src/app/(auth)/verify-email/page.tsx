@@ -86,7 +86,7 @@ function VerifyEmailForm() {
         notifySuccess(data.message, "Your email has been verified successfully.")
         // Check if admin email - redirect to admin panel first
         if (data.isAdmin) {
-          window.location.href = '/admin/verifications'
+          window.location.href = '/admin/dashboard'
           return
         }
         

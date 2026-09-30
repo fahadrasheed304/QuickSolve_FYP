@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useState } from 'react'
-import Link from 'next/link'
+
 import { Button } from '@/components/ui/button'
 
 type Payment = {
@@ -59,11 +59,9 @@ export default function AdminPaymentsPage() {
     finally { setSaving(false) }
   }
 
-  return <main className="mx-auto max-w-5xl space-y-5 p-4 md:p-8">
-    <Link href="/admin/verifications" className="font-bold text-primary">← Tutor verifications</Link>
-    <h1 className="text-3xl font-black">Session payments & disputes</h1>
+  return <main className="space-y-5">
     <p className="text-text-muted">Completed sessions enter a 5-minute dispute window without requiring a review. Low ratings, disputes and sessions that never started require a decision here. Refunds return the full amount to the student wallet.</p>
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="qs-panel flex flex-wrap items-center gap-3 rounded-xl border border-border p-5">
       <label htmlFor="payment-status">Status</label>
       <select id="payment-status" value={status} disabled={saving} onChange={event => { setStatus(event.target.value); setPage(0); setDecision(null) }} className="rounded border border-border bg-surface p-2">
         {['held', 'pending', 'released', 'refunded'].map(value => <option key={value} value={value}>{value}</option>)}

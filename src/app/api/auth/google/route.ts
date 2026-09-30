@@ -1,3 +1,4 @@
+import { assertAccountAccess } from '@/lib/account-access'
 import { NextResponse } from 'next/server'
 import { createSession } from '@/lib/auth'
 import { DB } from '@/lib/db'
@@ -30,6 +31,7 @@ export async function POST(request: Request) {
 
     const googleUser = await googleResponse.json()
     const googleEmail = googleUser.email
+    await assertAccountAccess(googleEmail)
 
     // Check if user already exists
     let user = await DB.findUserByEmail(googleEmail)
@@ -87,7 +89,7 @@ export async function POST(request: Request) {
     }
 
     // Create session cookie automatically via jose
-    const { session, expiresAt } = await createSession(user.email, user.email, sessionRole)
+    const { session } = await createSession(user.email, user.email, sessionRole)
 
     // Check if admin email
     const isAdminEmail = ADMIN_EMAILS.includes(user.email.toLowerCase())
@@ -101,12 +103,12 @@ export async function POST(request: Request) {
       verificationStage,
       requiresProfileCompletion: sessionRole === 'tutor' && !profileComplete,
       isAdmin: isAdminEmail,
-      redirectTo: isAdminEmail ? '/admin/verifications' : null
+      redirectTo: isAdminEmail ? '/admin/dashboard' : null
     })
     response.cookies.set('auth_token', session, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      expires: expiresAt,
+      // Session cookie: do not persist login across normal browser restarts.
       sameSite: 'lax',
       path: '/',
     })
@@ -116,7 +118,7 @@ export async function POST(request: Request) {
   } catch (caughtError: unknown) {
     const error = caughtError instanceof Error ? caughtError : new Error("Unexpected error")
     console.error("Google Auth error:", error)
-    return NextResponse.json({ error: error.message || "Failed to authenticate with Google" }, { status: 500 })
+    return NextResponse.json({ error: error.message || "Failed to authenticate with Google" }, { status: error.name === 'AccountRestrictedError' ? 403 : 500 })
   }
 }
 

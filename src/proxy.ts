@@ -13,7 +13,7 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL('/signin-page', request.url))
     }
     if (session.role === 'admin') {
-      return NextResponse.redirect(new URL('/admin/verifications', request.url))
+      return NextResponse.redirect(new URL('/admin/dashboard', request.url))
     }
     // If student role tries to access tutor routes, redirect
     if (session.role === 'tutor') {
@@ -46,7 +46,7 @@ export async function proxy(request: NextRequest) {
         return NextResponse.redirect(new URL('/tutor/signin', request.url))
       }
       if (session.role === 'admin') {
-        return NextResponse.redirect(new URL('/admin/verifications', request.url))
+        return NextResponse.redirect(new URL('/admin/dashboard', request.url))
       }
       // If student role tries to access tutor dashboard, redirect
       if (session.role !== 'tutor') {
@@ -63,7 +63,7 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL('/tutor/waiting-verification', request.url))
     }
     if (isTutorPublicPage && session && session.role === 'admin') {
-      return NextResponse.redirect(new URL('/admin/verifications', request.url))
+      return NextResponse.redirect(new URL('/admin/dashboard', request.url))
     }
   }
 
@@ -72,7 +72,7 @@ export async function proxy(request: NextRequest) {
     const isAdminSigninPage = request.nextUrl.pathname === '/admin/signin'
 
     if (isAdminSigninPage && session?.role === 'admin') {
-      return NextResponse.redirect(new URL('/admin/verifications', request.url))
+      return NextResponse.redirect(new URL('/admin/dashboard', request.url))
     }
 
     if (!isAdminSigninPage) {
@@ -94,7 +94,7 @@ export async function proxy(request: NextRequest) {
   ) {
     if (session) {
       const dest = session.role === 'admin'
-        ? '/admin/verifications'
+        ? '/admin/dashboard'
         : session.role === 'tutor'
           ? '/tutor/waiting-verification'
           : '/student/dashboard'
