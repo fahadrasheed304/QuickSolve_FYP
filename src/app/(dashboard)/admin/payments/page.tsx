@@ -77,14 +77,6 @@ export default function AdminPaymentsPage() {
       {status === 'held' && <span className="ml-auto hidden items-center gap-1.5 text-xs font-semibold text-amber-800 sm:inline-flex"><Clock3 size={14} />Needs admin decision</span>}
     </div>
     {error && <p role="alert" className="text-red-600">{error}</p>}
-    {decision && <section aria-label="Confirm payment decision" className="space-y-3 rounded-2xl border border-amber-300 bg-amber-50 p-5 shadow-sm sm:p-6">
-      <h2 className="font-bold">{decision.action === 'refund' ? 'Refund student wallet' : 'Release to tutor'}: Rs. {Number(decision.payment.amount).toLocaleString()}</h2>
-      <p className="break-all text-sm">Session {decision.payment.problem_id} · {decision.action === 'refund' ? decision.payment.student_email : decision.payment.tutor_email}</p>
-      <label className="block" htmlFor="resolution-note">Reason for this decision</label>
-      <textarea id="resolution-note" value={note} maxLength={2000} disabled={saving} onChange={event => setNote(event.target.value)} className="w-full rounded border border-border bg-surface p-3" />
-      <p className="text-sm text-text-muted">This moves the full session payment and saves your decision in the payment history.</p>
-      <div className="flex gap-3"><Button onClick={resolve} disabled={saving || note.trim().length < 5}>{saving ? 'Processing…' : 'Confirm decision'}</Button><Button variant="outline" disabled={saving} onClick={() => setDecision(null)}>Cancel</Button></div>
-    </section>}
     {loading && <p role="status">Loading payments…</p>}
     {!loading && !error && !payments.length && <p>No {status} payments.</p>}
     {payments.map(payment => <article key={payment.problem_id} className="space-y-2 rounded-lg border border-border bg-surface p-5">
@@ -103,6 +95,13 @@ export default function AdminPaymentsPage() {
         <Button disabled={saving} onClick={() => { setDecision({ payment, action: 'release' }); setNote('') }}>Release to tutor</Button>
         <Button variant="outline" disabled={saving} onClick={() => { setDecision({ payment, action: 'refund' }); setNote('') }}>Refund student wallet</Button>
       </div>}
+      {decision?.payment.problem_id === payment.problem_id && <section aria-label="Confirm payment decision" className="mt-4 space-y-3 rounded-xl border border-amber-300 bg-amber-50 p-4 sm:p-5">
+        <div><h3 className="font-bold">{decision.action === 'refund' ? 'Refund student wallet' : 'Release to tutor'}: Rs. {Number(payment.amount).toLocaleString()}</h3><p className="mt-1 break-all text-xs text-text-muted">{decision.action === 'refund' ? payment.student_email : payment.tutor_email}</p></div>
+        <label className="block text-sm font-semibold" htmlFor="resolution-note">Reason for this decision</label>
+        <textarea id="resolution-note" value={note} maxLength={2000} disabled={saving} onChange={event => setNote(event.target.value)} className="w-full rounded-lg border border-border bg-surface p-3 text-sm" />
+        <p className="text-xs text-text-muted">This moves the full session payment and saves your decision in the payment history.</p>
+        <div className="flex flex-wrap gap-3"><Button onClick={resolve} disabled={saving || note.trim().length < 5}>{saving ? 'Processing…' : 'Confirm decision'}</Button><Button variant="outline" disabled={saving} onClick={() => setDecision(null)}>Cancel</Button></div>
+      </section>}
     </article>)}
     <div className="flex items-center gap-3"><Button variant="outline" disabled={page === 0 || loading} onClick={() => setPage(value => value - 1)}>Previous</Button><span>Page {page + 1}</span><Button variant="outline" disabled={(page + 1) * 25 >= count || loading} onClick={() => setPage(value => value + 1)}>Next</Button></div>
   </main>
