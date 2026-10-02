@@ -121,7 +121,7 @@ export default function TutorSessionPage({ params }: { params: Promise<{ id: str
       <main className="flex min-h-0 flex-1 overflow-hidden">
         {/* ── LiveKit Video Room ── */}
         <div className="relative flex min-h-0 w-full flex-1 flex-col">
-          <VideoRoom roomName={roomId} onEndSession={handleEndSession} isEnding={isEnding} />
+          <VideoRoom roomName={roomId} onDisconnected={closeLocalSession} onEndSession={handleEndSession} isEnding={isEnding} />
         </div>
 
 
