@@ -20,9 +20,10 @@ test('verified LiveKit joins are routed; unsigned/tampered events fail and datab
   const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
   new Function('require', 'exports', js)(name => ({
     'livekit-server-sdk': { WebhookReceiver },
+    '@/lib/account-access': { assertAccountAccess: async () => {} },
     '@/lib/supabase': { supabaseAdmin: { rpc: async (...args) => { calls.push(args); return { error: fail ? {} : null } } } },
   })[name], exports)
-  const body = JSON.stringify({ event: 'participant_joined', room: { name: `session-${id}` }, participant: { identity: 'tutor@test:tutor' } })
+  const body = JSON.stringify({ id: 'event1', createdAt: Math.floor(Date.now()/1000), event: 'participant_joined', room: { name: `session-${id}`, sid: 'RM_test' }, participant: { identity: 'tutor@test:tutor', sid: 'PA_test' } })
   const request = async (text, signed = true, hashBody = text) => {
     const token = new AccessToken(process.env.LIVEKIT_API_KEY, process.env.LIVEKIT_API_SECRET)
     token.sha256 = createHash('sha256').update(hashBody).digest('base64')
@@ -36,9 +37,11 @@ test('verified LiveKit joins are routed; unsigned/tampered events fail and datab
     for (const ignored of [body.replace('participant_joined', 'participant_left'), body.replace('tutor@test:tutor', 'student@test:student'), body.replace(`session-${id}`, 'unrelated')]) {
       assert.equal((await exports.POST(await request(ignored))).status, 204)
     }
-    assert.equal(calls.length, 0)
+    assert.equal(calls.filter(call => call[0] === 'notify_tutor_joined').length, 0)
+    calls.length = 0
     assert.equal((await exports.POST(await request(body))).status, 204)
-    assert.deepEqual(calls[0], ['notify_tutor_joined', { p_problem_id: id, p_identity: 'tutor@test:tutor' }])
+    assert.equal(calls[0][0], 'record_session_attendance')
+    assert.deepEqual(calls[1], ['notify_tutor_joined', { p_problem_id: id, p_identity: 'tutor@test:tutor' }])
     fail = true
     assert.equal((await exports.POST(await request(body))).status, 503)
   } finally {

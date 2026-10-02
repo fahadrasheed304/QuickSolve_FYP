@@ -2,6 +2,15 @@
 
 ## Local setup
 
+### Session video recordings
+
+See [recording setup](docs/session-recordings.md) for the private R2 bucket,
+Vercel variables, LiveKit webhook, local database migration and Supabase Cron
+job. Recording stays disabled until `RECORDING_ENABLED=true`; playback is
+admin-only. Normal recordings expire after 20 minutes, while held payments
+preserve evidence until admin resolution. Apply the recording migration before
+deploying the updated 20-minute payment/dispute UI.
+
 ### Subject matching at bid submission (FR-40)
 
 The bid API loads the saved problem subject and checks the authenticated tutor's

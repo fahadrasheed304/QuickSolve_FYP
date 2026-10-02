@@ -8,9 +8,13 @@
     "start": "next start",
     "lint": "eslint",
     "test": "node --test --test-isolation=none tests/*.test.mjs",
-    "dev:stripe": "node scripts/run-stripe.mjs"
+    "dev:stripe": "node scripts/run-stripe.mjs",
+    "recordings:worker": "node scripts/recording-maintenance.mjs",
+    "recordings:cleanup": "node scripts/recording-maintenance.mjs --once"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1145.0",
+    "@aws-sdk/s3-request-presigner": "^3.1145.0",
     "@livekit/components-react": "^2.9.24",
     "@livekit/components-styles": "^1.2.0",
     "@react-oauth/google": "^0.13.5",

@@ -23,8 +23,7 @@ test('review-independent payout and admin resolutions use one funded terminal ou
     for (const file of ['202609210001_wallet_integrity.sql','202609220002_session_clock.sql','202609220003_session_end.sql','202609220004_session_payments.sql','202609250001_session_extensions.sql','202609250002_tutor_ratings.sql','202609250003_realtime_notifications.sql','202609250004_reject_unselected_bids.sql','202609250005_session_escrow.sql','202609250006_payment_resolution.sql']) {
       await db.exec((await readFile(new URL('../supabase/migrations/'+file,import.meta.url),'utf8')).split('-- Supabase Cron')[0])
     }
-
-
+    await db.exec(await readFile(new URL('../supabase/migrations/202609300004_session_recordings.sql',import.meta.url),'utf8'))
     await db.exec("update role_wallets set balance=10000 where role='student'")
     const create = async (ended = true) => {
       const p = (await db.query("insert into problems(student_email) values ('student@test') returning id")).rows[0].id
@@ -47,6 +46,7 @@ test('review-independent payout and admin resolutions use one funded terminal ou
       assert.equal((await payment(p)).rating,0)
       assert.equal((await payment(p)).review_submitted_at,null)
       assert.equal((await payment(p)).status,'pending')
+      assert.ok(Date.parse((await payment(p)).release_at) > Date.now() + 18 * 60000)
       assert.equal(await balance('tutor'),0)
       await due(p)
       await cron(); await cron()
@@ -127,6 +127,16 @@ test('review-independent payout and admin resolutions use one funded terminal ou
       await resolve(p,'refund')
       assert.equal(await balance('student'),Math.round((before+583.33)*100)/100)
       assert.equal(await balance('tutor'),tutorBefore)
+    })
+    await t.test('a late first review cannot reopen the twenty-minute dispute window',async()=>{
+      const p=await create()
+      await db.query("update problems set session_started_at=now()-interval '60 minutes' where id=$1",[p])
+      await assert.rejects(review(p,0,'Late dispute'),/20-minute dispute window has closed/)
+      assert.equal(await payment(p),undefined)
+      await review(p,5)
+      assert.ok(Date.parse((await payment(p)).release_at) < Date.now())
+      await cron()
+      assert.equal((await payment(p)).status,'released')
     })
  } finally { await db.close() }
 })

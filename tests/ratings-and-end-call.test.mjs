@@ -24,7 +24,7 @@ test('video footer end button uses server action without triggering local discon
     for (const isEnding of [false,true]) {
       index=0
       const tree=api.default({roomName:'session-test',isEnding,onEndSession:async()=>{ends++}})
-      const conference=tree.props.children.props.children
+      const conference=tree.props.children.props.children.find(child=>child.type==='conference')
       let prevented=0, stopped=0
       const event=matches=>({target:new Target(matches),preventDefault:()=>prevented++,stopPropagation:()=>stopped++})
       conference.props.onClickCapture(event(false))
