@@ -1,14 +1,13 @@
 import { create } from 'zustand'
-import type { BidRanking } from '@/lib/bid-ranking'
 
 interface Bid {
-  ranking?: BidRanking
   id: string
   problemId: string
   tutorName: string
   tutorRating: number
   tutorSessions: number
   tutorSubject: string
+  qualification: string
   responseTimeMin: number
   price: number
   durationMin: number
@@ -17,13 +16,13 @@ interface Bid {
 }
 
 interface SupabaseBid {
-  ranking?: BidRanking
   id: string
   problem_id: string
   tutor_name: string
   tutor_rating: number
   tutor_sessions: number
   tutor_subject: string
+  qualification?: string
   response_time_min: number
   price: number
   duration_min: number
@@ -90,6 +89,7 @@ export const useBidsStore = create<BidsState>((set) => ({
         tutorRating: b.tutor_rating,
         tutorSessions: b.tutor_sessions,
         tutorSubject: b.tutor_subject,
+        qualification: b.qualification || 'Qualification not listed',
         responseTimeMin: b.response_time_min,
         price: b.price,
         durationMin: b.duration_min,
@@ -129,12 +129,12 @@ export const useBidsStore = create<BidsState>((set) => ({
           tutorRating: b.tutor_rating,
           tutorSessions: b.tutor_sessions,
           tutorSubject: b.tutor_subject,
+          qualification: b.qualification || 'Qualification not listed',
           responseTimeMin: b.response_time_min,
           price: b.price,
           durationMin: b.duration_min,
           problemSubject: problem.subject,
           problemClass: problem.class,
-          ranking: b.ranking,
         }))
       )
 

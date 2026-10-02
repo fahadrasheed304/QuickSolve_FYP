@@ -26,11 +26,17 @@ test('ranking combines live ratings, outcomes and valid test results without exc
 test('student bids use fresh evidence, stay within their request, remove rejected bids and fail explicitly on missing evidence', async () => {
   let failed = false, highRating = 5
   const profiles = ['high@test','low@test'].map(user_email => ({ user_email, verification_status: 'verified', subject_test_passed: false }))
+  const degrees = [
+    { tutor_email: 'high@test', degree_name: 'BS Physics', institution: 'North University', year_completed: 2020 },
+    { tutor_email: 'high@test', degree_name: 'MSc Physics', institution: 'Central University', year_completed: 2024 },
+    { tutor_email: 'low@test', degree_name: 'BEd', institution: 'City University', year_completed: 2021 },
+  ]
   const { rankStudentBids } = moduleAt('src/lib/rank-student-bids.ts', {
     '@/lib/bid-ranking': ranking,
     '@/lib/supabase': { supabaseAdmin: {
       from(table) {
         if (table === 'tutor_profiles') return { select: () => ({ in: async () => ({ data: profiles, error: null }) }) }
+        if (table === 'tutor_degrees') return { select: () => ({ in: () => ({ order: async (_column, options) => ({ data: [...degrees].sort((a,b) => options?.ascending ? a.year_completed - b.year_completed : b.year_completed - a.year_completed), error: null }) }) }) }
         const query = { select() { return this }, eq() { return this }, order() { return this }, limit: async () => ({ data: [{ status: 'held' }], error: failed ? {} : null }) }
         return query
       },
@@ -46,6 +52,9 @@ test('student bids use fresh evidence, stay within their request, remove rejecte
   const result = await rankStudentBids(problems)
   assert.deepEqual(result[0].bids.map(b => b.id), ['high','low'])
   assert.equal(result[0].bids[0].tutor_rating, 5)
+  assert.equal(result[0].bids[0].qualification, 'MSc Physics · Central University')
+  assert.equal('ranking' in result[0].bids[0], false)
+  assert.equal(result[0].bids[1].qualification, 'BEd · City University')
   assert.equal(result[1], problems[1])
   assert.equal(problems[0].bids.length, 4)
   highRating = 1

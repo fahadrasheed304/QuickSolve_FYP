@@ -7,6 +7,7 @@ import {
   VideoConference,
   useIsRecording,
 } from '@livekit/components-react'
+import SessionWhiteboard from './session-whiteboard'
 import '@livekit/components-styles'
 
 function RecordingNotice({ enabled }: { enabled: boolean }) {
@@ -113,14 +114,21 @@ export default function VideoRoom({ roomName, onDisconnected, onEndSession, isEn
         data-lk-theme="default"
       >
         <RecordingNotice enabled={recordingEnabled} />
-        <VideoConference style={{ flex: 1, minHeight: 0 }} aria-busy={isEnding} onClickCapture={event => {
-          // Route pointer and keyboard clicks through the same server action as
-          // the header button, before LiveKit disconnects this browser locally.
-          if (!(event.target instanceof Element) || !event.target.closest('.lk-disconnect-button')) return
-          event.preventDefault()
-          event.stopPropagation()
-          if (!isEnding) void onEndSession()
-        }} />
+        <section className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(300px,1fr)_minmax(300px,1fr)] gap-2 overflow-auto p-2 md:grid-cols-[minmax(0,1.55fr)_minmax(330px,1fr)] md:grid-rows-1">
+          <div className="min-h-0 overflow-hidden rounded-xl border border-white/10">
+            <VideoConference style={{ height: '100%', minHeight: 0 }} aria-busy={isEnding} onClickCapture={event => {
+              // Route pointer and keyboard clicks through the same server action as
+              // the header button, before LiveKit disconnects this browser locally.
+              if (!(event.target instanceof Element) || !event.target.closest('.lk-disconnect-button')) return
+              event.preventDefault()
+              event.stopPropagation()
+              if (!isEnding) void onEndSession()
+            }} />
+          </div>
+          <div className="min-h-0 overflow-hidden rounded-xl border border-white/10">
+            <SessionWhiteboard problemId={roomName.replace(/^session-/, '')} />
+          </div>
+        </section>
       </LiveKitRoom>
     </div>
   )

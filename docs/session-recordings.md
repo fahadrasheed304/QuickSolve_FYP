@@ -2,9 +2,16 @@
 
 The code records LiveKit room audio/video and published screen shares to private
 720p MP4 files. Admins open **Payments → View session recordings** to play them.
-Student/tutor accounts cannot list recordings or request playback links.
-The separate QuickSolve whiteboard/chat UI is not captured automatically; share
-the whiteboard screen in the call if it needs to appear in the video.
+Student/tutor accounts cannot list recordings or request playback links. The
+custom recorder page also captures the shared whiteboard and LiveKit chat beside
+participant video.
+
+The session whiteboard syncs changes over the LiveKit room and saves document
+snapshots in the private `session_whiteboards` table. Apply
+`supabase/migrations/202609300005_session_whiteboards.sql` before deploying this
+feature. Add a valid tldraw license key as `NEXT_PUBLIC_TLDRAW_LICENSE_KEY` in Vercel for production; the SDK
+requires a trial, hobby, or commercial license key outside development. The key
+is public by design; do not put secret credentials in this variable.
 
 Recordings are eligible for cleanup 20 minutes after the session ends. A held
 payment (dispute, low rating, or no-start review) preserves evidence until admin
@@ -69,7 +76,10 @@ CRON_SECRET=YOUR_RANDOM_SECRET_AT_LEAST_32_CHARACTERS
 ```
 
 Existing `NEXT_PUBLIC_LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`,
-Supabase server credentials and `NEXT_PUBLIC_APP_URL` must also be configured.
+Supabase server credentials, `NEXT_PUBLIC_APP_URL`, and
+`NEXT_PUBLIC_TLDRAW_LICENSE_KEY` must also be configured. The app URL is used by
+LiveKit Egress to open `/recording-template`; the template lays out participant
+video, whiteboard and chat together.
 The URL must be the production HTTPS origin, not a preview deployment URL.
 Generate a cron secret locally, for example:
 

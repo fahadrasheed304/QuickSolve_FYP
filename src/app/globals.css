@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "tldraw/tldraw.css";
 
 :root {
   --background: #ffffff;
@@ -496,3 +497,45 @@ input:disabled {
     transition-duration: 0.001ms !important;
   }
 }
+
+.recording-root {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #08111f;
+  color: #e5edf8;
+  font-family: Arial, Helvetica, sans-serif;
+}
+.recording-template {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  grid-template: 42px minmax(0, 1fr) / minmax(0, 1fr) 320px;
+  gap: 8px;
+  padding: 8px;
+  box-sizing: border-box;
+}
+.recording-header {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 12px;
+  background: #16253b;
+  border-radius: 8px;
+  font-size: 13px;
+}
+.recording-header span { color: #ff9b9b; font-weight: 700; }
+.recording-board, .recording-videos, .recording-chat { min-width: 0; min-height: 0; overflow: hidden; border-radius: 8px; }
+.recording-board { position: relative; background: #fff; pointer-events: none; }
+.recording-side { display: grid; min-height: 0; grid-template-rows: minmax(150px, 36%) minmax(0, 1fr); gap: 8px; }
+.recording-videos { background: #16253b; }
+.recording-videos .lk-grid-layout { height: 100%; }
+.recording-empty { display: grid; height: 100%; place-items: center; padding: 16px; color: #b7c6d9; font-size: 13px; text-align: center; }
+.recording-chat { display: flex; flex-direction: column; background: #16253b; padding: 12px; }
+.recording-chat h2 { margin: 0 0 10px; border-bottom: 1px solid #ffffff24; padding-bottom: 8px; font-size: 14px; }
+.recording-messages { overflow: hidden; display: flex; flex: 1; flex-direction: column; gap: 10px; }
+.recording-messages article { overflow-wrap: anywhere; border-radius: 7px; background: #ffffff0c; padding: 8px; font-size: 12px; }
+.recording-messages strong { color: #93c5fd; }
+.recording-messages p { margin: 4px 0 0; white-space: pre-wrap; }
+.recording-template-error { display: grid; position: fixed; inset: 0; place-items: center; background: #08111f; color: white; font: 16px Arial, sans-serif; }
