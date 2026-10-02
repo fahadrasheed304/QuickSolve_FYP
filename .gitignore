@@ -45,3 +45,4 @@ next-env.d.ts
 /supabase/migrations/202609300001_account_moderation.sql
 /supabase/migrations/202609300002_session_attendance.sql
 /supabase/migrations/202609300003_student_reviews.sql
+/supabase/migrations/202609300004_session_recordings.sql

@@ -14,6 +14,10 @@ const sections = [
     body: 'During tutor tests, camera access may be used for identity and proctoring checks. QuickSolve uses this to reduce impersonation and test misuse.',
   },
   {
+    title: 'Session Recordings',
+    body: 'When recording is enabled, session audio, video and shared screens are recorded for administrator dispute review. Recordings are stored privately and playback is restricted to administrators. They become eligible for automatic deletion 20 minutes after the session ends. Recordings linked to held payments remain until an administrator resolves the payment and the retention window has passed. Deletion occurs during scheduled cleanup.',
+  },
+  {
     title: 'Sharing',
     body: 'We do not sell personal information. We may share limited data with service providers, payment systems, or administrators when needed to run and protect the platform.',
   },

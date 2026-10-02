@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { decrypt } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { RoomServiceClient } from 'livekit-server-sdk'
+import { stopRecordings } from '@/lib/recordings'
 
 async function handle(request: Request, end: boolean) {
   try {
@@ -25,6 +26,8 @@ async function handle(request: Request, end: boolean) {
       if (problem.status !== 'accepted') return NextResponse.json({ error: 'Session not active' }, { status: 409 })
       const { error: writeError } = await supabaseAdmin.from('problems').update({ session_ended_at: new Date().toISOString() }).eq('id', id).is('session_ended_at', null)
       if (writeError) return NextResponse.json({ error: 'Unable to end session. Please retry.' }, { status: 503 })
+      try { await stopRecordings(`session-${id}`) }
+      catch { console.error('Recording stop deferred to room closure and scheduled cleanup.') }
       try {
         const client = new RoomServiceClient(process.env.NEXT_PUBLIC_LIVEKIT_URL!.replace('wss:', 'https:'), process.env.LIVEKIT_API_KEY, process.env.LIVEKIT_API_SECRET)
         await client.deleteRoom(`session-${id}`)

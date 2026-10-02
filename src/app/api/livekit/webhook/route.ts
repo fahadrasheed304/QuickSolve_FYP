@@ -1,6 +1,7 @@
 import { WebhookReceiver, RoomServiceClient } from 'livekit-server-sdk'
 import { supabaseAdmin } from '@/lib/supabase'
 import { assertAccountAccess, AccountRestrictedError } from '@/lib/account-access'
+import { saveEgress } from '@/lib/recordings'
 
 export const runtime = 'nodejs'
 
@@ -17,6 +18,14 @@ export async function POST(request: Request) {
     )
   } catch {
     return new Response('Invalid webhook', { status: 401 })
+  }
+
+  if (['egress_started', 'egress_updated', 'egress_ended'].includes(event.event || '')) {
+    if (!event.egressInfo) return new Response('Recording event metadata missing', { status: 400 })
+    try {
+      await saveEgress(event.egressInfo)
+      return new Response(null, { status: 204 })
+    } catch { return new Response('Recording state unavailable; retry', { status: 503 }) }
   }
 
   const room = event.room?.name || ''

@@ -5,8 +5,18 @@ import { useEffect, useState } from 'react'
 import {
   LiveKitRoom,
   VideoConference,
+  useIsRecording,
 } from '@livekit/components-react'
 import '@livekit/components-styles'
+
+function RecordingNotice({ enabled }: { enabled: boolean }) {
+  const recording = useIsRecording()
+  if (!enabled && !recording) return null
+  return <div role="status" className="shrink-0 bg-[#16253b] px-3 py-2 text-xs text-white">
+    <span className={recording ? 'font-bold text-red-300' : 'font-bold text-amber-200'}>{recording ? '● Recording' : 'Recording is not active yet'}</span>
+    {' · '}Session audio, video and shared screens are recorded for admin dispute review. Recordings are kept for 20 minutes after the session ends, or until a held payment is resolved.
+  </div>
+}
 
 interface VideoRoomProps {
   roomName: string
@@ -21,6 +31,7 @@ export default function VideoRoom({ roomName, onDisconnected, onEndSession, isEn
   const [serverUrl, setServerUrl] = useState<string | undefined>(undefined)
   const [attempt, setAttempt] = useState(0)
   const [connected, setConnected] = useState(false)
+  const [recordingEnabled, setRecordingEnabled] = useState(false)
 
   useEffect(() => {
     if (!roomName) return
@@ -39,6 +50,7 @@ export default function VideoRoom({ roomName, onDisconnected, onEndSession, isEn
         if (cancelled) return
         if (!data.token || !data.serverUrl) throw new Error('Video configuration is incomplete. Please redeploy with LiveKit variables.')
         setServerUrl(data.serverUrl)
+        setRecordingEnabled(data.recordingEnabled === true)
         useSessionStore.getState().syncClock(data.endsAt, data.serverNow)
         setToken(data.token)
       } catch (caughtError: unknown) {
@@ -97,10 +109,11 @@ export default function VideoRoom({ roomName, onDisconnected, onEndSession, isEn
         onConnected={() => setConnected(true)}
         onError={(error) => setError(error.message || 'Video connection failed')}
         onDisconnected={() => { setConnected(false); setError('Call disconnected. Retry to rejoin.'); onDisconnected?.() }}
-        style={{ height: '100%' }}
+        style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
         data-lk-theme="default"
       >
-        <VideoConference aria-busy={isEnding} onClickCapture={event => {
+        <RecordingNotice enabled={recordingEnabled} />
+        <VideoConference style={{ flex: 1, minHeight: 0 }} aria-busy={isEnding} onClickCapture={event => {
           // Route pointer and keyboard clicks through the same server action as
           // the header button, before LiveKit disconnects this browser locally.
           if (!(event.target instanceof Element) || !event.target.closest('.lk-disconnect-button')) return

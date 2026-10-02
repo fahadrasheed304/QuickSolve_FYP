@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
+import { AdminSessionRecordings } from '@/components/admin-session-recordings'
 
 type Payment = {
   problem_id: string; student_email: string; tutor_email: string; amount: number
@@ -60,7 +61,7 @@ export default function AdminPaymentsPage() {
   }
 
   return <main className="space-y-5">
-    <p className="text-text-muted">Completed sessions enter a 5-minute dispute window without requiring a review. Low ratings, disputes and sessions that never started require a decision here. Refunds return the full amount to the student wallet.</p>
+    <p className="text-text-muted">Completed sessions have a 20-minute dispute window from their end time, without requiring a review. Low ratings, disputes and sessions that never started require a decision here. Review available recordings before resolving a held payment; resolution makes them eligible for cleanup after the window closes.</p>
     <div className="qs-panel flex flex-wrap items-center gap-3 rounded-xl border border-border p-5">
       <label htmlFor="payment-status">Status</label>
       <select id="payment-status" value={status} disabled={saving} onChange={event => { setStatus(event.target.value); setPage(0); setDecision(null) }} className="rounded border border-border bg-surface p-2">
@@ -90,6 +91,7 @@ export default function AdminPaymentsPage() {
       {payment.feedback && <p className="whitespace-pre-wrap text-sm">Feedback: {payment.feedback}</p>}
       {payment.dispute && <p className="whitespace-pre-wrap font-semibold">Dispute: {payment.dispute}</p>}
       {payment.hold_reason && <p className="text-sm">Hold reason: {payment.hold_reason}</p>}
+      <AdminSessionRecordings problemId={payment.problem_id} />
       {payment.resolved_at && <p className="whitespace-pre-wrap text-sm">Resolved by {payment.resolved_by || 'Automatic payout'} at {timestamp(payment.resolved_at)}<br />{payment.resolution_note}</p>}
       {payment.status === 'held' && <div className="flex flex-wrap gap-3 pt-2">
         <Button disabled={saving} onClick={() => { setDecision({ payment, action: 'release' }); setNote('') }}>Release to tutor</Button>
