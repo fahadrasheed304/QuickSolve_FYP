@@ -46,3 +46,8 @@ next-env.d.ts
 /supabase/migrations/202609300002_session_attendance.sql
 /supabase/migrations/202609300003_student_reviews.sql
 /supabase/migrations/202609300004_session_recordings.sql
+
+# Keep session recording and whiteboard setup instructions/migrations local.
+/docs/session-recordings.md
+/scripts/schedule-recording-cleanup.sql
+/supabase/migrations/202609300005_session_whiteboards.sql
