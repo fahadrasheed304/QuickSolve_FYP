@@ -36,12 +36,17 @@ export async function GET() {
     const subjects = Array.isArray(profile.subjects) ? profile.subjects : []
     const problems = await DB.getOpenProblemsForTutors(subjects)
 
-    const emails = [...new Set(problems.map(problem => problem.student_email))]
+    const emails = [...new Set(problems.map(problem => problem.student_email.toLowerCase().trim()))]
     const { data: ratings, error: ratingsError } = emails.length
       ? await supabaseAdmin.rpc('get_student_ratings', { p_emails: emails }) : { data: [], error: null }
+    const { data: students } = emails.length
+      ? await supabaseAdmin.from('users').select('email, fullname').in('email', emails)
+      : { data: [] }
     return NextResponse.json({ problems: problems.map(problem => {
-      const rating = ratings?.find((row: { student_email: string }) => row.student_email === problem.student_email)
-      return { ...problem, student_rating: rating?.rating ?? null, student_review_count: rating?.review_count ?? 0, student_rating_available: !ratingsError }
+      const email = problem.student_email.toLowerCase().trim()
+      const rating = ratings?.find((row: { student_email: string }) => row.student_email.toLowerCase().trim() === email)
+      const student = students?.find((row: { email: string }) => row.email.toLowerCase().trim() === email)
+      return { ...problem, student_name: student?.fullname || null, student_rating: rating?.rating ?? null, student_review_count: rating?.review_count ?? 0, student_rating_available: !ratingsError }
     }) }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (error: unknown) {
     console.error('Tutor open problems error:', error)
