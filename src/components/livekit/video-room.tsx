@@ -36,6 +36,24 @@ export default function VideoRoom({ roomName, onDisconnected, onEndSession, isEn
   const [recordingEnabled, setRecordingEnabled] = useState(false)
   const [mobileTab, setMobileTab] = useState<'call' | 'board'>('call')
 
+  const handleDisconnected = async () => {
+    setConnected(false)
+    try {
+      const problemId = roomName.replace(/^session-/, '')
+      const response = await fetch(`/api/sessions/state?problemId=${encodeURIComponent(problemId)}`, { cache: 'no-store' })
+      if (response.ok) {
+        const state = await response.json()
+        if (state.ended) {
+          onDisconnected?.()
+          return
+        }
+      }
+    } catch {
+      // If session state cannot be checked, treat this as a regular disconnect.
+    }
+    setError('Call disconnected. Retry to rejoin.')
+  }
+
   useEffect(() => {
     if (!roomName) return
 
@@ -111,7 +129,7 @@ export default function VideoRoom({ roomName, onDisconnected, onEndSession, isEn
         connect={true}
         onConnected={() => setConnected(true)}
         onError={(error) => setError(error.message || 'Video connection failed')}
-        onDisconnected={() => { setConnected(false); setError('Call disconnected. Retry to rejoin.'); onDisconnected?.() }}
+        onDisconnected={handleDisconnected}
         style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
         data-lk-theme="default"
       >

@@ -131,7 +131,7 @@ export default function SessionPage() {
       <main className="flex min-h-0 flex-1 overflow-hidden">
         {/* ── LiveKit Video Room ── */}
         <div className="relative flex min-h-0 w-full flex-1 flex-col">
-          {isActive && <VideoRoom roomName={liveKitRoomName} onEndSession={handleEndSession} isEnding={isEnding} />}
+          {isActive && <VideoRoom roomName={liveKitRoomName} onDisconnected={closeLocalSession} onEndSession={handleEndSession} isEnding={isEnding} />}
         </div>
 
 

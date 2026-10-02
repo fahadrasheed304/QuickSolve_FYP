@@ -43,6 +43,37 @@ test('video footer end button uses server action without triggering local discon
   }
 })
 
+test('remote room shutdown checks server state and closes cleanly after the other participant ends', async () => {
+  const source = readFileSync(new URL('../src/components/livekit/video-room.tsx', import.meta.url), 'utf8')
+  const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText
+  const makeNode = (type, props) => ({ type, props })
+  const errors = [], closed = []
+  let index = 0
+  const dependencies = {
+    'react/jsx-runtime': { jsx: makeNode, jsxs: makeNode },
+    react: { useEffect: () => {}, useState: initial => { const position = index++; return [position === 0 ? 'token' : position === 2 ? 'wss://test' : position === 4 ? true : initial, value => { if (position === 1) errors.push(value) }] } },
+    '@/stores/session-store': {}, '@livekit/components-styles': {},
+    'lucide-react': { PenTool: 'pen-tool', Video: 'video' },
+    './session-whiteboard': { default: 'whiteboard' },
+    '@livekit/components-react': { LiveKitRoom: 'room', VideoConference: 'conference' },
+  }
+  const api = {}
+  new Function('require', 'exports', js)(name => dependencies[name], api)
+  const originalFetch = globalThis.fetch
+  try {
+    globalThis.fetch = async url => {
+      assert.equal(url, '/api/sessions/state?problemId=abc')
+      return { ok: true, json: async () => ({ ended: true }) }
+    }
+    const tree = api.default({ roomName: 'session-abc', onDisconnected: () => closed.push(true), onEndSession: async () => {} })
+    const findRoom = node => !node || typeof node !== 'object' ? null : node.type === 'room' ? node : (Array.isArray(node.props?.children) ? node.props.children : [node.props?.children]).map(findRoom).find(Boolean)
+    const room = findRoom(tree)
+    await room.props.onDisconnected()
+    assert.deepEqual(closed, [true])
+    assert.deepEqual(errors, [])
+  } finally { globalThis.fetch = originalFetch }
+})
+
 test('ratings include low/held reviews, exclude unrated disputes, isolate tutor and preserve records', async () => {
   const db = new PGlite()
   try {
