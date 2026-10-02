@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { AdminSessionRecordings } from '@/components/admin-session-recordings'
+import { CheckCircle2, Clock3, CreditCard, RefreshCw, ShieldAlert } from 'lucide-react'
 
 type Payment = {
   problem_id: string; student_email: string; tutor_email: string; amount: number
@@ -60,18 +61,23 @@ export default function AdminPaymentsPage() {
     finally { setSaving(false) }
   }
 
-  return <main className="space-y-5">
-    <p className="text-text-muted">Completed sessions have a 20-minute dispute window from their end time, without requiring a review. Low ratings, disputes and sessions that never started require a decision here. Review available recordings before resolving a held payment; resolution makes them eligible for cleanup after the window closes.</p>
-    <div className="qs-panel flex flex-wrap items-center gap-3 rounded-xl border border-border p-5">
-      <label htmlFor="payment-status">Status</label>
-      <select id="payment-status" value={status} disabled={saving} onChange={event => { setStatus(event.target.value); setPage(0); setDecision(null) }} className="rounded border border-border bg-surface p-2">
+  const totalHeld = payments.filter(payment => payment.status === 'held').reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
+  return <main className="space-y-6 pb-8">
+    <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+      <div className="max-w-3xl"><div className="mb-2 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-800"><ShieldAlert size={14} />Payment review desk</div><p className="text-sm leading-6 text-text-muted">Review disputes and low-rated sessions before deciding where the held payment goes. Session recordings remain private and can be reviewed below.</p></div>
+      <div className="grid grid-cols-2 gap-3"><div className="rounded-xl border border-border bg-surface p-4 shadow-sm"><span className="text-xs font-semibold uppercase tracking-wide text-text-muted">{status} payments</span><div className="mt-1 text-2xl font-black">{count}</div></div><div className="rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm"><span className="text-xs font-semibold uppercase tracking-wide text-amber-800">Held on this page</span><div className="mt-1 text-2xl font-black text-amber-950">Rs. {totalHeld.toLocaleString()}</div></div></div>
+    </section>
+    <div className="sticky top-2 z-20 flex flex-wrap items-center gap-3 rounded-xl border border-border bg-white/95 p-3 shadow-md backdrop-blur sm:p-4">
+      <label htmlFor="payment-status" className="text-sm font-bold">Filter status</label>
+      <select id="payment-status" value={status} disabled={saving} onChange={event => { setStatus(event.target.value); setPage(0); setDecision(null) }} className="min-w-36 rounded-lg border border-border bg-surface p-2.5 text-sm font-semibold capitalize">
         {['held', 'pending', 'released', 'refunded'].map(value => <option key={value} value={value}>{value}</option>)}
       </select>
-      <Button onClick={refresh} disabled={loading}>Refresh</Button>
-      <span>{count} payments</span>
+      <Button onClick={refresh} disabled={loading} className="inline-flex items-center gap-2"><RefreshCw size={15} className={loading ? 'animate-spin' : ''} />Refresh</Button>
+      <span className="text-sm text-text-muted">{count} {status} {count === 1 ? 'payment' : 'payments'}</span>
+      {status === 'held' && <span className="ml-auto hidden items-center gap-1.5 text-xs font-semibold text-amber-800 sm:inline-flex"><Clock3 size={14} />Needs admin decision</span>}
     </div>
     {error && <p role="alert" className="text-red-600">{error}</p>}
-    {decision && <section aria-label="Confirm payment decision" className="space-y-3 rounded-lg border border-amber-500 bg-surface p-5">
+    {decision && <section aria-label="Confirm payment decision" className="space-y-3 rounded-2xl border border-amber-300 bg-amber-50 p-5 shadow-sm sm:p-6">
       <h2 className="font-bold">{decision.action === 'refund' ? 'Refund student wallet' : 'Release to tutor'}: Rs. {Number(decision.payment.amount).toLocaleString()}</h2>
       <p className="break-all text-sm">Session {decision.payment.problem_id} · {decision.action === 'refund' ? decision.payment.student_email : decision.payment.tutor_email}</p>
       <label className="block" htmlFor="resolution-note">Reason for this decision</label>

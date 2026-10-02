@@ -49,18 +49,18 @@ export function AdminSessionRecordings({ problemId }: { problemId: string }) {
     } finally { if (!controller.signal.aborted) setBusy(false) }
   }
 
-  return <section className="space-y-3 border-t border-border pt-3">
-    <button className="rounded-lg border border-border px-3 py-2 text-sm font-semibold" aria-expanded={open} onClick={() => { setOpen(value => !value); setVideo(null); setBusy(false) }}>{open ? 'Close recordings' : 'View session recordings'}</button>
+  return <section className="min-w-0 space-y-4">
+    <div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="text-sm font-black">Session recordings</h3><p className="mt-1 text-xs text-text-muted">Private playback for admin review</p></div><button className="rounded-lg border border-border bg-surface px-3 py-2 text-sm font-semibold transition hover:border-primary hover:text-primary" aria-expanded={open} onClick={() => { setOpen(value => !value); setVideo(null); setBusy(false) }}>{open ? 'Close recordings' : 'View recordings'}</button></div>
     {open && <>
-      <p className="text-xs text-text-muted">Private evidence for admin review. Held payments preserve recordings until resolution. Other recordings are eligible for deletion 20 minutes after the session ends.</p>
-      {loading && !rows.length && <p role="status" className="text-sm">Loading recordings...</p>}
-      {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
-      {!loading && !error && !rows.length && <p className="text-sm text-text-muted">No recording was saved for this session.</p>}
-      {rows.map((row, index) => <div key={row.egress_id} className="flex flex-wrap items-center gap-3 text-sm">
-        <span>Part {index + 1} · {new Date(row.created_at).toLocaleString()} · {labels[row.state] || row.state}</span>
-        {row.state === 'ready' && <button disabled={busy} className="rounded border border-border px-3 py-1 font-semibold text-primary disabled:opacity-50" onClick={() => void play(row.egress_id)}>{busy ? 'Loading...' : 'Play / renew link'}</button>}
+      <p className="text-xs leading-5 text-text-muted">Held payments preserve recordings until resolution. Other recordings become eligible for deletion 20 minutes after the session ends.</p>
+      {loading && !rows.length && <p role="status" className="rounded-lg bg-surface p-4 text-sm text-text-muted">Loading recordings...</p>}
+      {error && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+      {!loading && !error && !rows.length && <p className="rounded-lg bg-surface p-4 text-sm text-text-muted">No recording was saved for this session.</p>}
+      {rows.map((row, index) => <div key={row.egress_id} className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0"><p className="font-bold">Recording part {index + 1}</p><p className="mt-1 text-xs text-text-muted">{new Date(row.created_at).toLocaleString()} <span className="px-1">-</span> {labels[row.state] || row.state}</p></div>
+        {row.state === 'ready' && <button disabled={busy} className="inline-flex shrink-0 items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-primary-dark disabled:opacity-50" onClick={() => void play(row.egress_id)}>{busy ? 'Loading video...' : video?.id === row.egress_id ? 'Renew playback link' : 'Play recording'}</button>}
       </div>)}
-      {video && <video key={video.url} src={video.url} controls playsInline preload="metadata" className="max-h-[480px] w-full rounded-lg bg-black" aria-label="Session recording" onError={() => setError('Video could not load. Renew the playback link; it expires after 15 minutes.')} />}
+      {video && <div className="overflow-hidden rounded-xl border border-slate-700 bg-slate-950 shadow-lg"><div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-4 py-3 text-white"><div><p className="text-sm font-bold">Session recording playback</p><p className="mt-0.5 text-xs text-slate-400">Secure link expires after 15 minutes</p></div><button className="rounded-md border border-white/20 px-3 py-1.5 text-xs font-semibold hover:bg-white/10" onClick={() => setVideo(null)}>Close player</button></div><video key={video.url} src={video.url} controls playsInline preload="metadata" className="aspect-video max-h-[72vh] w-full bg-black object-contain" aria-label="Session recording" onError={() => setError('Video could not load. Renew the playback link; it expires after 15 minutes.')} /></div>}
     </>}
   </section>
 }
