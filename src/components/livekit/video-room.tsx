@@ -7,18 +7,19 @@ import {
   VideoConference,
   useIsRecording,
 } from '@livekit/components-react'
+import { PenTool, Video } from 'lucide-react'
 import SessionWhiteboard from './session-whiteboard'
 import '@livekit/components-styles'
 
 function RecordingNotice({ enabled }: { enabled: boolean }) {
   const recording = useIsRecording()
   if (!enabled && !recording) return null
-  return <div role="status" className="shrink-0 bg-[#16253b] px-3 py-2 text-xs text-white">
-    <span className={recording ? 'font-bold text-red-300' : 'font-bold text-amber-200'}>{recording ? '● Recording' : 'Recording is not active yet'}</span>
-    {' · '}Session audio, video and shared screens are recorded for admin dispute review. Recordings are kept for 20 minutes after the session ends, or until a held payment is resolved.
+  return <div role="status" className="shrink-0 border-b border-white/10 bg-[#16253b] px-3 py-2 text-[11px] leading-4 text-white sm:px-4 sm:text-xs">
+    <span className={recording ? 'font-bold text-red-300' : 'font-bold text-amber-200'}>{recording ? 'Recording' : 'Recording is not active yet'}</span>
+    <span className="hidden sm:inline"> - Session audio, video and shared screens are recorded for admin dispute review. Recordings are kept for 20 minutes after the session ends, or until a held payment is resolved.</span>
+    <span className="sm:hidden"> - Audio, video and screen are saved for admin review.</span>
   </div>
 }
-
 interface VideoRoomProps {
   roomName: string
   onDisconnected?: () => void
@@ -33,6 +34,7 @@ export default function VideoRoom({ roomName, onDisconnected, onEndSession, isEn
   const [attempt, setAttempt] = useState(0)
   const [connected, setConnected] = useState(false)
   const [recordingEnabled, setRecordingEnabled] = useState(false)
+  const [mobileTab, setMobileTab] = useState<'call' | 'board'>('call')
 
   useEffect(() => {
     if (!roomName) return
@@ -114,8 +116,12 @@ export default function VideoRoom({ roomName, onDisconnected, onEndSession, isEn
         data-lk-theme="default"
       >
         <RecordingNotice enabled={recordingEnabled} />
-        <section className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(300px,1fr)_minmax(300px,1fr)] gap-2 overflow-auto p-2 md:grid-cols-[minmax(0,1.55fr)_minmax(330px,1fr)] md:grid-rows-1">
-          <div className="min-h-0 overflow-hidden rounded-xl border border-white/10">
+        <section className="flex min-h-0 flex-1 flex-col overflow-hidden p-2 md:grid md:grid-cols-[minmax(0,1.55fr)_minmax(330px,1fr)] md:grid-rows-1 md:gap-2">
+          <nav aria-label="Session view" className="mb-2 grid shrink-0 grid-cols-2 gap-1 rounded-xl border border-white/10 bg-white/[0.04] p-1 md:hidden">
+            <button type="button" aria-pressed={mobileTab === 'call'} onClick={() => setMobileTab('call')} className={`flex min-h-11 items-center justify-center gap-2 rounded-lg text-sm font-bold transition ${mobileTab === 'call' ? 'bg-white text-slate-950 shadow' : 'text-white/65 hover:bg-white/5 hover:text-white'}`}><Video size={17} />Call</button>
+            <button type="button" aria-pressed={mobileTab === 'board'} onClick={() => setMobileTab('board')} className={`flex min-h-11 items-center justify-center gap-2 rounded-lg text-sm font-bold transition ${mobileTab === 'board' ? 'bg-white text-slate-950 shadow' : 'text-white/65 hover:bg-white/5 hover:text-white'}`}><PenTool size={17} />Whiteboard</button>
+          </nav>
+          <div className={`${mobileTab === 'call' ? 'flex' : 'hidden'} min-h-0 min-w-0 flex-1 overflow-hidden rounded-xl border border-white/10 md:flex`}>
             <VideoConference style={{ height: '100%', minHeight: 0 }} aria-busy={isEnding} onClickCapture={event => {
               // Route pointer and keyboard clicks through the same server action as
               // the header button, before LiveKit disconnects this browser locally.
@@ -125,7 +131,7 @@ export default function VideoRoom({ roomName, onDisconnected, onEndSession, isEn
               if (!isEnding) void onEndSession()
             }} />
           </div>
-          <div className="min-h-0 overflow-hidden rounded-xl border border-white/10">
+          <div className={`${mobileTab === 'board' ? 'flex' : 'hidden'} min-h-0 min-w-0 flex-1 overflow-hidden rounded-xl border border-white/10 md:flex`}>
             <SessionWhiteboard problemId={roomName.replace(/^session-/, '')} />
           </div>
         </section>
