@@ -15,6 +15,7 @@ export default function TutorLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const isFullscreenSession = /^\/tutor\/session\/[^/]+$/.test(pathname)
   const router = useRouter()
   const { user, isLoading, fetchUser, logout } = useAuthStore()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -63,6 +64,10 @@ export default function TutorLayout({
 
   if (isTestPage) {
     return <>{children}</>
+  }
+
+  if (isFullscreenSession) {
+    return <div className="h-screen w-screen overflow-hidden">{children}</div>
   }
 
   return (
