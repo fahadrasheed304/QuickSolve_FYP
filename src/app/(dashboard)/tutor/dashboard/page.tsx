@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Wallet, BookOpen, Users, Star, Zap, Shield, Clock, CheckCircle, AlertCircle, GraduationCap, FileText, Send, Loader2, MapPin, Award, Video } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -15,6 +15,7 @@ import Link from 'next/link'
 import { TutorPerformance } from '@/components/tutor-performance'
 
 interface OpenProblem {
+  student_name?: string | null
   student_rating?: number | null
   student_review_count?: number
   student_rating_available?: boolean
@@ -56,6 +57,8 @@ export default function TutorDashboard() {
   const startSession = useSessionStore((state) => state.startSession)
   const [loadedProblems, setOpenProblems] = useState<OpenProblem[]>([])
   const [isLoadingProblems, setIsLoadingProblems] = useState(false)
+  const [hasLoadedProblems, setHasLoadedProblems] = useState(false)
+  const hasLoadedProblemsRef = useRef(false)
   const [problemsError, setProblemsError] = useState<string | null>(null)
   const [bidPrices, setBidPrices] = useState<Record<string, string>>({})
   const [placingBidId, setPlacingBidId] = useState<string | null>(null)
@@ -70,6 +73,8 @@ export default function TutorDashboard() {
   const subjects = profile?.subjects || []
   const isAvailable = localAvailability ?? profile?.isAvailable ?? true
   const openProblems = isAvailable ? loadedProblems : []
+  const tutorRole = user?.role
+  const tutorProfileReady = Boolean(user?.tutorProfile && !user.tutorProfile.requiresProfileCompletion)
   const displayName = (user?.fullname || user?.email || 'Tutor').split(' ')[0].split('@')[0]
 
   useEffect(() => {
@@ -82,45 +87,58 @@ export default function TutorDashboard() {
 
   useEffect(() => {
     let cancelled = false
+    let activeController: AbortController | null = null
     const loadOpenProblems = async () => {
+      if (cancelled) return
+      activeController?.abort()
+      const controller = new AbortController()
+      activeController = controller
       setIsLoadingProblems(true)
       try {
-        const res = await fetch('/api/tutor/open-problems', { cache: 'no-store' })
+        const res = await fetch('/api/tutor/open-problems', { cache: 'no-store', signal: controller.signal })
         const data = await res.json()
-        if (cancelled) return
+        if (cancelled || controller.signal.aborted) return
         if (res.ok) {
           setProblemsError(null)
           const problems = data.problems || []
           setOpenProblems(problems)
-                    setBidPrices((current) =>
-            problems.reduce((acc: Record<string, string>, problem: OpenProblem) => {
-              acc[problem.id] = current[problem.id] || String(problem.offer_price || 400)
-              return acc
-            }, {})
-          )
+          hasLoadedProblemsRef.current = true
+          setHasLoadedProblems(true)
+          setBidPrices((current) => {
+            const next = { ...current }
+            problems.forEach((problem: OpenProblem) => {
+              next[problem.id] ??= String(problem.offer_price || 400)
+            })
+            return next
+          })
         } else {
           setProblemsError('Student requests could not be loaded. Retrying automatically…')
         }
       } catch {
-        if (!cancelled) setProblemsError('Connection failed. Retrying student requests automatically…')
+        if (!cancelled && !controller.signal.aborted) setProblemsError('Connection failed. Retrying student requests automatically…')
       } finally {
-        if (!cancelled) setIsLoadingProblems(false)
+        if (!cancelled && activeController === controller) {
+          activeController = null
+          setIsLoadingProblems(false)
+        }
       }
     }
 
-    if (user?.role === 'tutor' && user.tutorProfile && !user.tutorProfile.requiresProfileCompletion && isAvailable) {
+    if (tutorRole === 'tutor' && tutorProfileReady && isAvailable) {
       const initial = setTimeout(loadOpenProblems, 0)
       const unsubscribe = subscribeToRequestUpdates(loadOpenProblems)
       return () => {
         cancelled = true
+        activeController?.abort()
         clearTimeout(initial)
         unsubscribe()
       }
     }
     return () => {
       cancelled = true
+      activeController?.abort()
     }
-  }, [user, isAvailable])
+  }, [tutorRole, tutorProfileReady, isAvailable])
 
   // Refresh accepted sessions when their notification arrives.
   useEffect(() => {
@@ -222,7 +240,7 @@ export default function TutorDashboard() {
       setOpenProblems((current) =>
         current.map((item) =>
           item.id === problem.id
-            ? { ...item, bids: [...(item.bids || []), data.bid] }
+            ? { ...item, bids: [...(item.bids || []).filter((bid) => bid.id !== data.bid.id), data.bid] }
             : item
         )
       )
@@ -420,6 +438,12 @@ export default function TutorDashboard() {
               <h3 className="mt-3 text-2xl font-black text-text-main">
                 {isAvailable ? 'Open problems you can bid on' : 'Turn availability on to see requests'}
               </h3>
+              {isAvailable && hasLoadedProblems && isLoadingProblems && (
+                <p className="mt-2 text-xs font-semibold text-text-muted" role="status">Checking for new requests and bids…</p>
+              )}
+              {hasLoadedProblems && problemsError && (
+                <p className="mt-2 text-xs font-semibold text-amber-700" role="status">Couldn’t refresh just now. Showing the latest requests.</p>
+              )}
             </div>
             {bidMessage && (
               <span className="rounded-lg bg-success-subtle px-3 py-2 text-xs font-black text-success">
@@ -440,11 +464,11 @@ export default function TutorDashboard() {
                 Go Available
               </Button>
             </div>
-          ) : problemsError ? (
+          ) : problemsError && !hasLoadedProblems ? (
             <div role="alert" className="rounded-lg border border-border bg-surface p-8 text-center">
               <p className="text-text-muted">{problemsError}</p>
             </div>
-          ) : isLoadingProblems ? (
+          ) : isLoadingProblems && !hasLoadedProblems ? (
             <div className="flex min-h-48 items-center justify-center rounded-lg border border-border bg-surface/70">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
@@ -467,7 +491,9 @@ export default function TutorDashboard() {
                         <span className="rounded-full bg-secondary-subtle px-3 py-1 text-xs font-black text-secondary-dark">{problem.class}</span>
                         <span className="rounded-full bg-surface-hover px-3 py-1 text-xs font-bold text-text-muted">{problem.duration_min} min</span>
                       </div>
-                      <p className="flex items-center gap-2 text-sm font-semibold text-text-muted"><Star className="h-4 w-4 text-amber-500" />Student: {problem.student_rating_available === false ? "Rating unavailable" : problem.student_rating != null ? `${Number(problem.student_rating).toFixed(2)}/5 (${problem.student_review_count} reviews)` : "New student · No ratings yet"}</p><h4 className="text-lg font-black text-text-main">Rs. {Number(problem.offer_price || 0).toLocaleString()} student offer</h4>
+                      <p className="text-sm font-bold text-text-main">Student: {problem.student_name || 'Student'}</p>
+                      <p className="mt-1 flex items-center gap-2 text-sm font-semibold text-text-muted"><Star className="h-4 w-4 text-amber-500" />{problem.student_rating_available === false ? "Rating unavailable" : problem.student_rating != null ? `${Number(problem.student_rating).toFixed(2)}/5 (${problem.student_review_count} reviews)` : "New student · No ratings yet"}</p>
+                      <h4 className="text-lg font-black text-text-main">Rs. {Number(problem.offer_price || 0).toLocaleString()} student offer</h4>
                       <p className="mt-2 line-clamp-2 text-sm leading-6 text-text-muted">
                         {problem.details || 'Student uploaded a problem and is waiting for tutor bids.'}
                       </p>
