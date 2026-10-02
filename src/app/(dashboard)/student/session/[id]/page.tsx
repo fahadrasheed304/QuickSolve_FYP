@@ -29,7 +29,8 @@ const VideoRoom = dynamic(() => import('@/components/livekit/video-room'), {
 export default function SessionPage() {
   const router = useRouter()
   const clientReady = useClientReady()
-  const { isActive, timeLeftSeconds, tutorName, price, sessionId, roomName, endSession, tickTime } = useSessionStore()
+  const { isActive, timeLeftSeconds, tutorName, sessionId, roomName, endSession, tickTime } = useSessionStore()
+  const isEndingSoon = isActive && timeLeftSeconds <= 300
 
   const [showReview, setShowReview] = useState(false)
   const [rate, setRate] = useState<{ bidPrice: number; durationMin: number; extensionMinutes: number } | null>(null)
@@ -90,7 +91,6 @@ export default function SessionPage() {
 
   if (!isActive && !reviewOpen) return null
 
-  const isEndingSoon = isActive && timeLeftSeconds <= 300
   const liveKitRoomName = roomName || sessionId || 'default-room'
 
   return (
@@ -128,27 +128,13 @@ export default function SessionPage() {
 
       {isActive && rate && roomName && <SessionExtension key={roomName} problemId={roomName.replace(/^session-/, '')} rate={rate} />}
 
-      <main className="flex-1 flex overflow-hidden">
+      <main className="flex min-h-0 flex-1 overflow-hidden">
         {/* ── LiveKit Video Room ── */}
-        <div className="flex-1 relative flex flex-col">
+        <div className="relative flex min-h-0 w-full flex-1 flex-col">
           {isActive && <VideoRoom roomName={liveKitRoomName} onEndSession={handleEndSession} isEnding={isEnding} />}
         </div>
 
-        <aside className="hidden w-80 shrink-0 flex-col border-l border-border bg-surface text-text-main md:flex">
-          <div className="border-b border-border bg-surface-hover p-4">
-            <h3 className="mb-1 text-lg font-black">Session Info</h3>
-            <p className="mb-1 text-sm font-semibold text-text-muted">Physics / Class 10</p>
-            <p className="mb-4 text-sm font-black text-success">Rs. {price}</p>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-surface-container-high">
-              <div
-                className={cn("h-full transition-all", isEndingSoon ? "bg-red-500" : "bg-premium-gradient")}
-                style={{ width: `${(timeLeftSeconds / (30 * 60)) * 100}%` }}
-              />
-            </div>
-          </div>
 
-          <p className="p-4 text-sm text-text-muted">Use the Chat button in the call controls to message the other participant.</p>
-        </aside>
       </main>
 
       <ReviewModal isOpen={reviewOpen} onClose={() => setShowReview(false)} tutorName={tutorName} problemId={(roomName || "").replace(/^session-/, "")} />

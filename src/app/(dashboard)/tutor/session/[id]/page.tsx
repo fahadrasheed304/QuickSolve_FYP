@@ -30,7 +30,7 @@ export default function TutorSessionPage({ params }: { params: Promise<{ id: str
   const router = useRouter()
   const [ended, setEnded] = useState(false)
   const clientReady = useClientReady()
-  const { isActive, timeLeftSeconds, price, endSession, tickTime } = useSessionStore()
+  const { isActive, timeLeftSeconds, endSession, tickTime } = useSessionStore()
 
 
   const closeLocalSession = useCallback(() => {
@@ -118,29 +118,13 @@ export default function TutorSessionPage({ params }: { params: Promise<{ id: str
         </div>
       </header>
 
-      <main className="flex-1 flex overflow-hidden">
+      <main className="flex min-h-0 flex-1 overflow-hidden">
         {/* ── LiveKit Video Room ── */}
-        <div className="flex-1 relative flex flex-col">
+        <div className="relative flex min-h-0 w-full flex-1 flex-col">
           <VideoRoom roomName={roomId} onEndSession={handleEndSession} isEnding={isEnding} />
         </div>
 
-        <aside className="hidden w-80 shrink-0 flex-col border-l border-border bg-surface text-text-main md:flex">
-          <div className="border-b border-border bg-surface-hover p-4">
-            <h3 className="mb-1 text-lg font-black">Session Info</h3>
-            <p className="mb-1 text-sm font-semibold text-text-muted">Tutoring Session</p>
-            {price > 0 && <p className="mb-4 text-sm font-black text-success">Rs. {price}</p>}
-            {isActive && (
-              <div className="h-2 w-full overflow-hidden rounded-full bg-surface-container-high">
-                <div
-                  className={cn("h-full transition-all", isEndingSoon ? "bg-red-500" : "bg-premium-gradient")}
-                  style={{ width: `${(timeLeftSeconds / (30 * 60)) * 100}%` }}
-                />
-              </div>
-            )}
-          </div>
 
-          <p className="p-4 text-sm text-text-muted">Use the Chat button in the call controls to message the other participant.</p>
-        </aside>
       </main>
     </div>
   )

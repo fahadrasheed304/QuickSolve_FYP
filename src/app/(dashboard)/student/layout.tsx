@@ -17,6 +17,7 @@ export default function StudentLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const isFullscreenSession = /^\/student\/session\/[^/]+$/.test(pathname)
   const { balance, fetchWallet } = useWalletStore()
   const { user, isLoading, fetchUser, logout } = useAuthStore()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -53,6 +54,10 @@ export default function StudentLayout({
         </div>
       </div>
     )
+  }
+
+  if (isFullscreenSession) {
+    return <div className="h-screen w-screen overflow-hidden">{children}</div>
   }
 
   return (
