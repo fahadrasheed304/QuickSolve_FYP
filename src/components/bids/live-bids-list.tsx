@@ -9,7 +9,8 @@ import { useSessionStore } from '@/stores/session-store'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { AlertTriangle, Clock3, Loader2, Star, XCircle } from 'lucide-react'
+import { AlertTriangle, Loader2, XCircle } from 'lucide-react'
+import { RatingStars } from '@/components/rating/rating-stars'
 import { notifyError, notifySuccess } from '@/lib/toast'
 
 type LiveBid = ReturnType<typeof useBidsStore.getState>['bids'][number]
@@ -104,7 +105,6 @@ export function LiveBidsList() {
       </div>
 
       <div className="grid gap-3">
-        <p className="text-sm text-text-muted">Recommended order within each request: ratings 60%, recent resolved session outcomes 25%, subject test 15%. New and admin-verified tutors receive neutral baselines. All eligible bids remain selectable.</p>
         {bids.map((bid) => (
           <div key={bid.id} className="qs-card rounded-lg p-5 transition-all hover:border-primary/40">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -114,24 +114,10 @@ export function LiveBidsList() {
 
               <div className="min-w-0 flex-1">
                 <h4 className="text-lg font-black text-text-main">{bid.tutorName}</h4>
-                {bid.ranking && <details className="mt-2 text-sm">
-                  <summary className="cursor-pointer font-semibold text-primary">Recommendation score: {bid.ranking.score}/100</summary>
-                  <ul className="mt-2 list-disc pl-5">{bid.ranking.reasons.map(reason => <li key={reason}>{reason}</li>)}</ul>
-                  <p className="mt-1 text-text-muted">Payment outcomes are a ranking signal, not proof of tutor fault.</p>
-                </details>}
-                <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
-                  <span className="flex items-center gap-1 font-bold text-accent">
-                    <Star className="h-3.5 w-3.5 fill-current" />
-                    {bid.tutorRating > 0 ? bid.tutorRating : 'New'}
-                  </span>
-                  <span className="text-text-muted">({bid.tutorSessions} sessions)</span>
-                  <span className="h-1 w-1 rounded-full bg-border" />
-                  <span className="text-text-muted">{bid.tutorSubject}</span>
+                <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
+                  <p className="text-text-muted">{bid.qualification}</p>
+                  <RatingStars value={bid.tutorRating > 0 ? bid.tutorRating : null} />
                 </div>
-                <p className="mt-2 flex items-center gap-1.5 text-xs font-bold text-success">
-                  <Clock3 className="h-3.5 w-3.5" />
-                  Usually responds in {bid.responseTimeMin} min
-                </p>
               </div>
 
               <div className="w-full sm:w-auto sm:text-right">

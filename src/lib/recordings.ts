@@ -30,6 +30,8 @@ export async function prepareRecordingRoom(room: string) {
   if (!id) throw new Error('Invalid recording room')
   const config = storage()
   required('CRON_SECRET')
+  const appUrl = required('NEXT_PUBLIC_APP_URL').replace(/\/$/, '')
+  if (!appUrl.startsWith('https://')) throw new Error('NEXT_PUBLIC_APP_URL must be the public HTTPS app URL for recording')
   const { error } = await supabaseAdmin.from('session_recordings').select('egress_id').limit(0)
   if (error) throw new Error('Apply the session recording migration before enabling recording')
   const client = new RoomServiceClient(livekitHost(), required('LIVEKIT_API_KEY'), required('LIVEKIT_API_SECRET'))
@@ -41,7 +43,7 @@ export async function prepareRecordingRoom(room: string) {
   // Auto-egress is configured before any participant receives a join token.
   // Concurrent CreateRoom calls for the same name reuse the existing room.
   await client.createRoom({ name: room, metadata: 'quicksolve-recording-v1', emptyTimeout: 60, departureTimeout: 30, egress: new RoomEgress({ room: new RoomCompositeEgressRequest({
-    roomName: room, layout: 'grid', options: { case: 'preset', value: EncodingOptionsPreset.H264_720P_30 },
+    roomName: room, layout: 'grid', customBaseUrl: `${appUrl}/recording-template`, options: { case: 'preset', value: EncodingOptionsPreset.H264_720P_30 },
     fileOutputs: [new EncodedFileOutput({ fileType: EncodedFileType.MP4, filepath: `sessions/${id}/${randomUUID()}.mp4`, disableManifest: true, output: { case: 's3', value: config } })],
   }) }) })
 }

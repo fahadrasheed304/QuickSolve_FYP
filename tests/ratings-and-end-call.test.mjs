@@ -13,6 +13,7 @@ test('video footer end button uses server action without triggering local discon
     'react/jsx-runtime': {jsx:makeNode,jsxs:makeNode},
     react: {useEffect:()=>{},useState:()=>[['token',null,'wss://test',0,true][index++],()=>{}]},
     '@/stores/session-store': {}, '@livekit/components-styles': {},
+    './session-whiteboard': {default:'whiteboard'},
     '@livekit/components-react': {LiveKitRoom:'room',VideoConference:'conference'},
   }
   const api={}
@@ -24,7 +25,8 @@ test('video footer end button uses server action without triggering local discon
     for (const isEnding of [false,true]) {
       index=0
       const tree=api.default({roomName:'session-test',isEnding,onEndSession:async()=>{ends++}})
-      const conference=tree.props.children.props.children.find(child=>child.type==='conference')
+      const findConference=node=>!node || typeof node!=='object' ? null : node.type==='conference' ? node : (Array.isArray(node.props?.children) ? node.props.children : [node.props?.children]).map(findConference).find(Boolean)
+      const conference=findConference(tree)
       let prevented=0, stopped=0
       const event=matches=>({target:new Target(matches),preventDefault:()=>prevented++,stopPropagation:()=>stopped++})
       conference.props.onClickCapture(event(false))

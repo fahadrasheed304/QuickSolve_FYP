@@ -155,7 +155,7 @@ test('maintenance requires its dedicated bearer secret before any database or st
 })
 
 test('auto recording is configured once before joining and disabled mode needs no storage credentials', async () => {
-  const names = ['RECORDING_ENABLED','R2_ENDPOINT','R2_BUCKET','R2_ACCESS_KEY_ID','R2_SECRET_ACCESS_KEY','CRON_SECRET','LIVEKIT_API_KEY','LIVEKIT_API_SECRET','NEXT_PUBLIC_LIVEKIT_URL']
+  const names = ['RECORDING_ENABLED','R2_ENDPOINT','R2_BUCKET','R2_ACCESS_KEY_ID','R2_SECRET_ACCESS_KEY','CRON_SECRET','LIVEKIT_API_KEY','LIVEKIT_API_SECRET','NEXT_PUBLIC_LIVEKIT_URL','NEXT_PUBLIC_APP_URL']
   const before = Object.fromEntries(names.map(name => [name,process.env[name]]))
   const created = []
   let rooms = [], dbCalls = 0
@@ -171,12 +171,13 @@ test('auto recording is configured once before joining and disabled mode needs n
     process.env.RECORDING_ENABLED = 'false'
     await api.prepareRecordingRoom(`session-${id}`)
     assert.equal(dbCalls, 0)
-    Object.assign(process.env, { RECORDING_ENABLED: 'true', R2_ENDPOINT: 'https://test.r2.cloudflarestorage.com', R2_BUCKET: 'private', R2_ACCESS_KEY_ID: 'key', R2_SECRET_ACCESS_KEY: 'secret', CRON_SECRET: 'cron-secret', LIVEKIT_API_KEY: 'key', LIVEKIT_API_SECRET: 'secret', NEXT_PUBLIC_LIVEKIT_URL: 'wss://test.livekit.cloud' })
+    Object.assign(process.env, { RECORDING_ENABLED: 'true', R2_ENDPOINT: 'https://test.r2.cloudflarestorage.com', R2_BUCKET: 'private', R2_ACCESS_KEY_ID: 'key', R2_SECRET_ACCESS_KEY: 'secret', CRON_SECRET: 'cron-secret', LIVEKIT_API_KEY: 'key', LIVEKIT_API_SECRET: 'secret', NEXT_PUBLIC_LIVEKIT_URL: 'wss://test.livekit.cloud', NEXT_PUBLIC_APP_URL: 'https://quicksolve.example' })
     await api.prepareRecordingRoom(`session-${id}`)
     await api.prepareRecordingRoom(`session-${id}`)
     assert.equal(created.length, 1)
     const recording = created[0].egress.room
     assert.equal(recording.roomName, `session-${id}`)
+    assert.equal(recording.customBaseUrl, 'https://quicksolve.example/recording-template')
     assert.equal(recording.fileOutputs[0].output.value.bucket, 'private')
     assert.equal(recording.fileOutputs[0].disableManifest, true)
     assert.equal(api.validRecordingKey(id, recording.fileOutputs[0].filepath), true)
