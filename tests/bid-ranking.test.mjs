@@ -52,9 +52,8 @@ test('student bids use fresh evidence, stay within their request, remove rejecte
   const result = await rankStudentBids(problems)
   assert.deepEqual(result[0].bids.map(b => b.id), ['high','low'])
   assert.equal(result[0].bids[0].tutor_rating, 5)
-  assert.equal(result[0].bids[0].qualification, 'MSc Physics · Central University')
   assert.equal('ranking' in result[0].bids[0], false)
-  assert.equal(result[0].bids[1].qualification, 'BEd · City University')
+  assert.equal('qualification' in result[0].bids[0], false)
   assert.equal(result[1], problems[1])
   assert.equal(problems[0].bids.length, 4)
   highRating = 1
