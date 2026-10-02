@@ -9,7 +9,7 @@ import { useSessionStore } from '@/stores/session-store'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { AlertTriangle, Loader2, XCircle } from 'lucide-react'
+import { AlertTriangle, Loader2, XCircle, Users } from 'lucide-react'
 import { RatingStars } from '@/components/rating/rating-stars'
 import { notifyError, notifySuccess } from '@/lib/toast'
 
@@ -115,8 +115,8 @@ export function LiveBidsList() {
               <div className="min-w-0 flex-1">
                 <h4 className="text-lg font-black text-text-main">{bid.tutorName}</h4>
                 <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
-                  <p className="text-text-muted">{bid.qualification}</p>
                   <RatingStars value={bid.tutorRating > 0 ? bid.tutorRating : null} />
+                  <p className="inline-flex items-center gap-1.5 text-text-muted"><Users className="h-4 w-4" />{bid.tutorSessions} completed {bid.tutorSessions === 1 ? 'session' : 'sessions'}</p>
                 </div>
               </div>
 
