@@ -84,14 +84,14 @@ export default function TutorSessionPage({ params }: { params: Promise<{ id: str
 
   return (
     <div className="h-screen flex flex-col bg-[#101d32] text-white overflow-hidden">
-      <header className="h-16 bg-[#111c2d]/92 backdrop-blur-xl flex items-center justify-between px-4 md:px-6 shrink-0 border-b border-white/10">
+      <header className="h-14 md:h-16 bg-[#111c2d]/92 backdrop-blur-xl flex items-center justify-between gap-2 px-3 md:px-6 shrink-0 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10 bg-premium-gradient ring-2 ring-white/10">
+          <Avatar className="h-8 w-8 md:h-10 md:w-10 bg-premium-gradient ring-2 ring-white/10">
             <AvatarFallback className="bg-transparent text-white font-black">S</AvatarFallback>
           </Avatar>
           <div>
-            <h2 className="text-sm font-black">Live Tutoring Session</h2>
-            <div className="flex items-center gap-1 text-xs text-amber-300 font-bold">
+            <h2 className="max-w-[34vw] truncate text-xs font-black md:max-w-none md:text-sm">Live Tutoring Session</h2>
+            <div className="flex items-center gap-1 text-[10px] text-amber-300 font-bold md:text-xs">
               <Star className="h-3 w-3 fill-current" />
               Session in progress
             </div>
@@ -100,20 +100,20 @@ export default function TutorSessionPage({ params }: { params: Promise<{ id: str
 
         {isActive && (
           <div className="flex flex-col items-center">
-            <div className={cn("text-2xl font-mono font-black", isEndingSoon ? "text-red-300 animate-pulse" : "text-white")}>
+            <div className={cn("text-lg font-mono font-black md:text-2xl", isEndingSoon ? "text-red-300 animate-pulse" : "text-white")}>
               {formatTime(timeLeftSeconds)}
             </div>
-            <div className="text-[10px] text-white/45 uppercase font-black">Remaining</div>
+            <div className="hidden text-[10px] text-white/45 uppercase font-black sm:block">Remaining</div>
           </div>
         )}
 
-        <div className="flex items-center gap-2">
-          <Button onClick={handlePopOutWindow} variant="outline" size="sm" className="font-bold border-white/20 text-white bg-white/10 hover:bg-white/20">
-            <ExternalLink className="w-4 h-4 mr-1.5" />
-            Pop Out Window
+        <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
+          <Button aria-label="Pop out session window" title="Pop out session window" onClick={handlePopOutWindow} variant="outline" size="sm" className="h-9 px-2 font-bold border-white/20 text-white bg-white/10 hover:bg-white/20 sm:px-3">
+            <ExternalLink className="w-4 h-4 sm:mr-1.5" />
+            <span className="hidden sm:inline">Pop out</span>
           </Button>
-          <Button onClick={handleEndSession} disabled={isEnding} variant="destructive" size="sm" className="font-bold px-5">
-            {isEnding ? 'Ending...' : 'End Call'}
+          <Button onClick={handleEndSession} disabled={isEnding} variant="destructive" size="sm" className="h-9 px-3 font-bold sm:px-4">
+            <span className="sm:hidden">End</span><span className="hidden sm:inline">{isEnding ? 'Ending...' : 'End call'}</span>
           </Button>
         </div>
       </header>

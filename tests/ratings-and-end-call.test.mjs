@@ -13,6 +13,7 @@ test('video footer end button uses server action without triggering local discon
     'react/jsx-runtime': {jsx:makeNode,jsxs:makeNode},
     react: {useEffect:()=>{},useState:()=>[['token',null,'wss://test',0,true][index++],()=>{}]},
     '@/stores/session-store': {}, '@livekit/components-styles': {},
+    'lucide-react': {PenTool:'pen-tool',Video:'video'},
     './session-whiteboard': {default:'whiteboard'},
     '@livekit/components-react': {LiveKitRoom:'room',VideoConference:'conference'},
   }
