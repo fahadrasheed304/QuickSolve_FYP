@@ -116,12 +116,12 @@ export default function VideoRoom({ roomName, onDisconnected, onEndSession, isEn
         data-lk-theme="default"
       >
         <RecordingNotice enabled={recordingEnabled} />
-        <section className="flex min-h-0 flex-1 flex-col overflow-hidden p-2 md:grid md:grid-cols-[minmax(0,1.55fr)_minmax(330px,1fr)] md:grid-rows-1 md:gap-2">
-          <nav aria-label="Session view" className="mb-2 grid shrink-0 grid-cols-2 gap-1 rounded-xl border border-white/10 bg-white/[0.04] p-1 md:hidden">
+        <section className="flex min-h-0 flex-1 flex-col overflow-hidden p-2 lg:grid lg:grid-cols-[minmax(0,1.55fr)_minmax(330px,1fr)] lg:grid-rows-1 lg:gap-2">
+          <nav aria-label="Session view" className="mb-2 grid shrink-0 grid-cols-2 gap-1 rounded-xl border border-white/10 bg-white/[0.04] p-1 lg:hidden">
             <button type="button" aria-pressed={mobileTab === 'call'} onClick={() => setMobileTab('call')} className={`flex min-h-11 items-center justify-center gap-2 rounded-lg text-sm font-bold transition ${mobileTab === 'call' ? 'bg-white text-slate-950 shadow' : 'text-white/65 hover:bg-white/5 hover:text-white'}`}><Video size={17} />Call</button>
             <button type="button" aria-pressed={mobileTab === 'board'} onClick={() => setMobileTab('board')} className={`flex min-h-11 items-center justify-center gap-2 rounded-lg text-sm font-bold transition ${mobileTab === 'board' ? 'bg-white text-slate-950 shadow' : 'text-white/65 hover:bg-white/5 hover:text-white'}`}><PenTool size={17} />Whiteboard</button>
           </nav>
-          <div className={`${mobileTab === 'call' ? 'flex' : 'hidden'} min-h-0 min-w-0 flex-1 overflow-hidden rounded-xl border border-white/10 md:flex`}>
+          <div className={`${mobileTab === 'call' ? 'flex' : 'hidden'} min-h-0 min-w-0 flex-1 overflow-hidden rounded-xl border border-white/10 lg:flex`}>
             <VideoConference style={{ height: '100%', minHeight: 0 }} aria-busy={isEnding} onClickCapture={event => {
               // Route pointer and keyboard clicks through the same server action as
               // the header button, before LiveKit disconnects this browser locally.
@@ -131,7 +131,7 @@ export default function VideoRoom({ roomName, onDisconnected, onEndSession, isEn
               if (!isEnding) void onEndSession()
             }} />
           </div>
-          <div className={`${mobileTab === 'board' ? 'flex' : 'hidden'} min-h-0 min-w-0 flex-1 overflow-hidden rounded-xl border border-white/10 md:flex`}>
+          <div className={`${mobileTab === 'board' ? 'flex' : 'hidden'} min-h-0 min-w-0 flex-1 overflow-hidden rounded-xl border border-white/10 lg:flex`}>
             <SessionWhiteboard problemId={roomName.replace(/^session-/, '')} />
           </div>
         </section>
