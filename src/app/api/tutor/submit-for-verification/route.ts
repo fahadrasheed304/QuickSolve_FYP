@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { decrypt } from '@/lib/auth'
 import { DB } from '@/lib/db'
+import { demoSubjectsReady } from '@/lib/teaching-demos-server'
+import { DEMO_SUBJECTS } from '@/lib/teaching-demos'
 
 type SubmittedDocument = {
   documentType?: string
@@ -67,6 +69,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'At least one degree certificate is required' }, { status: 400 })
     }
     
+    if (!subjects.every((subject: unknown) => typeof subject === 'string' && DEMO_SUBJECTS.includes(subject))) {
+      return NextResponse.json({ error: 'Select valid teaching subjects' }, { status: 400 })
+    }
+    if (!await demoSubjectsReady(session.email as string, subjects, false)) {
+      return NextResponse.json({ error: 'Submit a teaching demo for each selected subject before submitting your profile.' }, { status: 400 })
+    }
+
     // 5. Submit for verification
     await DB.submitProfileForVerification(session.email as string, {
       personalDetails,

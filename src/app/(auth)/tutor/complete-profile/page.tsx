@@ -11,17 +11,11 @@ import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth-store'
 import { getApiMessage, notifyError, notifySuccess } from '@/lib/toast'
 import Tesseract from 'tesseract.js'
+import { TutorTeachingDemos } from '@/components/tutor-teaching-demos'
+import { DEMO_SUBJECTS } from '@/lib/teaching-demos'
 
 // Available subjects
-const SUBJECTS = [
-  'Mathematics', 'Physics', 'Chemistry', 'Biology',
-  'Computer Science', 'General Science', 'English', 'Urdu', 'Islamiat', 'Pak Studies',
-  'Mathematics (FSc)', 'Physics (FSc)', 'Chemistry (FSc)', 'Biology (FSc)',
-  'Computer Science (ICS)', 'Statistics (ICS)', 'Economics (FA/ICS)', 
-  'Accounting (ICom)', 'Business Math (ICom)', 'Principles of Commerce (ICom)',
-  'Education (FA)', 'Sociology (FA)',
-  'English (Compulsory)', 'Urdu (Compulsory)', 'Islamic Studies (Compulsory)', 'Pakistan Studies (Compulsory)'
-]
+const SUBJECTS = DEMO_SUBJECTS
 
 // Degree categories
 const SCHOOL_DEGREES = [
@@ -576,6 +570,7 @@ export default function TutorCompleteProfilePage() {
   
   // Step 2: Subjects
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([])
+  const [readyDemoSubjects, setReadyDemoSubjects] = useState<string[]>([])
   
   // Step 3: Degrees
   const [degrees, setDegrees] = useState<Degree[]>([])
@@ -798,6 +793,10 @@ export default function TutorCompleteProfilePage() {
       return
     }
       if (step === 4) {
+        if (!selectedSubjects.every(subject => readyDemoSubjects.includes(subject))) {
+          setError('Upload a teaching demo for every selected subject before continuing')
+          return
+        }
         // Check required documents
         const hasCnicFront = documents.some(d => d.documentType === 'cnic_front')
         const hasProfilePhoto = documents.some(d => d.documentType === 'profile_photo')
@@ -984,7 +983,7 @@ export default function TutorCompleteProfilePage() {
     { id: 1, label: 'Personal', title: 'Personal details', caption: 'City, CNIC, and short bio', icon: <User className="h-4 w-4" /> },
     { id: 2, label: 'Subjects', title: 'Teaching subjects', caption: 'Pick the subjects you can teach', icon: <BookOpen className="h-4 w-4" /> },
     { id: 3, label: 'Education', title: 'Academic record', caption: 'Add degrees and institutions', icon: <GraduationCap className="h-4 w-4" /> },
-    { id: 4, label: 'Documents', title: 'Identity documents', caption: 'CNIC, profile photo, certificates', icon: <FileText className="h-4 w-4" /> },
+    { id: 4, label: 'Documents', title: 'Documents and teaching demos', caption: 'Identity, certificates, subject demos', icon: <FileText className="h-4 w-4" /> },
     { id: 5, label: 'Review', title: 'Final review', caption: 'Confirm and submit', icon: <ClipboardCheck className="h-4 w-4" /> },
   ]
   const currentStep = steps.find(item => item.id === step) || steps[0]
@@ -1341,6 +1340,7 @@ export default function TutorCompleteProfilePage() {
 
               {step === 4 && (
                                 <div className="space-y-5">
+                  <TutorTeachingDemos subjects={selectedSubjects} onReadyChange={setReadyDemoSubjects} />
                   <div className="grid gap-4 md:grid-cols-3">
                     {requiredDocs.map((doc) => {
                       const uploadedDoc = getDocumentByType(doc.type)
@@ -1471,6 +1471,7 @@ export default function TutorCompleteProfilePage() {
 
               {step === 5 && (
                                 <div className="space-y-5">
+                  <p className="text-sm font-semibold">Required teaching demos: {selectedSubjects.length} selected subjects</p>
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="rounded-lg border border-border bg-surface p-4">
                       <h3 className="mb-3 flex items-center gap-2 font-bold text-text-main"><User className="h-4 w-4 text-primary" /> Personal</h3>

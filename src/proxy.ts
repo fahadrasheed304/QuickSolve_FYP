@@ -1,11 +1,14 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { decrypt } from '@/lib/auth'
+import { demoReviewReturnPath } from '@/lib/teaching-demos'
 
 export async function proxy(request: NextRequest) {
   // Extract the "auth_token" from cookies
   const cookie = request.cookies.get('auth_token')?.value
   const session = await decrypt(cookie)
+  const demoId = request.nextUrl.searchParams.get('demo')
+  const demoReturnPath = demoReviewReturnPath(demoId)
 
   // 1. Protect Student Routes
   if (request.nextUrl.pathname.startsWith('/student')) {
@@ -43,6 +46,12 @@ export async function proxy(request: NextRequest) {
     // Protect non-auth tutor pages
     if (!isTutorAuthPage) {
       if (!session) {
+        if (request.nextUrl.pathname === '/tutor/waiting-verification' && demoReturnPath) {
+          const login = new URL('/signin-page', request.url)
+          login.searchParams.set('role', 'tutor')
+          login.searchParams.set('demo', demoId!)
+          return NextResponse.redirect(login)
+        }
         return NextResponse.redirect(new URL('/tutor/signin', request.url))
       }
       if (session.role === 'admin') {
@@ -96,7 +105,7 @@ export async function proxy(request: NextRequest) {
       const dest = session.role === 'admin'
         ? '/admin/dashboard'
         : session.role === 'tutor'
-          ? '/tutor/waiting-verification'
+          ? (demoReturnPath || '/tutor/waiting-verification')
           : '/student/dashboard'
       return NextResponse.redirect(new URL(dest, request.url))
     }

@@ -99,6 +99,7 @@ export async function GET() {
     
     return NextResponse.json({
       status: verification.status,
+      subjects: Array.isArray(profile.subjects) ? profile.subjects : [],
       stage: verification.stage,
       message: verification.stage === 'test_failed' && !retakeInfo.canRetake
         ? retakeInfo.message
