@@ -71,6 +71,10 @@ export async function stopRecordings(room: string) {
 export async function recordingPlayback(key: string) {
   return getSignedUrl(s3(), new GetObjectCommand({ Bucket: storage().bucket, Key: key, ResponseContentType: 'video/mp4', ResponseContentDisposition: 'inline' }), { expiresIn: 900 })
 }
+export async function recordingDownload(key: string, problemId: string, expiresIn = 300) {
+  if (!validRecordingKey(problemId, key)) throw new Error('Invalid recording path')
+  return getSignedUrl(s3(), new GetObjectCommand({ Bucket: storage().bucket, Key: key, ResponseContentType: 'video/mp4', ResponseContentDisposition: `attachment; filename="QuickSolve-${problemId}-${key.split('/').pop()}"` }), { expiresIn })
+}
 export async function deleteRecording(egressId: string) {
   const { data: key, error } = await supabaseAdmin.rpc('claim_recording_deletion', { p_egress: egressId })
   if (error) throw new Error('Retention claim failed')

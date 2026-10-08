@@ -1,5 +1,6 @@
 "use client"
 import { SessionPayments } from '@/components/session-payments'
+import { StudentRecordingDownload } from '@/components/student-recording-download'
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { AlertCircle, CheckCircle2, Clock, History, Loader2, RefreshCw, Search, XCircle } from 'lucide-react'
@@ -23,6 +24,7 @@ type ProblemRow = {
   status?: string | null
   created_at?: string | null
   bids?: BidRow[]
+  session_ended_at?: string | null
 }
 
 const formatDate = (value?: string | null) => {
@@ -79,6 +81,8 @@ export default function HistoryPage() {
   const [history, setHistory] = useState<ProblemRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [recordingId, setRecordingId] = useState<string | null>(null)
+  const [now, setNow] = useState(0)
 
   const fetchHistory = useCallback(async (silent = false) => {
     if (!silent) setLoading(true)
@@ -101,9 +105,10 @@ export default function HistoryPage() {
   }, [])
 
   useEffect(() => {
+    const clock = setInterval(() => setNow(Date.now()), 1000)
     const initial = setTimeout(fetchHistory, 0)
     const intervalId = window.setInterval(() => fetchHistory(true), 15000)
-    return () => { clearTimeout(initial); window.clearInterval(intervalId) }
+    return () => { clearInterval(clock); clearTimeout(initial); window.clearInterval(intervalId) }
   }, [fetchHistory])
 
   const filtered = useMemo(() => {
@@ -121,6 +126,7 @@ export default function HistoryPage() {
   return (
     <div className="p-4 md:p-8 pb-20 qs-page-enter">
       <SessionPayments student />
+      {recordingId && <StudentRecordingDownload key={recordingId} problemId={recordingId} fromHistory onContinue={() => setRecordingId(null)} />}
       <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <div className="qs-kicker rounded-full px-3 py-1.5">
@@ -129,6 +135,7 @@ export default function HistoryPage() {
           </div>
           <h1 className="mt-4 text-4xl font-black text-text-main">History</h1>
           <p className="mt-1 text-text-muted">Review your posted problems, bids, and session outcomes.</p>
+          <p className="mt-2 text-sm text-text-muted">Recordings can be downloaded within 15 minutes after the session ends.</p>
         </div>
         <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:items-center">
           <div className="relative w-full md:w-80">
@@ -164,6 +171,7 @@ export default function HistoryPage() {
                 <th className="p-4">Duration</th>
                 <th className="p-4">Status</th>
                 <th className="p-4 pr-6 text-right">Cost</th>
+                <th className="p-4">Recording</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -201,6 +209,12 @@ export default function HistoryPage() {
                     </td>
                     <td className="p-4 pr-6 text-right font-black text-text-main">
                       {cost ? `Rs. ${cost.toLocaleString()}` : 'N/A'}
+                    </td>
+                    <td className="p-4 text-sm">
+                      {item.session_ended_at ? now > 0 && now < Date.parse(item.session_ended_at) + 15 * 60000
+                        ? <button onClick={() => setRecordingId(item.id)} className="whitespace-nowrap rounded-lg border border-border px-3 py-2 font-bold text-primary hover:bg-surface-hover">Download recording</button>
+                        : <span className="text-text-muted">Download window closed</span>
+                        : <span className="text-text-muted">Available after session</span>}
                     </td>
                   </tr>
                 )
