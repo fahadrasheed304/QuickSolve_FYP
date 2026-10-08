@@ -16,8 +16,8 @@ function RecordingNotice({ enabled }: { enabled: boolean }) {
   if (!enabled && !recording) return null
   return <div role="status" className="shrink-0 border-b border-white/10 bg-[#16253b] px-3 py-2 text-[11px] leading-4 text-white sm:px-4 sm:text-xs">
     <span className={recording ? 'font-bold text-red-300' : 'font-bold text-amber-200'}>{recording ? 'Recording' : 'Recording is not active yet'}</span>
-    <span className="hidden sm:inline"> - Session audio, video and shared screens are recorded for admin dispute review. Recordings are kept for 20 minutes after the session ends, or until a held payment is resolved.</span>
-    <span className="sm:hidden"> - Audio, video and screen are saved for admin review.</span>
+    <span className="hidden sm:inline"> - Session audio, video and shared screens are recorded for admin dispute review. The student can download a copy within 15 minutes after the session ends. Server recordings are kept for 15 minutes, or until a held payment is resolved.</span>
+    <span className="sm:hidden"> - Audio, video and screen are recorded. The student can download a copy after the session.</span>
   </div>
 }
 interface VideoRoomProps {

@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { createHash } from 'node:crypto'
 import ts from 'typescript'
@@ -23,7 +23,48 @@ const auth = session => ({
   '@/lib/admin-auth': { isAdminEmail: email => email === 'admin@test' },
 })
 
-test('recording SQL protects event ordering, file ownership, retention, held payments and deletion retries', async () => {
+test('student downloads require ownership, a recent session end and a ready recording', async () => {
+  let owner = 'student@test', ended = new Date().toISOString(), state = 'ready', signed = 0
+  const dependencies = {
+    '@/lib/supabase': { supabaseAdmin: { from: table => {
+      const filters = {}
+      const query = {
+        select: () => query,
+        eq: (name, value) => { filters[name] = value; return query },
+        maybeSingle: async () => ({ data: table === 'problems'
+          ? filters.id === id && filters.student_email === owner ? { session_ended_at: ended } : null
+          : filters.problem_id === id && filters.egress_id === 'egress1' ? { object_key: key, state } : null, error: null }),
+      }
+      return query
+    } } },
+    '@/lib/recordings': { recordingDownload: async (path, problem, expiresIn) => { assert.equal(path, key); assert.equal(problem, id); assert.ok(expiresIn > 0 && expiresIn <= 300); signed++; return 'https://storage.test/download' } },
+  }
+  const request = () => new Request(`https://app.test/api/student/recordings?problemId=${id}&egressId=egress1`)
+  for (const session of [null, { role: 'tutor', email: owner }, { role: 'admin', email: owner }]) {
+    const api = module('src/app/api/student/recordings/route.ts', { ...dependencies, ...auth(session) })
+    assert.equal((await api.GET(request())).status, 401)
+  }
+  const api = module('src/app/api/student/recordings/route.ts', { ...dependencies, ...auth({ role: 'student', email: owner }) })
+  owner = 'other@test'
+  assert.equal((await api.GET(request())).status, 404)
+  owner = 'student@test'; ended = null
+  assert.equal((await api.GET(request())).status, 409)
+  ended = new Date(Date.now() - 16 * 60000).toISOString()
+  assert.equal((await api.GET(request())).status, 410)
+  ended = new Date().toISOString()
+  for (state of ['starting', 'recording', 'processing', 'failed', 'deleting', 'deleted']) assert.equal((await api.GET(request())).status, 409)
+  assert.equal(signed, 0)
+  state = 'ready'
+  const response = await api.GET(request())
+  assert.equal(response.status, 200)
+  assert.equal(response.headers.get('cache-control'), 'no-store')
+  assert.equal((await response.json()).url, 'https://storage.test/download')
+  assert.equal(signed, 1)
+  ended = new Date(Date.now() - 14 * 60000).toISOString()
+  assert.equal((await api.GET(request())).status, 200)
+})
+
+test('recording SQL protects event ordering, file ownership, retention, held payments and deletion retries', async t => {
   const db = new PGlite()
   try {
     await db.exec(`create role anon; create role authenticated; create role service_role;
@@ -67,6 +108,30 @@ test('recording SQL protects event ordering, file ownership, retention, held pay
     assert.equal(await claim(), null)
     const privileges = (await db.query("select has_table_privilege('authenticated','session_recordings','select') read,has_function_privilege('anon','claim_recording_deletion(text)','execute') delete,has_function_privilege('service_role','save_recording_event(text,uuid,text,text,bigint)','execute') save")).rows[0]
     assert.deepEqual(privileges, { read: false, delete: false, save: true })
+    // This deployment migration is intentionally kept outside Git.
+    const upgradePath = new URL('../supabase/migrations/202610080001_recording_retention_15_minutes.sql', import.meta.url)
+    await t.test('15-minute retention upgrade', { skip: !existsSync(upgradePath) }, async () => {
+      const upgrade = readFileSync(upgradePath, 'utf8')
+      await db.exec(upgrade); await db.exec(upgrade)
+      await db.exec("update session_recordings set state='ready'; update session_payments set status='pending',dispute=null,release_at=now()+interval '10 minutes'")
+      await db.query("update problems set session_ended_at=now()-interval '14 minutes' where id=$1", [id])
+      assert.equal(await claim(), null)
+      assert.equal((await db.query('select * from recording_cleanup_candidates(50)')).rows.length, 0)
+      await db.query("update problems set session_ended_at=now()-interval '16 minutes' where id=$1", [id])
+      assert.equal((await db.query('select * from recording_cleanup_candidates(50)')).rows.length, 1)
+      await db.exec("update session_payments set status='held',dispute='Preserve evidence'")
+      assert.equal(await claim(), null)
+      assert.equal((await db.query('select * from recording_cleanup_candidates(50)')).rows.length, 0)
+      await db.exec("update session_payments set status='refunded'")
+      assert.equal(await claim(), key)
+      assert.equal(await claim(), key)
+      await db.exec("update session_recordings set state='deleted'")
+      assert.equal(await claim(), null)
+      // Video retention must not silently shorten the existing payment dispute window.
+      await db.exec("update session_payments set status='held',dispute='Later dispute without video'")
+      await db.query("update problems set session_ended_at=now()-interval '21 minutes' where id=$1", [id])
+      await assert.rejects(db.exec("update session_payments set dispute='Too late'"), /20-minute dispute window/)
+    })
   } finally { await db.close() }
 })
 
@@ -136,6 +201,7 @@ test('recording helper keeps nanosecond event precision and rejects foreign stor
   info.fileResults[0].filename = 'sessions/foreign/video.mp4'
   await assert.rejects(api.saveEgress(info), /Unexpected recording path/)
   assert.equal(calls.length, 1)
+  await assert.rejects(api.recordingDownload('sessions/foreign/video.mp4', id), /Invalid recording path/)
 })
 
 test('maintenance requires its dedicated bearer secret before any database or storage work', async () => {

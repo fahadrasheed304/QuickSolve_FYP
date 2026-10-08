@@ -12,6 +12,7 @@ import dynamic from 'next/dynamic'
 import { useEndSession } from '@/hooks/use-end-session'
 import { useClientReady } from '@/hooks/use-client-ready'
 import { SessionExtension } from '@/components/session-extension'
+import { StudentRecordingDownload } from '@/components/student-recording-download'
 
 // Dynamically import VideoRoom to avoid SSR issues with LiveKit
 const VideoRoom = dynamic(() => import('@/components/livekit/video-room'), {
@@ -33,6 +34,7 @@ export default function SessionPage() {
   const isEndingSoon = isActive && timeLeftSeconds <= 300
 
   const [showReview, setShowReview] = useState(false)
+  const [recordingChoiceDone, setRecordingChoiceDone] = useState<string | null>(null)
   const [rate, setRate] = useState<{ bidPrice: number; durationMin: number; extensionMinutes: number } | null>(null)
   const reviewOpen = showReview || (!isActive && !!roomName)
 
@@ -137,7 +139,8 @@ export default function SessionPage() {
 
       </main>
 
-      <ReviewModal isOpen={reviewOpen} onClose={() => setShowReview(false)} tutorName={tutorName} problemId={(roomName || "").replace(/^session-/, "")} />
+      {reviewOpen && roomName && recordingChoiceDone !== roomName && <StudentRecordingDownload key={roomName} problemId={roomName.replace(/^session-/, '')} onContinue={() => setRecordingChoiceDone(roomName)} />}
+      <ReviewModal isOpen={reviewOpen && recordingChoiceDone === roomName} onClose={() => setShowReview(false)} tutorName={tutorName} problemId={(roomName || "").replace(/^session-/, "")} />
     </div>
   )
 }

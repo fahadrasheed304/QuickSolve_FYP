@@ -15,7 +15,7 @@ const sections = [
   },
   {
     title: 'Session Recordings',
-    body: 'When recording is enabled, session audio, video and shared screens are recorded for administrator dispute review. Recordings are stored privately and playback is restricted to administrators. They become eligible for automatic deletion 20 minutes after the session ends. Recordings linked to held payments remain until an administrator resolves the payment and the retention window has passed. Deletion occurs during scheduled cleanup.',
+    body: 'When recording is enabled, session audio, video and shared screens are recorded for administrator dispute review. Recordings are stored privately. Administrators can review recordings, and the student who attended the session can choose to download a copy within 15 minutes after it ends for offline study. Downloaded copies stay on the student’s device and are not removed by server cleanup. Students should keep these copies private. Server recordings become eligible for automatic deletion 15 minutes after the session ends. Recordings linked to held payments remain until an administrator resolves the payment and the retention window has passed. Deletion occurs during scheduled cleanup.',
   },
   {
     title: 'Sharing',

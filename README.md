@@ -369,3 +369,26 @@ Open request cards show the student's aggregate rating and review count. Unrated
 students are labelled as new/unrated; unavailable ratings are not shown as zero.
 Admin student activity uses received tutor ratings separately from reviews given
 to tutors. Live verification is pending after applying the migration.
+
+# Student recording downloads and 15-minute retention
+
+Apply supabase/migrations/202610080001_recording_retention_15_minutes.sql in
+Supabase SQL Editor after the session recording migration. It is transactional
+and rerunnable. Application service-role credentials cannot apply schema changes.
+
+Students can download their own recordings from the session end screen or
+Student > History for 15 minutes from the server-recorded session end.
+Signed download links expire within that window. After 15 minutes, the existing
+recording maintenance job removes ordinary recordings from Cloudflare R2.
+Deletion happens on the next successful cleanup run, not at the exact second.
+Keep npm run recordings:worker running or schedule authenticated calls to
+/api/cron/recordings at least once a minute using CRON_SECRET. Without a running
+worker or scheduler, R2 files will not be deleted automatically.
+
+Held/disputed payments preserve available recordings until admin resolution.
+The payment dispute/release window remains 20 minutes; disputes opened after
+video deletion remain valid but cannot recover deleted evidence.
+
+Live validation: end a recorded session, download from History before 15 minutes,
+then verify the download closes and the R2 object is deleted after the next
+cleanup run. Repeat with a held payment and verify its recording is preserved.
