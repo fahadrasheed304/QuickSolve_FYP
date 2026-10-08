@@ -18,8 +18,10 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { notifyError } from '@/lib/toast'
+import { TutorTeachingDemos } from '@/components/tutor-teaching-demos'
 
 interface VerificationStatus {
+  subjects: string[]
   status: string
   stage: string
   message: string
@@ -123,7 +125,8 @@ export default function WaitingVerificationPage() {
         }
         if (data?.stage === 'verified' || data?.status === 'verified') {
           redirected = true
-          router.replace('/tutor/dashboard')
+          const demo = new URLSearchParams(window.location.search).get('demo')
+          router.replace(demo ? `/tutor/subjects?demo=${encodeURIComponent(demo)}#teaching-demos` : '/tutor/dashboard')
           return
         }
         setStatus(data)
@@ -360,6 +363,7 @@ export default function WaitingVerificationPage() {
             )}
           </aside>
         </div>
+        <TutorTeachingDemos subjects={status?.subjects || []} />
       </div>
     </main>
   )

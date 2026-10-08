@@ -1,5 +1,6 @@
 "use client"
 import { TutorPerformance } from '@/components/tutor-performance'
+import { AdminTeachingDemos } from '@/components/admin-teaching-demos'
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
@@ -648,6 +649,7 @@ export default function AdminVerificationsPage() {
                 <div className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_360px]">
                   <div className="space-y-5">
                     <TutorPerformance key={selectedTutor.user_email} tutorEmail={selectedTutor.user_email} />
+                    <AdminTeachingDemos key={`demos-${selectedTutor.user_email}`} tutorEmail={selectedTutor.user_email} />
                     <section className="qs-panel rounded-lg p-5">
                       <div className="flex items-center justify-between border-b border-border/80 pb-4">
                         <div className="flex items-center gap-3">

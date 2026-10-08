@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { AlertTriangle, Loader2, XCircle, Users } from 'lucide-react'
 import { RatingStars } from '@/components/rating/rating-stars'
 import { notifyError, notifySuccess } from '@/lib/toast'
+import { TeachingDemoPlayer } from '@/components/teaching-demo-player'
 
 type LiveBid = ReturnType<typeof useBidsStore.getState>['bids'][number]
 
@@ -114,6 +115,7 @@ export function LiveBidsList() {
 
               <div className="min-w-0 flex-1">
                 <h4 className="text-lg font-black text-text-main">{bid.tutorName}</h4>
+                <TeachingDemoPlayer bidId={bid.id} />
                 <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
                   <RatingStars value={bid.tutorRating > 0 ? bid.tutorRating : null} />
                   <p className="inline-flex items-center gap-1.5 text-text-muted"><Users className="h-4 w-4" />{bid.tutorSessions} completed {bid.tutorSessions === 1 ? 'session' : 'sessions'}</p>

@@ -7,9 +7,13 @@ import { PGlite } from '@electric-sql/pglite'
 const require = createRequire(import.meta.url)
 
 test('bid API uses stored problem subject and authenticated tutor subjects, including second subject', async () => {
-  let subjects = ['Math'], problem = { subject: 'Physics' }, failed = false, session = { email: 'tutor@test', role: 'tutor' }
+  let subjects = ['Math'], problem = { subject: 'Physics' }, failed = false, demoApproved = true, session = { email: 'tutor@test', role: 'tutor' }
   const created = []
   const deps = {
+    '@/lib/teaching-demos-server': { demoSubjectsReady: async (email, requested, approved) => {
+      assert.equal(email, 'tutor@test'); assert.deepEqual(requested, ['Physics']); assert.equal(approved, true)
+      return demoApproved
+    } },
     'next/headers': { cookies: async () => ({ get: () => ({ value: 'token' }) }) },
     '@/lib/auth': { decrypt: async () => session },
     '@/lib/db': { DB: { findUserByEmail: async () => ({ email: 'tutor@test' }),
@@ -29,6 +33,8 @@ test('bid API uses stored problem subject and authenticated tutor subjects, incl
   subjects=['Math','Physics']; assert.equal((await send()).status,200)
   assert.equal(created[0].tutorSubject,'Physics')
   assert.equal(created[0].tutorEmail,'tutor@test')
+  demoApproved=false; assert.equal((await send()).status,403); assert.equal(created.length,1)
+  demoApproved=true
   failed=true; assert.equal((await send()).status,503)
   failed=false; problem=null; assert.equal((await send()).status,404)
   session=null; assert.equal((await send()).status,401)

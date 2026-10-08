@@ -10,6 +10,7 @@ import { AuthDivider } from '@/components/auth/AuthDivider';
 import { PasswordInput } from '@/components/auth/PasswordInput';
 import { getApiMessage, notifyError, notifySuccess } from '@/lib/toast';
 import { ShieldCheck } from 'lucide-react';
+import { demoReviewReturnPath } from '@/lib/teaching-demos';
 export default function SigninPage() {
   const [selectedRole, setRole] = useState<'student'|'tutor' | null>(null);
   const queryRole = useQueryRole();
@@ -53,6 +54,11 @@ export default function SigninPage() {
           return;
         }
         
+        const demoReturn = demoReviewReturnPath(new URLSearchParams(window.location.search).get('demo'));
+        if (data.role === 'tutor' && demoReturn) {
+          window.location.href = demoReturn;
+          return;
+        }
         // Check if tutor needs to complete profile first
         if (data.requiresProfileCompletion) {
           window.location.href = '/tutor/complete-profile';
@@ -108,6 +114,11 @@ export default function SigninPage() {
             return;
           }
           
+          const demoReturn = demoReviewReturnPath(new URLSearchParams(window.location.search).get('demo'));
+          if (data.role === 'tutor' && demoReturn) {
+            window.location.href = demoReturn;
+            return;
+          }
           // If needs profile completion
           if (data.requiresProfileCompletion) {
             window.location.href = '/tutor/complete-profile';

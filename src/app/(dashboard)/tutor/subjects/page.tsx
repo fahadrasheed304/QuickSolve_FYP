@@ -2,6 +2,7 @@
 
 import { Award, BookOpen, CheckCircle2, GraduationCap, Layers, Sparkles } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth-store'
+import { TutorTeachingDemos } from '@/components/tutor-teaching-demos'
 
 export default function TutorSubjectsPage() {
   const { user } = useAuthStore()
@@ -42,6 +43,7 @@ export default function TutorSubjectsPage() {
         </div>
       </section>
 
+      <TutorTeachingDemos subjects={subjects} />
       <section className="mt-6 qs-panel rounded-lg p-5 md:p-6">
         <div className="mb-5 flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary-subtle text-primary">

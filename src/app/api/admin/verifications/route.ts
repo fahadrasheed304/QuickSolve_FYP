@@ -3,6 +3,7 @@ import { sendMail } from '@/lib/mail'
 import { cookies } from 'next/headers'
 import { decrypt } from '@/lib/auth'
 import { DB } from '@/lib/db'
+import { demoSubjectsReady } from '@/lib/teaching-demos-server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getCurrentTutorDocuments } from '@/lib/tutor-documents'
 import { getAppUrl } from '@/lib/app-url'
@@ -184,6 +185,13 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
     }
     
+    if (newStage === 'test_invited' || newStage === 'verified' || newStatus === 'verified') {
+      const profile = await DB.getTutorProfile(tutorEmail)
+      if (!await demoSubjectsReady(tutorEmail, profile?.subjects || [], true)) {
+        return NextResponse.json({ error: 'Approve a teaching demo for every selected subject before inviting the tutor to the test or completing verification.' }, { status: 409 })
+      }
+    }
+
     // Update tutor profile
     await DB.updateTutorProfile(tutorEmail, {
       verification_stage: newStage,

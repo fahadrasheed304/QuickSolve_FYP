@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { decrypt } from '@/lib/auth'
 import { DB } from '@/lib/db'
 import { supabaseAdmin } from '@/lib/supabase'
+import { demoSubjectsReady } from '@/lib/teaching-demos-server'
 
 export const dynamic = 'force-dynamic'
 
@@ -61,6 +62,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'You can only bid on problems in your profile subjects.' }, { status: 403 })
     }
 
+    if (!await demoSubjectsReady(String(session.email), [problem.subject], true)) {
+      return NextResponse.json({ error: 'An approved teaching demo is required for this subject. Open My Subjects to submit your demo.' }, { status: 403 })
+    }
+
     const bid = await DB.createBid({
       problemId,
       tutorEmail: String(session.email).toLowerCase().trim(),
@@ -77,6 +82,7 @@ export async function POST(request: Request) {
   } catch (error: unknown) {
     console.error('Tutor bid error:', error)
     const message = error instanceof Error ? error.message : 'Internal server error'
+    if (message === 'An approved teaching demo is required for this subject') return NextResponse.json({ error: message }, { status: 403 })
     if (message === 'Tutor subject does not match problem') return NextResponse.json({ error: 'You can only bid on problems in your profile subjects.' }, { status: 403 })
     return NextResponse.json({ error: message }, { status: 500 })
   }

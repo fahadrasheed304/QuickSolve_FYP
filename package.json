@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "node --test --test-isolation=none tests/*.test.mjs",
     "dev:stripe": "node scripts/run-stripe.mjs",
+    "demos:cleanup": "node scripts/cleanup-teaching-demos.mjs",
     "recordings:worker": "node scripts/recording-maintenance.mjs",
     "recordings:cleanup": "node scripts/recording-maintenance.mjs --once"
   },
@@ -28,6 +29,7 @@
     "livekit-client": "^2.22.3",
     "livekit-server-sdk": "^2.19.0",
     "lucide-react": "^1.8.0",
+    "mp4box": "^2.4.1",
     "next": "16.2.3",
     "next-themes": "^0.4.6",
     "nodemailer": "^8.0.5",
