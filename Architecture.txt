@@ -24,3 +24,4 @@ Development notes:
 - October 2, 2026: Added interactive whiteboard canvas to active call rooms.
 - October 2, 2026: Fixed whiteboard stroke synchronization latency.
 - October 6, 2026: Implemented student rating and review submission modal.
+- October 10, 2026: Added file attachment support in session chat window.
