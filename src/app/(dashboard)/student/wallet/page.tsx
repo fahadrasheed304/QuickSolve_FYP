@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { useWalletStore } from '@/stores/wallet-store'
 import { notifyError, notifySuccess } from '@/lib/toast'
+import ScheduledWalletSummary from '@/components/scheduled-wallet-summary'
 
 
 const PRESET_AMOUNTS = ['500', '1000', '2000', '5000']
@@ -118,6 +119,7 @@ export default function WalletPage() {
         </button>
       </div>
 
+      <div className="mb-6"><ScheduledWalletSummary role="student"/></div>
       <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
         <div className="space-y-6">
           <Card className="mesh-sheen overflow-hidden border-transparent bg-hero-gradient text-white">
@@ -129,7 +131,7 @@ export default function WalletPage() {
                 <h2 className="my-5 text-5xl font-black">Rs. {balance.toLocaleString()}</h2>
               )}
               <div className="mb-5 rounded-lg border border-white/20 bg-white/10 p-3">
-                <p className="flex items-center gap-2 text-sm font-bold"><Lock className="h-4 w-4" />Reserved for sessions</p>
+                <p className="flex items-center gap-2 text-sm font-bold"><Lock className="h-4 w-4" />Reserved for 1:1 sessions</p>
                 <p className="mt-1 text-xl font-black">{isLoading ? 'Loading…' : `Rs. ${escrowBalance.toLocaleString()}`}</p>
                 <p className="mt-1 text-xs text-white/70">Already excluded from your available balance. Held until the session payment is released.</p>
               </div>

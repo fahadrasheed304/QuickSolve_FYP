@@ -46,9 +46,20 @@ export async function POST(request: Request) {
       if (!url || !process.env.LIVEKIT_API_KEY || !process.env.LIVEKIT_API_SECRET) throw new Error()
       const client = new RoomServiceClient(url.replace('wss:', 'https:'), process.env.LIVEKIT_API_KEY, process.env.LIVEKIT_API_SECRET)
       for (const room of await client.listRooms()) {
+        const groupIdentities:string[]=[]
+        if (/^class-[0-9a-f-]{36}$/i.test(room.name)) {
+          const classId=room.name.slice(6)
+          const [owner,bookings]=await Promise.all([
+            supabaseAdmin.from('scheduled_classes').select('tutor_email').eq('id',classId).single(),
+            supabaseAdmin.from('scheduled_class_bookings').select('id').eq('class_id',classId).eq('student_email',email),
+          ])
+          if (owner.error || bookings.error) throw new Error('Class participants unavailable')
+          if (owner.data.tutor_email===email) groupIdentities.push(`${classId}:tutor`)
+          for (const booking of bookings.data || []) groupIdentities.push(`${booking.id}:student`)
+        }
         const participants = await client.listParticipants(room.name)
         for (const participant of participants) {
-          if ([email, `${email}:student`, `${email}:tutor`].includes(participant.identity)) await client.removeParticipant(room.name, participant.identity)
+          if ([email, `${email}:student`, `${email}:tutor`,...groupIdentities].includes(participant.identity)) await client.removeParticipant(room.name, participant.identity)
         }
       }
     } catch { warning = 'Restriction saved, but live-call disconnection could not be confirmed. Retry this decision to retry disconnection.' }

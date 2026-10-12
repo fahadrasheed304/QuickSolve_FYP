@@ -18,6 +18,10 @@ const sections = [
     body: 'Wallet balances, top-ups, payouts, and session charges are shown inside the app. Disputes should be reported promptly so our team can review the activity.',
   },
   {
+    title: 'Scheduled Group Classes',
+    body: 'Class time, topic, per-student fee and maximum seats are fixed when published. Booking reserves the fee from your wallet. Student cancellation at least two hours before start gets a full refund; late cancellation or student absence is charged if the class takes place. Tutor cancellation or failure to join within ten minutes of the announced start refunds reserved fees. Join opens ten minutes before start. Report payment issues within twenty minutes after class ends; disputed, early-ended or insufficient-attendance classes require administrator payment review. Recorded group classes require recording consent, and booked students have a fifteen-minute download window for each available recording part.',
+  },
+  {
     title: 'Platform Changes',
     body: 'We may update features, pricing, verification requirements, or these terms as the service improves. Continued use means you accept the latest version.',
   },

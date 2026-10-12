@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server'
-import { sendMail } from '@/lib/mail'
+
 import { cookies } from 'next/headers'
 import { decrypt } from '@/lib/auth'
 import { DB } from '@/lib/db'
 import { demoSubjectsReady } from '@/lib/teaching-demos-server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getCurrentTutorDocuments } from '@/lib/tutor-documents'
-import { getAppUrl } from '@/lib/app-url'
+
 
 // Hardcoded admin emails (fallback if env not set)
 const HARDCODED_ADMIN_EMAILS = ['quicksolve.officials@gmail.com']
@@ -49,7 +49,7 @@ export async function GET(request: Request) {
       .from('tutor_profiles')
       .select(`
         *,
-        users: user_email (email, fullname, created_at)
+        users!tutor_profiles_user_email_fkey (email, fullname, created_at)
       `)
       .order('created_at', { ascending: true })
     
@@ -206,39 +206,7 @@ export async function POST(request: Request) {
       createdBy: session.email as string,
     })
     
-    // Send email notification for test invitation without delaying the admin action.
-    if (newStage === 'test_invited') {
-      const dashboardUrl = `${getAppUrl(request)}/tutor/waiting-verification`
-      const emailHtml = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-  <h2 style="color: #006c4a;">Subject Test Invitation</h2>
-  <p>Hello,</p>
-  <p>Congratulations! Your profile has been reviewed and you are invited to take the subject test.</p>
-  <p><strong>Next Steps:</strong></p>
-  <ol>
-    <li>Login to your QuickSolve tutor account</li>
-    <li>Go to your dashboard</li>
-    <li>Click on "Take Test" button</li>
-  </ol>
-  <p>The test will assess your knowledge in the subjects you selected. Good luck!</p>
-  <br>
-  <a href="${dashboardUrl}" 
-     style="background: #006c4a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
-    Go to Dashboard
-  </a>
-  <br><br>
-  <p style="color: #666; font-size: 12px;">If you have any questions, please contact us at support@quicksolve.com</p>
-</div>`
-
-      void sendMail(
-          tutorEmail,
-          'QuickSolve - Subject Test Invitation',
-          'You are invited to take the subject test. Login to your dashboard to start.',
-          emailHtml
-      ).catch((emailErr) => {
-        console.error('Failed to send test invitation email:', emailErr)
-      })
-    }
-    
+    // The verification note queues the email atomically in the database.
     return NextResponse.json({
       success: true,
       message: 'Verification status updated',

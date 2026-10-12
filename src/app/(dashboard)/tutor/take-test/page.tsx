@@ -6,6 +6,7 @@ import { Clock, AlertTriangle, CheckCircle, ChevronRight, ChevronLeft, Loader2 }
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { notifyError } from '@/lib/toast'
+import { loadFaceModels } from '@/lib/face-models'
 
 interface Question {
   id: string
@@ -30,12 +31,6 @@ type NativeFaceDetector = {
 }
 
 type FaceApiModule = typeof import('@vladmandic/face-api')
-type FaceApiRuntimeModule = FaceApiModule & {
-  tf: {
-    setBackend: (backend: string) => Promise<boolean>
-    ready: () => Promise<void>
-  }
-}
 
 type DetectedFace = {
   descriptor: Float32Array
@@ -67,26 +62,9 @@ const getNativeFaceDetector = () => {
   }
 }
 
-let faceApiLoadPromise: Promise<FaceApiModule> | null = null
 const referenceFaceCache = new Map<string, Promise<PreparedReferenceFace>>()
 
-const loadFaceRecognitionApi = async () => {
-  if (!faceApiLoadPromise) {
-    faceApiLoadPromise = import('@vladmandic/face-api').then(async (faceapi) => {
-      const runtime = faceapi as unknown as FaceApiRuntimeModule
-      await runtime.tf.setBackend('webgl').catch(() => runtime.tf.setBackend('cpu'))
-      await runtime.tf.ready()
-      await Promise.all([
-        faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
-        faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
-        faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
-      ])
-      return faceapi
-    })
-  }
-
-  return faceApiLoadPromise
-}
+const loadFaceRecognitionApi = () => loadFaceModels(true)
 
 const getPreparedReferenceFace = (faceapi: FaceApiModule, profilePhotoUrl: string) => {
   const cached = referenceFaceCache.get(profilePhotoUrl)
@@ -106,7 +84,7 @@ const getPreparedReferenceFace = (faceapi: FaceApiModule, profilePhotoUrl: strin
       descriptor: profileFaces[0]?.descriptor || null,
       count: profileFaces.length,
     }
-  })
+  }).catch(error => { referenceFaceCache.delete(profilePhotoUrl); throw error })
 
   referenceFaceCache.set(profilePhotoUrl, prepared)
   return prepared
