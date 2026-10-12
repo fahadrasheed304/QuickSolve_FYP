@@ -37,7 +37,7 @@ export async function GET() {
       balance: wallet.balance,
       escrowBalance: Math.round(escrowBalance * 100) / 100,
       transactions: wallet.transactions.map(tx => ({ ...tx,
-        type: tx.method === 'Session escrow' || tx.method === 'Session escrow extension' ? 'escrow' : tx.type,
+        type: tx.method === 'Session escrow' || tx.method === 'Session escrow extension' || tx.method === 'Scheduled class reserve' ? 'escrow' : tx.type,
       })),
     })
   } catch (caughtError: unknown) {

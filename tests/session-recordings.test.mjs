@@ -171,6 +171,7 @@ test('signed egress webhooks save state; invalid signatures do not, and storage 
   try {
     const api = module('src/app/api/livekit/webhook/route.ts', {
       'livekit-server-sdk': { WebhookReceiver }, '@/lib/supabase': {}, '@/lib/account-access': {},
+      '@/lib/scheduled-class-recordings': {},
       '@/lib/recordings': { saveEgress: async info => { assert.equal(info.egressId, 'egress1'); saves++; if (fail) throw new Error('offline') } },
     })
     const text = JSON.stringify({ event: 'egress_ended', egressInfo: { egressId: 'egress1', roomName: `session-${id}`, status: 'EGRESS_COMPLETE' } })

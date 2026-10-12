@@ -440,28 +440,7 @@ const getCnicOcrMatch = (expectedCnic: string, ocrText: string) => {
   return { matched, inconclusive, shouldBlock, candidates, bestCandidate, bestScore, bestDistance }
 }
 
-type FaceApiModule = typeof import('@vladmandic/face-api')
-type FaceApiRuntimeModule = FaceApiModule & {
-  tf: {
-    setBackend: (backend: string) => Promise<boolean>
-    ready: () => Promise<void>
-  }
-}
-
-let faceApiLoadPromise: Promise<FaceApiModule> | null = null
-const loadProfilePhotoFaceApi = async () => {
-  if (!faceApiLoadPromise) {
-    faceApiLoadPromise = import('@vladmandic/face-api').then(async (faceapi) => {
-      const faceRuntime = faceapi as unknown as FaceApiRuntimeModule
-      await faceRuntime.tf.setBackend('cpu')
-      await faceRuntime.tf.ready()
-      await faceapi.nets.tinyFaceDetector.loadFromUri('/models')
-      return faceapi
-    })
-  }
-
-  return faceApiLoadPromise
-}
+const loadProfilePhotoFaceApi = async () => (await import('@/lib/face-models')).loadFaceModels()
 
 const loadImageForFaceCheck = (file: File): Promise<HTMLImageElement> => {
   return new Promise((resolve, reject) => {

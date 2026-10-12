@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, type ReactNode } from 'react'
-import { LayoutDashboard, Users, ShieldCheck, ClipboardCheck, CreditCard, LogOut, Video } from 'lucide-react'
+import { LayoutDashboard, Users, ShieldCheck, ClipboardCheck, CreditCard, LogOut, Video, CalendarDays } from 'lucide-react'
 
 export const adminPages = [
   { href: '/admin/dashboard', label: 'Overview', title: 'Admin dashboard', description: 'Your central workspace for people, tutor approvals and session payments.', icon: LayoutDashboard },
@@ -12,6 +12,7 @@ export const adminPages = [
   { href: '/admin/verifications', label: 'Verifications', title: 'Tutor verification desk', description: 'Review applications, qualifications and assessments in one place.', icon: ShieldCheck },
   { href: '/admin/conduct', label: 'Tutor conduct', title: 'Tutor conduct review', description: 'Review flagged tutors and manage booking restrictions.', icon: ClipboardCheck },
   { href: '/admin/payments', label: 'Payments & disputes', title: 'Session payments & disputes', description: 'Review held payments, resolve disputes and track payment outcomes.', icon: CreditCard },
+  { href: '/admin/scheduled-classes', label: 'Group class payments', title: 'Scheduled class payments', description: 'Review group-class attendance, recordings and individual seat disputes.', icon: CalendarDays },
 ]
 
 export function AdminShell({ children }: { children: ReactNode }) {

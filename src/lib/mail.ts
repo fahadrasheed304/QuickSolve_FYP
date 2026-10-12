@@ -11,6 +11,9 @@ export async function sendMail(to: string, subject: string, text: string, html: 
 
   const transporter = nodemailer.createTransport({
     service: 'gmail',
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 20000,
     auth: {
       user: smtpUser,
       pass: smtpPass

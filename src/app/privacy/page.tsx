@@ -14,8 +14,12 @@ const sections = [
     body: 'During tutor tests, camera access may be used for identity and proctoring checks. QuickSolve uses this to reduce impersonation and test misuse.',
   },
   {
-    title: 'Session Recordings',
+    title: 'One-to-one Session Recordings',
     body: 'When recording is enabled, session audio, video and shared screens are recorded for administrator dispute review. Recordings are stored privately. Administrators can review recordings, and the student who attended the session can choose to download a copy within 15 minutes after it ends for offline study. Downloaded copies stay on the student’s device and are not removed by server cleanup. Students should keep these copies private. Server recordings become eligible for automatic deletion 15 minutes after the session ends. Recordings linked to held payments remain until an administrator resolves the payment and the retention window has passed. Deletion occurs during scheduled cleanup.',
+  },
+  {
+    title: 'Scheduled Group Class Recordings',
+    body: 'Scheduled group classes record audio, video, shared screens and class chat. All students with a confirmed booking can download the group recording, including other participants visible or audible in it. Recording consent is requested before booking and joining. Each recording part is available for download for 15 minutes after both the class has ended and that part is ready. Downloaded copies remain on the student’s device and should be kept private. Server copies are retained through the 20-minute payment dispute window and while any class payment is held for administrator review, then deleted by scheduled cleanup. A processing or storage failure may make a recording unavailable.',
   },
   {
     title: 'Sharing',

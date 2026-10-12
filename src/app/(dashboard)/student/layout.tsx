@@ -3,7 +3,7 @@
 import { useNotifications } from '@/hooks/use-notifications'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, PlusCircle, Wallet, History, LogOut, Menu, X } from 'lucide-react'
+import { LayoutDashboard, PlusCircle, Wallet, History, LogOut, Menu, X, CalendarDays } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -37,6 +37,7 @@ export default function StudentLayout({
   }> = [
     { name: 'Dashboard', href: '/student/dashboard', icon: LayoutDashboard },
     { name: 'Post Problem', href: '/student/post-problem', icon: PlusCircle },
+    { name: 'Scheduled Classes', href: '/student/scheduled-classes', icon: CalendarDays },
     {
       name: 'Wallet',
       href: '/student/wallet',

@@ -22,6 +22,7 @@ function s3() {
   const config = storage()
   return new S3Client({ endpoint: config.endpoint, region: 'auto', forcePathStyle: true, credentials: { accessKeyId: config.accessKey, secretAccessKey: config.secret } })
 }
+export { storage as recordingStorage, s3 as recordingStorageClient }
 export function egressClient() { return new EgressClient(livekitHost(), required('LIVEKIT_API_KEY'), required('LIVEKIT_API_SECRET')) }
 
 export async function prepareRecordingRoom(room: string) {

@@ -13,6 +13,13 @@ function RecordingView() {
   const { chatMessages } = useChat()
   const messagesRef = useRef<HTMLDivElement>(null)
   useEffect(() => { if (messagesRef.current) messagesRef.current.scrollTop = messagesRef.current.scrollHeight }, [chatMessages])
+  if (room.name.startsWith('class-')) return <main style={{width:'100vw',height:'100vh',display:'flex',flexDirection:'column',background:'#08111f',color:'white',fontFamily:'Arial,sans-serif'}}>
+    <header style={{padding:'20px 32px',fontSize:24,fontWeight:700,borderBottom:'1px solid #26344b'}}>QuickSolve · Scheduled group class</header>
+    <div style={{display:'grid',gridTemplateColumns:'3fr 1fr',minHeight:0,flex:1,gap:16,padding:20}}>
+      <section style={{minHeight:0,overflow:'hidden'}}>{visibleTracks.length?<GridLayout tracks={visibleTracks}><ParticipantTile/></GridLayout>:<p>Waiting for class participants…</p>}</section>
+      <aside style={{background:'#16253b',padding:20,overflow:'hidden'}}><h2 style={{fontSize:20,fontWeight:700}}>Class chat</h2><div ref={messagesRef} style={{height:'90%',overflow:'auto'}}>{chatMessages.map((item,index)=><article key={`${item.timestamp}-${index}`} style={{marginTop:16}}><strong>{item.from?.name||'Participant'}</strong><p style={{whiteSpace:'pre-wrap',marginTop:4}}>{item.message}</p></article>)}</div></aside>
+    </div><RoomAudioRenderer/>
+  </main>
   return <main className="recording-template">
     <header className="recording-header"><strong>QuickSolve · Live session</strong><span>Session recording</span></header>
     <section className="recording-board"><SessionWhiteboard problemId="" recording readOnly /></section>
@@ -41,8 +48,10 @@ export default function RecordingTemplate() {
     const query = new URLSearchParams(window.location.search)
     const url = query.get('url') || ''
     const token = query.get('token') || ''
-    if (!url.startsWith('wss://') || !token) { setError('LiveKit recording parameters are missing'); return }
-    setParams({ url, token })
+    void Promise.resolve().then(()=>{
+      if (!url.startsWith('wss://') || !token) { setError('LiveKit recording parameters are missing'); return }
+      setParams({ url, token })
+    })
   }, [])
 
   const onConnected = useMemo(() => () => {

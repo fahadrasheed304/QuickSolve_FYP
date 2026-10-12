@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useState } from 'react'
 import { SessionPayments } from '@/components/session-payments'
+import ScheduledWalletSummary from '@/components/scheduled-wallet-summary'
 
 type Cursor = { date: string; id: string }
 type Wallet = {
@@ -48,9 +49,10 @@ export default function TutorWalletPage() {
     {loading && <p role="status">Loading wallet…</p>}
     {error && <p role="alert" className="text-red-600">{error}</p>}
     {data && <section aria-label="Wallet summary" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      {([['Wallet balance', data.balance], ['Lifetime session earnings', data.earnings], ['Pending payments', data.pending], ['Held for review', data.held]] as const).map(([label, value]) =>
+      {([['Wallet balance', data.balance], ['1:1 session earnings', data.earnings], ['1:1 pending payments', data.pending], ['1:1 held for review', data.held]] as const).map(([label, value]) =>
         <article key={label} className="rounded-lg border border-border bg-surface p-5"><h2 className="text-sm text-text-muted">{label}</h2><p className="mt-2 text-2xl font-bold">{money(Number(value))}</p></article>)}
     </section>}
+    <ScheduledWalletSummary role="tutor"/>
     <section className="space-y-4 rounded-lg border border-border bg-surface p-5">
       <h2 className="text-xl font-bold">Transaction history</h2>
       <form className="flex flex-wrap items-end gap-3" onSubmit={event => { event.preventDefault(); setCursors([null]); setFilters({ ...draft }); setRevision(value => value + 1) }}>
