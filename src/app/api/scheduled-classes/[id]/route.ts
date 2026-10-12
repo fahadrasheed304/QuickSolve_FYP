@@ -1,9 +1,11 @@
 import { supabaseAdmin } from '@/lib/supabase'
+import { dispatchEmailAlerts } from '@/lib/email-alert-dispatch'
 import { classAccount, classAccess, classHeaders, classRpcError } from '@/lib/scheduled-classes-server'
 import { isClassId, publicClass, publicBooking } from '@/lib/scheduled-classes'
 import { closeScheduledRoom } from '@/lib/scheduled-class-recordings'
 
 export const dynamic = 'force-dynamic'
+export const maxDuration = 60
 export async function GET(request: Request, {params}: {params:Promise<{id:string}>}) {
   const account = await classAccount()
   if (!account) return Response.json({error:'Login required'},{status:401})
@@ -70,6 +72,7 @@ export async function POST(request: Request, {params}: {params:Promise<{id:strin
       } else result=await supabaseAdmin.rpc('finish_scheduled_class',{p_class:id,p_tutor:account.email})
     } else return Response.json({error:'This action is not allowed'},{status:403})
     if (result.error) return classRpcError(result.error)
+    dispatchEmailAlerts(request)
     let warning: string|undefined
     if (['finish','cancel_class'].includes(body.action)) {
       try { await closeScheduledRoom(id) } catch { warning='Decision saved. Background maintenance will retry closing the room.' }

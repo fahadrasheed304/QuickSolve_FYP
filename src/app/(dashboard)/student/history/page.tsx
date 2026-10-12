@@ -1,5 +1,6 @@
 "use client"
 import { SessionPayments } from '@/components/session-payments'
+import ScheduledClasses from '@/components/scheduled-classes'
 import { StudentRecordingDownload } from '@/components/student-recording-download'
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
@@ -126,6 +127,7 @@ export default function HistoryPage() {
   return (
     <div className="p-4 md:p-8 pb-20 qs-page-enter">
       <SessionPayments student />
+      <ScheduledClasses role="student" archive />
       {recordingId && <StudentRecordingDownload key={recordingId} problemId={recordingId} fromHistory onContinue={() => setRecordingId(null)} />}
       <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>

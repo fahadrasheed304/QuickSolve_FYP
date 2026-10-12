@@ -74,6 +74,19 @@ test('cron rejects requests without the secret before delivering mail', async ()
   } finally { if (previous === undefined) delete process.env.CRON_SECRET; else process.env.CRON_SECRET = previous }
 })
 
+test('successful actions defer email delivery until after the response', async () => {
+  const callbacks=[]
+  let deliveries=0
+  const lib=moduleAt('src/lib/email-alert-dispatch.ts',{
+    'next/server':{after:callback=>callbacks.push(callback)},
+    '@/lib/email-alerts':{deliverEmailAlerts:async()=>{deliveries++}},
+  })
+  lib.dispatchEmailAlerts(new Request('https://test/class'))
+  assert.equal(deliveries,0)
+  await callbacks[0]()
+  assert.equal(deliveries,1)
+})
+
 test('delivery persists SMTP failures with backoff and fences stale workers by claim token', async () => {
   const original = { email: process.env.SMTP_EMAIL, password: process.env.SMTP_PASSWORD }
   process.env.SMTP_EMAIL = 'sender@test'; process.env.SMTP_PASSWORD = 'test'

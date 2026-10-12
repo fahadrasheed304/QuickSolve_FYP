@@ -17,3 +17,7 @@ Covered events:
 Broadcast new requests and closed-request alerts remain in-app to avoid bulk email. Existing signup OTP and password-reset emails continue to work.
 
 Delivery processes up to ten queued alerts and five rejected-demo retries per run. Queue claims use row locks so simultaneous workers cannot claim the same alert. Failed alerts retry with exponential backoff (up to one hour); crashed claims recover after five minutes. Monitor `email_alerts.status`, `attempts` and `sent_at` with service-role access. Delivery is at least once: an SMTP success followed by a database failure can cause a duplicate on retry. Failed cron responses return 503 for monitoring/retry.
+
+Scheduled-class booking, cancellation, dispute and administrator settlement actions also start delivery after the HTTP response using Next.js `after`. Keep the minute-by-minute cron running for reminders, retries, queued older events and automatic settlements. A `pending` alert with zero attempts means delivery has not picked it up; it is not an SMTP rejection.
+
+Apply `supabase/migrations/202610130001_scheduled_class_notifications.sql` after scheduled classes to add class events to the notification bell. It restores non-expired historical alerts once, including refunds, without sending duplicate emails. Scheduled class history is available on both History pages and shows refunded booking amounts.
