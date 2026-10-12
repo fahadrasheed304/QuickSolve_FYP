@@ -25,7 +25,8 @@ export async function deliverEmailAlerts(request: Request) {
     .eq('status', 'rejected')
     .or(`review_email_status.in.(pending,failed),and(review_email_status.eq.sending,review_email_attempted_at.lt.${stale})`)
     .order('review_email_attempted_at', { ascending: true, nullsFirst: true }).limit(5)
-  if (demoError) throw new Error('Demo email retry queue unavailable')
+  // A separate demo retry failure must not strand already-claimed class emails.
+  if (demoError) console.error('Demo email retry queue unavailable:', demoError)
   const resultsPromise = Promise.all((data as EmailAlert[] || []).map(async alert => {
     let sent = false
     try {

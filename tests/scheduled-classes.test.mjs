@@ -10,6 +10,7 @@ import { PGlite } from '@electric-sql/pglite'
 const sql=file=>readFileSync(new URL('../supabase/migrations/'+file,import.meta.url),'utf8')
 const require=createRequire(import.meta.url)
 function moduleAt(file,deps){
+  deps={ '@/lib/email-alert-dispatch':{dispatchEmailAlerts:()=>{}}, ...deps }
   const exports={}
   const js=ts.transpileModule(readFileSync(new URL('../'+file,import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText
   new Function('require','exports',js)(name=>Object.hasOwn(deps,name)?deps[name]:require(name),exports)
@@ -268,8 +269,10 @@ test('class API takes booking identity from the authenticated student and forbid
   const id=randomUUID(),bookingId=randomUUID()
   let account={email:'owner@test',role:'student'}
   const calls=[]
+  let dispatches=0
   const server={classAccount:async()=>account,classAccess:async()=>({c:{id},booking:{id:bookingId}}),classHeaders:{},classRpcError:()=>Response.json({error:'failed'},{status:409})}
   const api=moduleAt('src/app/api/scheduled-classes/[id]/route.ts',{
+    '@/lib/email-alert-dispatch':{dispatchEmailAlerts:()=>{dispatches++}},
     '@/lib/supabase':{supabaseAdmin:{rpc:async(name,args)=>{calls.push([name,args]);return{data:{},error:null}}}},
     '@/lib/scheduled-classes-server':server,
     '@/lib/scheduled-classes':moduleAt('src/lib/scheduled-classes.ts',{}),
@@ -283,6 +286,36 @@ test('class API takes booking identity from the authenticated student and forbid
   account={email:'tutor@test',role:'tutor'}
   assert.equal((await post({action:'book',requestId:bookingId,consent:true})).status,403)
   account=null;assert.equal((await post({action:'book'})).status,401)
+  assert.equal(dispatches,1)
+})
+
+test('class notifications backfill refunds once and new actions notify atomically',async()=>{
+  const db=await fixture()
+  try {
+    await db.exec(`create table notifications (
+      id uuid primary key default gen_random_uuid(),recipient_email text,recipient_role text,
+      kind text check(kind in ('new_bid')),problem_id uuid not null references problems(id),
+      event_key text,message text,created_at timestamptz default now(),read_at timestamptz,
+      unique(recipient_email,recipient_role,event_key));`)
+    const id=await create(db)
+    const booking=await book(db,id)
+    await db.query("select cancel_scheduled_class($1,'tutor@test','Tutor unavailable')",[id])
+    await db.exec(sql('202610130001_scheduled_class_notifications.sql'))
+    await db.exec(sql('202610130001_scheduled_class_notifications.sql'))
+    const refund=(await db.query("select * from notifications where recipient_email='s1@test' and event_key=$1",['scheduled:payment:'+booking.id+':refunded'])).rows
+    assert.equal(refund.length,1)
+    assert.equal(refund[0].class_id,id)
+    assert.equal(refund[0].problem_id,null)
+    assert.match(refund[0].message,/refunded/)
+    const next=await create(db,6)
+    const nextBooking=await book(db,next)
+    assert.equal((await db.query('select count(*) from notifications where event_key=$1',['scheduled:booking:'+nextBooking.id])).rows[0].count,1)
+    await db.exec('begin')
+    await db.query("select scheduled_email('rollback','s1@test','Update','Test','student',$1)",[next])
+    await db.exec('rollback')
+    assert.equal((await db.query("select count(*) from notifications where event_key='scheduled:rollback'")).rows[0].count,0)
+    assert.equal((await db.query("select has_function_privilege('authenticated','notify_scheduled_email()','execute') allowed")).rows[0].allowed,false)
+  } finally { await db.close() }
 })
 
 test('student details omit other students and financial totals; tutor sees a paginated private roster',async()=>{

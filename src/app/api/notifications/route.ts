@@ -7,7 +7,7 @@ export async function GET() {
   const account = await notificationAccount()
   if (!account) return Response.json({ error: 'Login required' }, { status: 401 })
   const { data, error } = await supabaseAdmin.from('notifications')
-    .select('id,kind,problem_id,message,created_at,read_at')
+    .select('id,kind,problem_id,class_id,message,created_at,read_at')
     .eq('recipient_email', account.email).eq('recipient_role', account.role)
     .order('created_at', { ascending: false }).order('id', { ascending: false }).limit(50)
   if (error) return Response.json({ error: 'Notifications are temporarily unavailable' }, { status: 503 })

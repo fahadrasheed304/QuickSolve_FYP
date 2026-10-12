@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ArrowUpRight, History, Wallet } from 'lucide-react'
 import { SessionPayments } from '@/components/session-payments'
+import ScheduledClasses from '@/components/scheduled-classes'
 
 export default function TutorHistoryPage() {
   return <main className="space-y-6 p-4 pb-20 md:p-8">
@@ -12,5 +13,6 @@ export default function TutorHistoryPage() {
       </div>
     </header>
     <SessionPayments />
+    <ScheduledClasses role="tutor" archive />
   </main>
 }
