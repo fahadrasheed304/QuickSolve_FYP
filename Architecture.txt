@@ -26,3 +26,4 @@ Development notes:
 - October 6, 2026: Implemented student rating and review submission modal.
 - October 10, 2026: Added file attachment support in session chat window.
 - October 14, 2026: Optimized chat message loading with infinite scroll pagination.
+- October 18, 2026: Added user report and session flagging moderation tools.
