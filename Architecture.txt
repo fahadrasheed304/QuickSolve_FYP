@@ -28,3 +28,4 @@ Development notes:
 - October 14, 2026: Optimized chat message loading with infinite scroll pagination.
 - October 18, 2026: Added user report and session flagging moderation tools.
 - October 22, 2026: Fixed timezone conversion bug in scheduled class calendar.
+- October 27, 2026: Enhanced password reset flow with secure token expiry.
