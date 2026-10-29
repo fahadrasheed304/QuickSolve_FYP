@@ -66,6 +66,7 @@ export async function POST(request: Request) {
             highestEducation: '',
             university: '',
             experienceYears: 0,
+            demoRequired: isNewUser,
           })
         }
       } catch (caughtError: unknown) {

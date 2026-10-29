@@ -4,6 +4,7 @@ import { cookies } from 'next/headers'
 import { decrypt } from '@/lib/auth'
 import { DB } from '@/lib/db'
 import { getTestRetakeInfo } from '@/lib/test-retake'
+import { dispatchEmailAlerts } from '@/lib/email-alert-dispatch'
 
 const getTestAttemptFingerprint = (result: TestResult) => [
   result.total_questions,
@@ -201,7 +202,7 @@ export async function POST(request: Request) {
     if (finalPassed) {
       await DB.addVerificationNote(session.email as string, {
         noteType: 'system',
-        message: `Test passed with ${Math.round(scorePercentage)}%. Waiting for final admin verification.`,
+        message: `Congratulations! You passed your subject proficiency test with ${Math.round(scorePercentage)}%. Your result is now awaiting final admin verification.`,
         createdBy: 'system',
       })
     } else {
@@ -213,6 +214,8 @@ export async function POST(request: Request) {
         createdBy: 'system',
       })
     }
+
+    dispatchEmailAlerts(request)
     
     return NextResponse.json({
       success: true,

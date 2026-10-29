@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { assertAccountAccess, AccountRestrictedError } from '@/lib/account-access'
 import { saveEgress } from '@/lib/recordings'
 import { classIdFromRoom, saveScheduledEgress } from '@/lib/scheduled-class-recordings'
+import { dispatchEmailAlerts } from '@/lib/email-alert-dispatch'
 
 export const runtime = 'nodejs'
 
@@ -97,6 +98,7 @@ export async function POST(request: Request) {
       p_identity: identity,
     })
     if (error) return new Response('Notification unavailable; retry', { status: 503 })
+    dispatchEmailAlerts(request)
     return new Response(null, { status: 204 })
   } catch {
     return new Response('Notification unavailable; retry', { status: 503 })

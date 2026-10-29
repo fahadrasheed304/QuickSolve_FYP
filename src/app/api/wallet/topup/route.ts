@@ -26,7 +26,17 @@ export async function POST(request: Request) {
     const baseUrl = getAppUrl(request)
     const checkout = await getStripe().checkout.sessions.create({
       mode: 'payment', payment_method_types: ['card'],
-      customer_email: session.email, billing_address_collection: 'required',
+      customer_email: session.email, billing_address_collection: 'auto',
+      branding_settings: {
+        display_name: 'QuickSolve',
+        background_color: '#F7F9FC',
+        button_color: '#087F5B',
+        border_style: 'rounded',
+        font_family: 'inter',
+      },
+      custom_text: {
+        submit: { message: 'Your wallet is credited after Stripe confirms the payment.' },
+      },
       line_items: [{ price_data: { currency: 'pkr', unit_amount: amount * 100, product_data: { name: 'QuickSolve wallet top-up' } }, quantity: 1 }],
       metadata: { purpose: 'wallet_topup', email: session.email.toLowerCase().trim(), role: 'student' },
       success_url: `${baseUrl}/student/wallet?checkout_session_id={CHECKOUT_SESSION_ID}`,

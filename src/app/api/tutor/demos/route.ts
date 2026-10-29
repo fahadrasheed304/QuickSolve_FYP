@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { DEMO_BUCKET, DEMO_SUBJECTS } from '@/lib/teaching-demos'
-import { demoSession, inspectDemo } from '@/lib/teaching-demos-server'
+import { demoSession, inspectDemo, tutorRequiresDemos } from '@/lib/teaching-demos-server'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -14,7 +14,11 @@ export async function GET() {
     .eq('tutor_email', session.email).in('status', ['uploading', 'pending', 'approved', 'rejected'])
     .order('created_at', { ascending: false })
   if (error) return NextResponse.json({ error: 'Teaching demos unavailable. Please contact support.' }, { status: 503 })
-  return NextResponse.json({ demos: data }, { headers: { 'Cache-Control': 'no-store' } })
+  try {
+    return NextResponse.json({ demos: data, required: await tutorRequiresDemos(session.email) }, { headers: { 'Cache-Control': 'no-store' } })
+  } catch {
+    return NextResponse.json({ error: 'Tutor profile unavailable. Please contact support.' }, { status: 503 })
+  }
 }
 
 export async function POST(request: Request) {

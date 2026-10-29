@@ -3,7 +3,8 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { decrypt } from '@/lib/auth'
 import { DB } from '@/lib/db'
-import { demoSubjectsReady } from '@/lib/teaching-demos-server'
+import { dispatchEmailAlerts } from '@/lib/email-alert-dispatch'
+import { demoSubjectsReady, tutorRequiresDemos } from '@/lib/teaching-demos-server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getCurrentTutorDocuments } from '@/lib/tutor-documents'
 
@@ -156,6 +157,11 @@ export async function POST(request: Request) {
         newStatus = 'verified'
         message = 'Tutor fully verified! Can now start teaching.'
         break
+      case 'test_pass_verify':
+        newStage = 'verified'
+        newStatus = 'verified'
+        message = 'Congratulations! Your subject test has been marked as passed and your tutor account is verified. You can now start teaching.'
+        break
       case 'request_documents':
         newStage = 'pending'
         newStatus = 'pending'
@@ -185,9 +191,10 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
     }
     
-    if (newStage === 'test_invited' || newStage === 'verified' || newStatus === 'verified') {
+    const isTestingOverride = actionOrStage === 'test_pass_verify'
+    if (!isTestingOverride && (newStage === 'test_invited' || newStage === 'verified' || newStatus === 'verified')) {
       const profile = await DB.getTutorProfile(tutorEmail)
-      if (!await demoSubjectsReady(tutorEmail, profile?.subjects || [], true)) {
+      if (await tutorRequiresDemos(tutorEmail) && !await demoSubjectsReady(tutorEmail, profile?.subjects || [], true)) {
         return NextResponse.json({ error: 'Approve a teaching demo for every selected subject before inviting the tutor to the test or completing verification.' }, { status: 409 })
       }
     }
@@ -197,6 +204,7 @@ export async function POST(request: Request) {
       verification_stage: newStage,
       verification_status: newStatus,
       verified_by: session.email,
+      ...(isTestingOverride ? { subject_test_passed: true, subject_test_score: 100 } : {}),
     })
     
     // Add verification note
@@ -205,6 +213,8 @@ export async function POST(request: Request) {
       message: message,
       createdBy: session.email as string,
     })
+
+    dispatchEmailAlerts(request)
     
     // The verification note queues the email atomically in the database.
     return NextResponse.json({

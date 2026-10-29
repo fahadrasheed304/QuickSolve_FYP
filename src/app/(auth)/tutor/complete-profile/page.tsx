@@ -484,11 +484,16 @@ const validateProfilePhotoFace = async (file: File) => {
   const { box } = detections[0]
   const faceWidthRatio = box.width / image.naturalWidth
   const faceHeightRatio = box.height / image.naturalHeight
+  const faceCenterX = (box.x + box.width / 2) / image.naturalWidth
+  const imageAspectRatio = image.naturalWidth / image.naturalHeight
 
-  if (faceWidthRatio < 0.12 || faceHeightRatio < 0.12) {
+  // A CNIC often contains a detectable face, but it is a small inset portrait
+  // on a landscape card. Require a close face and reject that card layout.
+  const likelyCardPortrait = imageAspectRatio > 1.2 && faceWidthRatio < 0.28 && faceCenterX < 0.42
+  if (faceWidthRatio < 0.16 || faceHeightRatio < 0.16 || likelyCardPortrait) {
     return {
       valid: false,
-      error: 'Face is too small in this photo. Please upload a closer, clearer profile photo.',
+      error: 'This looks like an ID-card photo or the face is too small. Upload a close, upright face photo without sunglasses.',
     }
   }
    return { valid: true, error: '' }
@@ -509,11 +514,22 @@ const detectIdentityDocumentText = async (file: File) => {
     for (const variant of variants.slice(0, 4)) {
       const ret = await worker.recognize(variant.source)
       ocrText = `${ocrText}\n${ret.data.text}`
-
-      if (extractCnicCandidates(ocrText).length > 0) return true
     }
 
-    return /national\s+identity|identity\s+card|cnic|pakistan|date\s+of\s+birth|father\s+name/i.test(ocrText)
+    // Portrait backgrounds and clothing can produce OCR digit noise. A loose
+    // 13-digit match alone is not enough to classify a profile photo as a CNIC.
+    const hasIdentityHeading = /\b(?:national\s+identity\s+card|identity\s+card|cnic|computerized\s+national\s+identity)\b/i.test(ocrText)
+    if (hasIdentityHeading) return true
+
+    const identityFields = [
+      /date\s+of\s+birth/i,
+      /father(?:'s)?\s+name/i,
+      /date\s+of\s+(?:issue|issuance|expiry|expiration)/i,
+      /identity\s+(?:number|no\.?)/i,
+      /gender|sex/i,
+    ]
+    const detectedFieldCount = identityFields.filter(pattern => pattern.test(ocrText)).length
+    return detectedFieldCount >= 2 || (detectedFieldCount >= 1 && hasFormattedCnicCandidate(ocrText))
   } catch (err) {
     console.error('Profile photo document OCR error:', err)
     return false
@@ -550,6 +566,7 @@ export default function TutorCompleteProfilePage() {
   // Step 2: Subjects
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([])
   const [readyDemoSubjects, setReadyDemoSubjects] = useState<string[]>([])
+  const [demoRequired, setDemoRequired] = useState(true)
   
   // Step 3: Degrees
   const [degrees, setDegrees] = useState<Degree[]>([])
@@ -772,7 +789,7 @@ export default function TutorCompleteProfilePage() {
       return
     }
       if (step === 4) {
-        if (!selectedSubjects.every(subject => readyDemoSubjects.includes(subject))) {
+        if (demoRequired && !selectedSubjects.every(subject => readyDemoSubjects.includes(subject))) {
           setError('Upload a teaching demo for every selected subject before continuing')
           return
         }
@@ -1319,7 +1336,7 @@ export default function TutorCompleteProfilePage() {
 
               {step === 4 && (
                                 <div className="space-y-5">
-                  <TutorTeachingDemos subjects={selectedSubjects} onReadyChange={setReadyDemoSubjects} />
+                  <TutorTeachingDemos subjects={selectedSubjects} onReadyChange={setReadyDemoSubjects} onRequiredChange={setDemoRequired} />
                   <div className="grid gap-4 md:grid-cols-3">
                     {requiredDocs.map((doc) => {
                       const uploadedDoc = getDocumentByType(doc.type)
@@ -1450,7 +1467,7 @@ export default function TutorCompleteProfilePage() {
 
               {step === 5 && (
                                 <div className="space-y-5">
-                  <p className="text-sm font-semibold">Required teaching demos: {selectedSubjects.length} selected subjects</p>
+                    <p className="text-sm font-semibold">{demoRequired ? 'Required' : 'Optional'} teaching demos: {selectedSubjects.length} selected subjects</p>
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="rounded-lg border border-border bg-surface p-4">
                       <h3 className="mb-3 flex items-center gap-2 font-bold text-text-main"><User className="h-4 w-4 text-primary" /> Personal</h3>

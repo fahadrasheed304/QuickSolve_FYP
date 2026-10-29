@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { decrypt } from '@/lib/auth'
 import { DB } from '@/lib/db'
 import { getCurrentTutorDocuments } from '@/lib/tutor-documents'
+import { dispatchEmailAlerts } from '@/lib/email-alert-dispatch'
 
 // Hardcoded admin emails (fallback if env not set)
 const HARDCODED_ADMIN_EMAILS = ['quicksolve.officials@gmail.com']
@@ -61,6 +62,7 @@ export async function GET(request: Request) {
         message: 'Admin review started.',
         createdBy: session.email as string,
       })
+      dispatchEmailAlerts(request)
     }
     
     // Get degrees

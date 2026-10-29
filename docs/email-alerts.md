@@ -2,7 +2,7 @@ Email alerts use the existing Gmail SMTP account (`SMTP_EMAIL`, `SMTP_PASSWORD`)
 
 Apply `supabase/migrations/202610120001_email_alerts.sql` after the earlier migrations, including account moderation, conduct, payments and teaching-demo review emails. New actions queue alerts in the same database transaction. Historical actions are not emailed.
 
-Set `NEXT_PUBLIC_APP_URL` to the deployed site URL and set `CRON_SECRET`. Run `npm run emails:worker` alongside the app, or schedule an HTTPS GET to `/api/cron/emails` every minute with `Authorization: Bearer <CRON_SECRET>`. For a single batch, run `npm run emails:send`. The worker requires the Next.js server to be running. Never expose the cron secret in browser code.
+Set `NEXT_PUBLIC_APP_URL` to the deployed site URL and set `CRON_SECRET`. Locally, `npm run dev` starts the email worker beside Next.js automatically; restart the dev command after changing environment variables. For production, schedule an HTTPS GET to `/api/cron/emails` every minute with `Authorization: Bearer <CRON_SECRET>`. For a single batch, run `npm run emails:send` while the Next.js server is running. Never expose the cron secret in browser code.
 
 Covered events:
 

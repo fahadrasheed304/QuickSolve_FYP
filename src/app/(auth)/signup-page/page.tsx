@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { GraduationCap, UserRound } from 'lucide-react';
 import { useQueryRole } from '@/hooks/use-client-ready';
 import { useRouter } from 'next/navigation';
 import { useGoogleLogin } from '@react-oauth/google';
@@ -169,7 +170,7 @@ export default function SignupPagePage() {
                 onClick={() => setRole('student')}
                 className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all duration-200 ${role === 'student' ? 'border-primary bg-primary-subtle/50 shadow-sm' : 'border-border hover:border-primary/50 hover:bg-surface-hover bg-surface'}`}
               >
-                <span className={`material-symbols-outlined mb-2 ${role === 'student' ? 'text-primary' : 'text-text-muted'}`} style={{ fontVariationSettings: "'FILL' 1" }}>person</span>
+                <UserRound aria-hidden="true" className={`mb-2 size-6 ${role === 'student' ? 'text-primary' : 'text-text-muted'}`} />
                 <span className={`text-sm font-bold ${role === 'student' ? 'text-primary' : 'text-text-muted'}`}>Student</span>
               </button>
               <button 
@@ -177,7 +178,7 @@ export default function SignupPagePage() {
                 onClick={() => setRole('tutor')}
                 className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all duration-200 ${role === 'tutor' ? 'border-secondary bg-secondary-subtle/50 shadow-sm' : 'border-border hover:border-secondary/50 hover:bg-surface-hover bg-surface'}`}
               >
-                <span className={`material-symbols-outlined mb-2 ${role === 'tutor' ? 'text-secondary' : 'text-text-muted'}`}>history_edu</span>
+                <GraduationCap aria-hidden="true" className={`mb-2 size-6 ${role === 'tutor' ? 'text-secondary' : 'text-text-muted'}`} />
                 <span className={`text-sm font-bold ${role === 'tutor' ? 'text-secondary' : 'text-text-muted'}`}>Tutor</span>
               </button>
             </div>

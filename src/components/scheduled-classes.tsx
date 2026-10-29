@@ -64,7 +64,7 @@ export default function ScheduledClasses({role,archive=false}:{role:'student'|'t
         <label className="space-y-2 text-sm font-bold">Topic<input name="topic" required minLength={3} maxLength={120} placeholder="Newton's laws with worked examples" className={input}/></label>
         <label className="space-y-2 text-sm font-bold">Class level<input name="classLevel" required maxLength={60} placeholder="Grade 10" className={input}/></label>
         <label className="space-y-2 text-sm font-bold">Start time (your timezone)<input name="startsAt" type="datetime-local" required className={input}/></label>
-        <label className="space-y-2 text-sm font-bold">Duration (minutes)<input name="durationMin" type="number" defaultValue={60} min={15} max={180} required className={input}/></label>
+      <label className="space-y-2 text-sm font-bold">Duration (minutes)<input name="durationMin" type="number" defaultValue={60} min={15} max={300} step={1} required aria-describedby="class-duration-help" className={input}/><span id="class-duration-help" className="block text-xs font-normal text-text-muted">Enter 15–300 minutes (maximum 5 hours).</span></label>
         <label className="space-y-2 text-sm font-bold">Fee per student (Rs.)<input name="fee" type="number" defaultValue={500} min={0.01} max={100000} step={0.01} required className={input}/></label>
         <label className="space-y-2 text-sm font-bold">Maximum seats<input name="capacity" type="number" defaultValue={10} min={2} max={10} required className={input}/></label>
         <label className="space-y-2 text-sm font-bold sm:col-span-2">What students will learn<textarea name="description" maxLength={2000} rows={3} className={input}/></label>

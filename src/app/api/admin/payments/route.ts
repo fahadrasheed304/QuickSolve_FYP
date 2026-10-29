@@ -2,6 +2,7 @@ import { cookies } from 'next/headers'
 import { decrypt } from '@/lib/auth'
 import { isAdminEmail } from '@/lib/admin-auth'
 import { supabaseAdmin } from '@/lib/supabase'
+import { dispatchEmailAlerts } from '@/lib/email-alert-dispatch'
 
 export const dynamic = 'force-dynamic'
 
@@ -46,5 +47,6 @@ export async function POST(request: Request) {
     p_problem_id: body.problemId, p_action: body.action, p_admin: admin, p_note: body.note.trim(),
   })
   if (error) return Response.json({ error: error.code === 'P0001' ? error.message : 'Payment resolution failed. Please retry.' }, { status: error.code === 'P0001' ? 409 : 503 })
+  dispatchEmailAlerts(request)
   return Response.json({ payment: data })
 }

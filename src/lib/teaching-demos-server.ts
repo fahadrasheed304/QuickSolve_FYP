@@ -18,6 +18,13 @@ export async function demoSubjectsReady(email: string, subjects: string[], appro
   return subjects.length > 0 && subjects.every(subject => ready.has(subject))
 }
 
+export async function tutorRequiresDemos(email: string) {
+  const { data, error } = await supabaseAdmin.from('tutor_profiles').select('demo_required')
+    .eq('user_email', email.toLowerCase().trim()).maybeSingle()
+  if (error) throw new Error('Tutor profile unavailable. Apply the new tutor demo requirement migration.')
+  return data?.demo_required === true
+}
+
 export async function demoPlayback(key: string) {
   const { data, error } = await supabaseAdmin.storage.from(DEMO_BUCKET).createSignedUrl(key, 600)
   if (error || !data) throw new Error('Video unavailable. Please retry.')

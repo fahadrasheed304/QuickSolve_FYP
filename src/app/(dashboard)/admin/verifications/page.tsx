@@ -300,6 +300,7 @@ export default function AdminVerificationsPage() {
           newStage,
           newStatus,
           notes: noteText,
+          action: action === 'test_pass_verify' ? action : undefined,
         }),
       })
 
@@ -648,7 +649,9 @@ export default function AdminVerificationsPage() {
 
                 <div className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_360px]">
                   <div className="space-y-5">
-                    <TutorPerformance key={selectedTutor.user_email} tutorEmail={selectedTutor.user_email} />
+                    {selectedTutor.verification_stage === 'verified' && selectedTutor.subject_test_passed === true && (
+                      <TutorPerformance key={selectedTutor.user_email} tutorEmail={selectedTutor.user_email} />
+                    )}
                     <AdminTeachingDemos key={`demos-${selectedTutor.user_email}`} tutorEmail={selectedTutor.user_email} />
                     <section className="qs-panel rounded-lg p-5">
                       <div className="flex items-center justify-between border-b border-border/80 pb-4">
@@ -792,6 +795,18 @@ export default function AdminVerificationsPage() {
                       )}
 
                       <div className="space-y-3">
+                        {selectedTutor.verification_stage !== 'verified' && (
+                          <Button
+                            type="button"
+                            onClick={() => updateStatus(selectedTutor.user_email, 'verified', 'verified', 'test_pass_verify')}
+                            disabled={isUpdatingSelected}
+                            className="w-full justify-start bg-amber-600 hover:bg-amber-700"
+                          >
+                            {isUpdatingAction('test_pass_verify') ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckSquare className="mr-2 h-4 w-4" />}
+                            Testing: pass test & verify
+                          </Button>
+                        )}
+
                         {['submitted', 'pending'].includes(selectedTutor.verification_stage || '') && (
                           <Button
                             type="button"

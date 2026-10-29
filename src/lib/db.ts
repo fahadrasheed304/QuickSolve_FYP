@@ -289,6 +289,7 @@ export const DB = {
     highestEducation?: string
     university?: string
     experienceYears?: number
+    demoRequired?: boolean
   }) => {
     const { data, error } = await supabaseAdmin
       .from('tutor_profiles')
@@ -301,6 +302,7 @@ export const DB = {
         highest_education: profile.highestEducation || '',
         university: profile.university || '',
         experience_years: profile.experienceYears || 0,
+        demo_required: profile.demoRequired === true,
         verification_status: 'not_started',
         verification_stage: 'not_started',
       })
