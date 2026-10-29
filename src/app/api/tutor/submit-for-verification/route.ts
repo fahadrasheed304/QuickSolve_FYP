@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { decrypt } from '@/lib/auth'
 import { DB } from '@/lib/db'
-import { demoSubjectsReady } from '@/lib/teaching-demos-server'
+import { demoSubjectsReady, tutorRequiresDemos } from '@/lib/teaching-demos-server'
 import { DEMO_SUBJECTS } from '@/lib/teaching-demos'
+import { dispatchEmailAlerts } from '@/lib/email-alert-dispatch'
 
 type SubmittedDocument = {
   documentType?: string
@@ -72,7 +73,7 @@ export async function POST(request: Request) {
     if (!subjects.every((subject: unknown) => typeof subject === 'string' && DEMO_SUBJECTS.includes(subject))) {
       return NextResponse.json({ error: 'Select valid teaching subjects' }, { status: 400 })
     }
-    if (!await demoSubjectsReady(session.email as string, subjects, false)) {
+    if (await tutorRequiresDemos(session.email as string) && !await demoSubjectsReady(session.email as string, subjects, false)) {
       return NextResponse.json({ error: 'Submit a teaching demo for each selected subject before submitting your profile.' }, { status: 400 })
     }
 
@@ -90,6 +91,7 @@ export async function POST(request: Request) {
       message: 'Profile submitted for verification. Documents and degrees uploaded.',
       createdBy: 'system',
     })
+    dispatchEmailAlerts(request)
     
     return NextResponse.json({ 
       success: true, 

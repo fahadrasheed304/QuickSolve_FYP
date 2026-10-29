@@ -22,14 +22,6 @@ interface TestData {
   passingScore: number
 }
 
-type NativeFaceDetectorResult = {
-  boundingBox: DOMRectReadOnly
-}
-
-type NativeFaceDetector = {
-  detect: (image: CanvasImageSource) => Promise<NativeFaceDetectorResult[]>
-}
-
 type FaceApiModule = typeof import('@vladmandic/face-api')
 
 type DetectedFace = {
@@ -37,29 +29,9 @@ type DetectedFace = {
   landmarks: Parameters<typeof isLookingAwayFromCamera>[0]
 }
 
-type NativeFaceDetectorConstructor = new (options?: {
-  fastMode?: boolean
-  maxDetectedFaces?: number
-}) => NativeFaceDetector
-
-type WindowWithFaceDetector = Window & {
-  FaceDetector?: NativeFaceDetectorConstructor
-}
-
 type PreparedReferenceFace = {
   descriptor: Float32Array | null
   count: number
-}
-
-const getNativeFaceDetector = () => {
-  const Detector = (window as WindowWithFaceDetector).FaceDetector
-  if (!Detector) return null
-
-  try {
-    return new Detector({ fastMode: true, maxDetectedFaces: 2 })
-  } catch {
-    return null
-  }
 }
 
 const referenceFaceCache = new Map<string, Promise<PreparedReferenceFace>>()
@@ -248,7 +220,6 @@ export default function TakeTestPage() {
   const [faceTrackingReady, setFaceTrackingReady] = useState(false)
   const [verificationStep, setVerificationStep] = useState('')
   const [verificationError, setVerificationError] = useState('')
-  const faceDetectorRef = useRef<NativeFaceDetector | null>(null)
   const faceApiRef = useRef<FaceApiModule | null>(null)
   const referenceFaceDescriptorRef = useRef<Float32Array | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
@@ -420,7 +391,6 @@ export default function TakeTestPage() {
   }, [testStarted, testFinished, handleTabSwitchWarning])
   useEffect(() => {
     if (!testStarted || testFinished || !faceTrackingReady || !verificationPassed) return;
-    const faceDetector = faceDetectorRef.current;
     const faceapi = faceApiRef.current;
     const referenceDescriptor = referenceFaceDescriptorRef.current;
 
@@ -442,29 +412,32 @@ export default function TakeTestPage() {
       if (videoRef.current && streamRef.current && videoRef.current.readyState === 4) {
         try {
           const now = Date.now()
-          const quickDetections = faceDetector
-            ? await faceDetector.detect(videoRef.current)
-            : null
-
-          if (quickDetections && quickDetections.length === 0 && (!faceapi || !referenceDescriptor)) {
-            missingFaceFrames++
-            if (missingFaceFrames >= MISSING_FACE_WARNING_FRAMES) {
-              handleProctoringWarning("No face detected in the camera frame.")
-              missingFaceFrames = 0
-            }
-          }
 
           if (faceapi && referenceDescriptor && now - lastFaceAnalysisCheck > FACE_ATTENTION_CHECK_INTERVAL_MS) {
             lastFaceAnalysisCheck = now
-            const liveFaces = await faceapi
-              .detectAllFaces(
-                videoRef.current,
-                new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.45 })
-              )
+            const shouldCheckIdentity = now - lastIdentityCheck > IDENTITY_CHECK_INTERVAL_MS
+            let liveFaceCount = 0
+            let liveLandmarks: DetectedFace['landmarks'] | null = null
+            let liveDescriptor: Float32Array | null = null
+            const faceLandmarkTask = faceapi
+              .detectAllFaces(videoRef.current, new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.45 }))
               .withFaceLandmarks()
-              .withFaceDescriptors()
 
-            if (liveFaces.length === 0) {
+            if (shouldCheckIdentity) {
+              const liveFaces = await faceLandmarkTask.withFaceDescriptors()
+              liveFaceCount = liveFaces.length
+              if (liveFaces.length === 1) {
+                liveLandmarks = liveFaces[0].landmarks
+                liveDescriptor = liveFaces[0].descriptor
+              }
+              lastIdentityCheck = now
+            } else {
+              const liveFaces = await faceLandmarkTask
+              liveFaceCount = liveFaces.length
+              if (liveFaces.length === 1) liveLandmarks = liveFaces[0].landmarks
+            }
+
+            if (liveFaceCount === 0) {
               missingFaceFrames++
               if (missingFaceFrames >= MISSING_FACE_WARNING_FRAMES) {
                 handleProctoringWarning("No face detected in the camera frame.")
@@ -472,15 +445,14 @@ export default function TakeTestPage() {
               }
               lookingAwayFrames = 0
               identityMismatchFrames = 0
-            } else if (liveFaces.length > 1) {
+            } else if (liveFaceCount > 1) {
               handleProctoringWarning("Only one person should be visible during the test.")
               missingFaceFrames = 0
               lookingAwayFrames = 0
               identityMismatchFrames = 0
             } else {
               missingFaceFrames = 0
-              const liveFace = liveFaces[0]
-              if (isLookingAwayFromCamera(liveFace.landmarks)) {
+              if (liveLandmarks && isLookingAwayFromCamera(liveLandmarks)) {
                 lookingAwayFrames++
                 if (lookingAwayFrames >= LOOKING_AWAY_WARNING_FRAMES) {
                   handleProctoringWarning("Please keep your face directed toward the screen during the test.")
@@ -490,9 +462,8 @@ export default function TakeTestPage() {
                 lookingAwayFrames = 0
               }
 
-              if (now - lastIdentityCheck > IDENTITY_CHECK_INTERVAL_MS) {
-                lastIdentityCheck = now
-                const distance = faceapi.euclideanDistance(referenceDescriptor, liveFace.descriptor)
+              if (liveDescriptor) {
+                const distance = faceapi.euclideanDistance(referenceDescriptor, liveDescriptor)
                 if (distance > FACE_TRACKING_MISMATCH_THRESHOLD) {
                   identityMismatchFrames++
                   if (identityMismatchFrames >= IDENTITY_MISMATCH_WARNING_FRAMES) {
@@ -571,8 +542,6 @@ export default function TakeTestPage() {
     setVerificationStep('Starting camera...')
     
     try {
-      const faceDetector = faceDetectorRef.current || getNativeFaceDetector()
-      faceDetectorRef.current = faceDetector
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: 'user',
@@ -825,15 +794,15 @@ export default function TakeTestPage() {
   // Verification screen
   if (!verificationPassed && !testFinished && !testStarted) {
     return (
-      <main className="min-h-screen bg-background py-12 px-4 flex flex-col items-center justify-center">
-        <Card className="max-w-md w-full">
-          <CardContent className="p-8">
-            <h1 className="text-2xl font-bold text-center mb-6">Identity Verification</h1>
+      <main className="min-h-screen bg-background px-4 py-8 flex flex-col items-center justify-center sm:py-12">
+        <Card className="w-full max-w-2xl">
+          <CardContent className="p-5 sm:p-8">
+            <h1 className="mb-5 text-center text-2xl font-bold sm:text-3xl">Identity Verification</h1>
             <p className="text-muted-foreground text-center mb-6 text-sm">
               Please position your face clearly in the camera before starting the test.
             </p>
             
-            <div className="relative aspect-video bg-black rounded-lg overflow-hidden mb-6 flex items-center justify-center">
+            <div className="relative mb-6 aspect-[4/3] max-h-[65vh] overflow-hidden rounded-xl bg-black flex items-center justify-center">
               <video 
                 ref={handleVideoRef} 
                 className="w-full h-full object-cover"
@@ -914,9 +883,9 @@ export default function TakeTestPage() {
                 </div>
               </div>
 
-              <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-6">
-                <p className="text-sm text-amber-800 dark:text-amber-300">
-                  <strong>Important:</strong> Make sure you have a stable internet connection and are in a quiet environment before starting. Once started, you cannot pause or retake immediately.
+              <div className="mb-6 rounded-xl border p-4" style={{ backgroundColor: '#fff5da', borderColor: '#b45309' }}>
+                <p className="text-sm font-medium leading-6" style={{ color: '#713f12' }}>
+                  <strong className="font-extrabold">Important:</strong> Make sure you have a stable internet connection and are in a quiet environment before starting. Once started, you cannot pause or retake immediately.
                 </p>
               </div>
 

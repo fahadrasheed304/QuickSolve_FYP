@@ -49,9 +49,17 @@ const models = new Map<string, Promise<void>>()
 async function faceRuntime() {
   if (!runtimePromise) {
     runtimePromise = import('@vladmandic/face-api').then(async api => {
-      // One backend for both photo validation and test identity/proctoring checks.
       const tf = api.tf as FaceRuntime
-      if (!await tf.setBackend('cpu')) throw new Error('Face verification runtime could not start')
+      // GPU inference keeps proctoring work from monopolizing the UI thread.
+      // Keep CPU as a compatibility fallback for browsers without WebGL support.
+      let backendReady = false
+      try {
+        backendReady = await tf.setBackend('webgl')
+      } catch {
+        backendReady = false
+      }
+      if (!backendReady) backendReady = await tf.setBackend('cpu')
+      if (!backendReady) throw new Error('Face verification runtime could not start')
       await tf.ready()
       return api
     }).catch(error => { runtimePromise = null; throw error })

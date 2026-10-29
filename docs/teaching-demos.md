@@ -3,9 +3,10 @@
 ## Deployment
 
 Apply `supabase/migrations/202610080002_tutor_teaching_demos.sql` in Supabase SQL
-Editor, then apply `supabase/migrations/202610080003_demo_review_emails.sql`, before
-deploying the application. If the first migration is already applied, only the
-email migration is needed. The first creates a private `tutor-demos`
+Editor, then apply `supabase/migrations/202610080003_demo_review_emails.sql` and
+`supabase/migrations/202610290001_new_tutor_demo_requirement.sql` before deploying
+the application. If the demo storage migrations are already applied, apply the
+new-tutor requirement migration before deploying. The first creates a private `tutor-demos`
 Storage bucket and service-role-only tables/functions. Existing Supabase URL and
 service-role environment variables are sufficient; no new provider is needed.
 The project-wide Storage upload limit must allow 50 MB. The bucket permits MP4
@@ -14,20 +15,22 @@ policies. Videos upload directly with scoped signed upload URLs, avoiding Vercel
 request-body limit. The completion API downloads at most the bucket's limit and
 parses the MP4 using MP4Box before making it reviewable.
 
-Existing verified tutors must upload an approved demo for each subject before
-placing new bids in that subject. Existing bids and ongoing sessions are not
-invalidated. Profile submission requires pending or approved demos for every
-selected subject. Test invitation and final admin verification require approved demos for all
-selected subjects. Subject assessment and identity verification remain separate.
+Only tutor profiles created after the new-tutor demo requirement migration is
+deployed must upload demos. Existing tutors are grandfathered in; their existing
+bids and ongoing sessions are not invalidated. For new tutors, profile submission
+requires pending or approved demos for every selected subject, and bidding,
+test invitation and final verification require approved demos for the relevant
+subjects. Subject assessment and identity verification remain separate.
 
 ## Workflow
 
-- Tutor: Profile completion's **Documents** step shows a separate upload form for
+- Tutor: For new accounts, profile completion's **Documents** step shows a separate upload form for
   each selected subject. Enter a topic and class/level, then upload an MP4 up to
   five minutes with both audio and video. Standard,
   non-fragmented MP4 is required; H.264/AAC is recommended for browser playback.
-  The tutor cannot continue past Documents until each subject has a pending or
-  approved demo. Server submission checks enforce the same requirement.
+  New tutors cannot continue past Documents until each subject has a pending or
+  approved demo. Server submission checks enforce the same requirement. Existing
+  tutors may still submit demos, but are not required to do so.
 - Admin: **Teaching demos** queue or the tutor's verification detail. Watch the
   video, score accuracy, clarity, example and communication from 1 to 5. Approval
   requires at least 14/20 and accuracy of at least 4/5. These are product defaults,
@@ -68,8 +71,9 @@ private. This maintenance is independent of session/dispute recording retention.
 
 1. Upload a real MP4 as a tutor; confirm it is pending and refresh survives.
 2. Check over-five-minute, audio-only and invalid files are rejected by the server.
-3. Confirm profile submission rejects missing subject demos and new bids reject
-   subjects with no approved demo.
+3. Confirm new tutor profile submission rejects missing subject demos and new
+   tutor bids reject subjects with no approved demo. Confirm existing tutors can
+   submit profiles and bid without demos.
 4. As admin, request changes with feedback; resubmit and approve a revised demo.
 5. As the problem owner, play the approved subject demo from the bid. Other
    students, signed-out clients and other tutors must not access private videos.

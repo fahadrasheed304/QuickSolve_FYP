@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { decrypt } from '@/lib/auth'
 import { DB } from '@/lib/db'
+import { dispatchEmailAlerts } from '@/lib/email-alert-dispatch'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,6 +34,8 @@ export async function PATCH(
     const problem = action === 'accept'
       ? await DB.acceptBidForStudent(id, session.email as string, String(body.bidId || ''))
       : await DB.cancelProblemForStudent(id, session.email as string)
+
+    if (action === 'accept') dispatchEmailAlerts(request)
 
     return NextResponse.json({ success: true, problem })
   } catch (error: unknown) {

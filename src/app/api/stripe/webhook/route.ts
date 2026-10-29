@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getStripe } from '@/lib/stripe'
 import { DB } from '@/lib/db'
 import type Stripe from 'stripe'
+import { dispatchEmailAlerts } from '@/lib/email-alert-dispatch'
 
 export async function POST(request: Request) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET
@@ -33,6 +34,7 @@ export async function POST(request: Request) {
       id: checkout.id, type: 'credit', amount: amount / 100, method: 'stripe',
       description: 'Added via Stripe (sandbox)', status: 'completed', date: new Date().toISOString(),
     }, `stripe:${checkout.id}`)
+    dispatchEmailAlerts(request)
     return NextResponse.json({ received: true })
   } catch (error: unknown) {
     console.error('Wallet credit failed:', error instanceof Error ? error.message : 'Unknown error')

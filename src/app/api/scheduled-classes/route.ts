@@ -46,6 +46,7 @@ export async function POST(request: Request) {
   if (!body || !isClassId(body.requestId) || typeof body.subject!=='string' || typeof body.topic!=='string' || typeof body.classLevel!=='string'
     || typeof body.description!=='string' || typeof body.startsAt!=='string' || !Number.isFinite(Date.parse(body.startsAt))
     || !Number.isInteger(body.durationMin) || !Number.isInteger(body.capacity) || typeof body.fee!=='number' || !Number.isFinite(body.fee)) return Response.json({error:'Complete the class details'},{status:400})
+  if (body.durationMin < 15 || body.durationMin > 300) return Response.json({error:'Duration must be between 15 and 300 minutes (maximum 5 hours).'},{status:400})
   try { assertScheduledRecordingConfig() } catch { return Response.json({error:'Scheduled classes require configured LiveKit recording and storage. Contact the administrator.'},{status:503}) }
   const {data,error} = await supabaseAdmin.rpc('create_scheduled_class',{
     p_id:body.requestId,p_tutor:account.email,p_subject:body.subject,p_topic:body.topic,p_level:body.classLevel,p_description:body.description,

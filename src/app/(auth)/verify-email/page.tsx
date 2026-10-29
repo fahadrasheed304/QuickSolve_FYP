@@ -12,6 +12,7 @@ function VerifyEmailForm() {
 
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
   const [loading, setLoading] = useState(false)
+  const [resending, setResending] = useState(false)
   const [error, setError] = useState('')
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
@@ -109,7 +110,9 @@ function VerifyEmailForm() {
   }
 
   const handleResend = async () => {
+    if (resending) return
     setError('')
+    setResending(true)
     try {
       const res = await fetch('/api/auth/resend-otp', {
         method: 'POST',
@@ -118,12 +121,14 @@ function VerifyEmailForm() {
       })
       const data = await res.json()
       if (res.ok) {
-        notifySuccess(data.message, "A new verification code has been sent to your email.")
+        notifySuccess('Verification code requested', data.message || 'Check your inbox shortly.')
       } else {
         showError(getApiMessage(data, "We could not resend the code. Please wait a moment and try again."))
       }
     } catch {
       showError("We could not resend the code right now. Please check your connection and try again.")
+    } finally {
+      setResending(false)
     }
   }
 
@@ -182,7 +187,7 @@ function VerifyEmailForm() {
 
           <div className="mt-8 text-center lg:text-left">
             <p className="text-sm text-on-surface-variant font-medium">
-              Didn&apos;t receive the email? <button type="button" onClick={handleResend} className="text-primary font-bold hover:underline ml-1">Resend code</button>
+              Didn&apos;t receive the email? <button type="button" disabled={resending} onClick={handleResend} className="text-primary font-bold hover:underline disabled:opacity-60 ml-1">{resending ? 'Requesting…' : 'Resend code'}</button>
             </p>
           </div>
         </div>

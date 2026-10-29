@@ -3,6 +3,7 @@ import { decrypt } from '@/lib/auth'
 import { isAdminEmail } from '@/lib/admin-auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { RoomServiceClient } from 'livekit-server-sdk'
+import { dispatchEmailAlerts } from '@/lib/email-alert-dispatch'
 
 export const dynamic = 'force-dynamic'
 async function admin() {
@@ -39,6 +40,7 @@ export async function POST(request: Request) {
   const email = body.email.toLowerCase().trim()
   const { data, error } = await supabaseAdmin.rpc('admin_moderate_account', { p_email: email, p_action: body.action, p_reason: body.reason.trim(), p_days: body.action === 'suspend' ? body.days : null, p_actor: actor, p_revision: body.revision, p_request: body.requestId })
   if (error) return Response.json({ error: error.code === 'P0001' ? error.message : 'Decision could not be saved. Check the moderation migration and retry.' }, { status: error.code === 'P0001' ? 409 : 503 })
+  dispatchEmailAlerts(request)
   let warning = ''
   if (data.status !== 'active') {
     try {

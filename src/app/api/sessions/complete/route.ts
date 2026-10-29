@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { decrypt } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
+import { dispatchEmailAlerts } from '@/lib/email-alert-dispatch'
 
 export async function POST(request: Request) {
   try {
@@ -29,6 +30,7 @@ export async function POST(request: Request) {
       const status = error.code === 'P0001' ? 409 : 503
       return NextResponse.json({ error: status === 409 ? error.message : 'Session payment is temporarily unavailable' }, { status })
     }
+    dispatchEmailAlerts(request)
     return NextResponse.json({ success: true, ...data })
   } catch {
     return NextResponse.json({ error: 'Unable to complete session payment' }, { status: 500 })

@@ -3,7 +3,8 @@ import { cookies } from 'next/headers'
 import { decrypt } from '@/lib/auth'
 import { DB } from '@/lib/db'
 import { supabaseAdmin } from '@/lib/supabase'
-import { demoSubjectsReady } from '@/lib/teaching-demos-server'
+import { demoSubjectsReady, tutorRequiresDemos } from '@/lib/teaching-demos-server'
+import { dispatchEmailAlerts } from '@/lib/email-alert-dispatch'
 
 export const dynamic = 'force-dynamic'
 
@@ -62,7 +63,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'You can only bid on problems in your profile subjects.' }, { status: 403 })
     }
 
-    if (!await demoSubjectsReady(String(session.email), [problem.subject], true)) {
+    if (await tutorRequiresDemos(String(session.email)) && !await demoSubjectsReady(String(session.email), [problem.subject], true)) {
       return NextResponse.json({ error: 'An approved teaching demo is required for this subject. Open My Subjects to submit your demo.' }, { status: 403 })
     }
 
@@ -77,6 +78,8 @@ export async function POST(request: Request) {
       price,
       durationMin,
     })
+
+    dispatchEmailAlerts(request)
 
     return NextResponse.json({ success: true, bid })
   } catch (error: unknown) {

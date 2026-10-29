@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { demoSession } from '@/lib/teaching-demos-server'
 import { DEMO_CRITERIA } from '@/lib/teaching-demos'
 import { sendDemoReviewEmail } from '@/lib/demo-review-email'
+import { dispatchEmailAlerts } from '@/lib/email-alert-dispatch'
 
 export const maxDuration = 60
 
@@ -43,6 +44,7 @@ export async function POST(request: Request) {
       try { return NextResponse.json({ success: true, emailStatus: await sendDemoReviewEmail(body.id, request) }) }
       catch { return NextResponse.json({ success: true, emailStatus: 'failed', warning: 'Review saved. Email could not be confirmed; refresh and retry the email.' }) }
     }
+    dispatchEmailAlerts(request)
     return NextResponse.json({ success: true })
   } catch { return NextResponse.json({ error: 'Could not save review' }, { status: 400 }) }
 }

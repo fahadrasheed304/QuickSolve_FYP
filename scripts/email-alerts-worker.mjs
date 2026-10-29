@@ -15,10 +15,12 @@ let running = true
 process.on('SIGINT', () => { running = false })
 process.on('SIGTERM', () => { running = false })
 do {
+  let delivered = false
   try {
     const response = await fetch(endpoint, { headers: { Authorization: `Bearer ${secret}` }, signal: AbortSignal.timeout(60000) })
     const result = await response.json()
     console.log(new Date().toISOString(), response.status, result)
+    delivered = response.ok
     if (!response.ok && process.argv.includes('--once')) process.exitCode = 1
   } catch {
     console.error(new Date().toISOString(), 'Email delivery could not reach the app; will retry.')
@@ -26,5 +28,6 @@ do {
   }
   if (process.argv.includes('--once')) break
   // Short waits let Ctrl+C stop the worker promptly, without overlapping jobs.
-  for (let second = 0; running && second < 60; second++) await new Promise(resolve => setTimeout(resolve, 1000))
+  const waitSeconds = delivered ? 60 : 5
+  for (let second = 0; running && second < waitSeconds; second++) await new Promise(resolve => setTimeout(resolve, 1000))
 } while (running)

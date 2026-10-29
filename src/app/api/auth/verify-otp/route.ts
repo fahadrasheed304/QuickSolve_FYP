@@ -44,6 +44,7 @@ export async function POST(request: Request) {
 
     // Check if user already exists with different role
     let newUser = await DB.findUserByEmail(pending.user.email)
+    const isNewAccount = !newUser
     
     if (newUser && newUser.role !== pending.user.role) {
       // User exists but with different role - update role to new role
@@ -70,6 +71,7 @@ export async function POST(request: Request) {
             highestEducation: pending.user.highestEducation || '',
             university: pending.user.university || '',
             experienceYears: pending.user.experienceYears || 0,
+            demoRequired: isNewAccount,
           })
         }
       } catch (caughtError: unknown) {

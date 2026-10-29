@@ -2,6 +2,7 @@ import { cookies } from 'next/headers'
 import { decrypt } from '@/lib/auth'
 import { isAdminEmail } from '@/lib/admin-auth'
 import { supabaseAdmin } from '@/lib/supabase'
+import { dispatchEmailAlerts } from '@/lib/email-alert-dispatch'
 
 export const dynamic = 'force-dynamic'
 async function account() {
@@ -53,6 +54,7 @@ export async function POST(request: Request) {
       p_email: body.email.toLowerCase().trim(), p_action: body.action, p_note: body.note.trim(), p_actor: user.email, p_request: body.requestId,
     })
     if (error) return Response.json({ error: error.code === 'P0001' ? error.message : 'Decision unavailable. Retry the same decision.' }, { status: error.code === 'P0001' ? 409 : 503 })
+    dispatchEmailAlerts(request)
     return Response.json({ conduct: data })
   } catch { return Response.json({ error: 'Decision unavailable. Retry the same decision.' }, { status: 503 }) }
 }
