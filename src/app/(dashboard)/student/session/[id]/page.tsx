@@ -34,6 +34,7 @@ export default function SessionPage() {
   const isEndingSoon = isActive && timeLeftSeconds <= 300
 
   const [showReview, setShowReview] = useState(false)
+  const [recordingEnabled, setRecordingEnabled] = useState<boolean | null>(null)
   const [recordingChoiceDone, setRecordingChoiceDone] = useState<string | null>(null)
   const [rate, setRate] = useState<{ bidPrice: number; durationMin: number; extensionMinutes: number } | null>(null)
   const reviewOpen = showReview || (!isActive && !!roomName)
@@ -133,13 +134,13 @@ export default function SessionPage() {
       <main className="flex min-h-0 flex-1 overflow-hidden">
         {/* ── LiveKit Video Room ── */}
         <div className="relative flex min-h-0 w-full flex-1 flex-col">
-          {isActive && <VideoRoom roomName={liveKitRoomName} onDisconnected={closeLocalSession} onEndSession={handleEndSession} isEnding={isEnding} />}
+          {isActive && <VideoRoom roomName={liveKitRoomName} onRecordingConfigured={setRecordingEnabled} onDisconnected={closeLocalSession} onEndSession={handleEndSession} isEnding={isEnding} />}
         </div>
 
 
       </main>
 
-      {reviewOpen && roomName && recordingChoiceDone !== roomName && <StudentRecordingDownload key={roomName} problemId={roomName.replace(/^session-/, '')} onContinue={() => setRecordingChoiceDone(roomName)} />}
+      {reviewOpen && roomName && recordingChoiceDone !== roomName && <StudentRecordingDownload key={roomName} problemId={roomName.replace(/^session-/, '')} recordingEnabled={recordingEnabled} onContinue={() => setRecordingChoiceDone(roomName)} />}
       <ReviewModal isOpen={reviewOpen && recordingChoiceDone === roomName} onClose={() => setShowReview(false)} tutorName={tutorName} problemId={(roomName || "").replace(/^session-/, "")} />
     </div>
   )

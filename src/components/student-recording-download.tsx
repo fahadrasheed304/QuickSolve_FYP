@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 
 type Recording = { egress_id: string; state: string }
 
-export function StudentRecordingDownload({ problemId, onContinue, fromHistory = false }: { problemId: string; onContinue: () => void; fromHistory?: boolean }) {
+export function StudentRecordingDownload({ problemId, onContinue, fromHistory = false, recordingEnabled }: { problemId: string; onContinue: () => void; fromHistory?: boolean; recordingEnabled?: boolean | null }) {
   const [wanted, setWanted] = useState(fromHistory)
   const [rows, setRows] = useState<Recording[]>([])
   const [error, setError] = useState('')
@@ -14,7 +14,7 @@ export function StudentRecordingDownload({ problemId, onContinue, fromHistory = 
   const [downloaded, setDownloaded] = useState<string[]>([])
 
   useEffect(() => {
-    if (!wanted) return
+    if (!wanted || recordingEnabled === false) return
     const controller = new AbortController()
     let timer: ReturnType<typeof setTimeout>
     const load = async () => {
@@ -37,7 +37,7 @@ export function StudentRecordingDownload({ problemId, onContinue, fromHistory = 
     }
     void load()
     return () => { controller.abort(); clearTimeout(timer) }
-  }, [wanted, problemId])
+  }, [wanted, problemId, recordingEnabled])
 
   const download = async (id: string) => {
     setBusy(id)
@@ -64,7 +64,8 @@ export function StudentRecordingDownload({ problemId, onContinue, fromHistory = 
       <p className="text-sm text-text-muted">Download an MP4 to watch offline later. Downloads are available here and in Session History for 15 minutes after the session ends. Keep this window open while the recording finishes processing.</p>
       {!wanted ? <div className="mt-4 flex gap-3"><Button onClick={() => setWanted(true)}>Yes, download</Button><Button variant="outline" onClick={onContinue}>Skip</Button></div> : <div className="mt-4 space-y-3">
         <div role="status" className="space-y-3 text-sm text-text-main">
-          {!rows.length && !error && <p>Waiting for the recording. If this session was not recorded, {fromHistory ? 'close this window' : 'choose Continue to review'}.</p>}
+          {!rows.length && !error && recordingEnabled !== false && <p>Waiting for the recording. If this session was not recorded, {fromHistory ? 'close this window' : 'choose Continue to review'}.</p>}
+          {!rows.length && recordingEnabled === false && <p role="status" className="rounded-lg bg-amber-500/10 p-3 text-amber-900">Recording was disabled for this session, so no MP4 was created. You can continue to your review.</p>}
           {rows.map((row, index) => <div key={row.egress_id} className="flex items-center justify-between gap-3 rounded-lg border border-border p-3">
             <span>Recording {index + 1}</span>
             {row.state === 'ready' ? <Button size="sm" disabled={busy !== null} onClick={() => void download(row.egress_id)}>{busy === row.egress_id ? 'Starting…' : downloaded.includes(row.egress_id) ? 'Download again' : 'Download MP4'}</Button> : <span className="text-text-muted">{['starting', 'recording', 'processing'].includes(row.state) ? 'Processing…' : row.state === 'failed' ? 'Recording failed' : 'No longer available'}</span>}

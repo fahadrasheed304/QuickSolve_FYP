@@ -31,7 +31,7 @@ export async function POST(request: Request) {
 
     const googleUser = await googleResponse.json()
     const googleEmail = googleUser.email
-    await assertAccountAccess(googleEmail)
+    await assertAccountAccess(googleEmail, userRole)
 
     // Check if user already exists
     let user = await DB.findUserByEmail(googleEmail)

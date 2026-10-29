@@ -22,12 +22,13 @@ function RecordingNotice({ enabled }: { enabled: boolean }) {
 }
 interface VideoRoomProps {
   roomName: string
+  onRecordingConfigured?: (enabled: boolean) => void
   onDisconnected?: () => void
   onEndSession: () => Promise<void>
   isEnding?: boolean
 }
 
-export default function VideoRoom({ roomName, onDisconnected, onEndSession, isEnding }: VideoRoomProps) {
+export default function VideoRoom({ roomName, onRecordingConfigured, onDisconnected, onEndSession, isEnding }: VideoRoomProps) {
   const [token, setToken] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [serverUrl, setServerUrl] = useState<string | undefined>(undefined)
@@ -58,7 +59,11 @@ export default function VideoRoom({ roomName, onDisconnected, onEndSession, isEn
     if (!roomName) return
 
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 20000)
+    let timedOut = false
+    const timeout = setTimeout(() => {
+      timedOut = true
+      controller.abort()
+    }, 20000)
     let cancelled = false
     const fetchToken = async () => {
       try {
@@ -72,18 +77,24 @@ export default function VideoRoom({ roomName, onDisconnected, onEndSession, isEn
         if (!data.token || !data.serverUrl) throw new Error('Video configuration is incomplete. Please redeploy with LiveKit variables.')
         setServerUrl(data.serverUrl)
         setRecordingEnabled(data.recordingEnabled === true)
+        onRecordingConfigured?.(data.recordingEnabled === true)
         useSessionStore.getState().syncClock(data.endsAt, data.serverNow)
         setToken(data.token)
       } catch (caughtError: unknown) {
-    const err = caughtError instanceof Error ? caughtError : new Error('Unexpected error')
+        // React Strict Mode intentionally runs effect cleanup and setup again in
+        // development. That cleanup aborts this fetch; it is expected, not a
+        // connection failure to show or log.
+        if (cancelled) return
+        const err = caughtError instanceof Error ? caughtError : new Error('Unexpected error')
+        if (controller.signal.aborted && !timedOut) return
         console.error('Failed to fetch LiveKit token:', err)
-        if (!cancelled) setError(controller.signal.aborted ? 'Connection timed out. Please retry.' : err.message)
+        setError(timedOut ? 'Connection timed out. Please retry.' : err.message)
       }
     }
 
     fetchToken().finally(() => clearTimeout(timeout))
     return () => { cancelled = true; controller.abort(); clearTimeout(timeout) }
-  }, [roomName, attempt])
+  }, [roomName, attempt, onRecordingConfigured])
 
   useEffect(() => {
     if (!token || connected) return

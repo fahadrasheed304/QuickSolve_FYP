@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       }
       if (event.event==='participant_joined') {
         let allowed=!!email
-        if (email) { try {await assertAccountAccess(email)} catch (error) {if (!(error instanceof AccountRestrictedError)) throw error; allowed=false} }
+        if (email) { try {await assertAccountAccess(email, identity.endsWith(':tutor') ? 'tutor' : 'student')} catch (error) {if (!(error instanceof AccountRestrictedError)) throw error; allowed=false} }
         if (!allowed) {
           const url=process.env.NEXT_PUBLIC_LIVEKIT_URL
           if (!url) throw new Error('LiveKit unavailable')
@@ -81,7 +81,7 @@ export async function POST(request: Request) {
     return new Response(null, { status: 204 })
   }
   try {
-    await assertAccountAccess(identity.replace(/:(student|tutor)$/, ''))
+    await assertAccountAccess(identity.replace(/:(student|tutor)$/, ''), identity.endsWith(':tutor') ? 'tutor' : 'student')
   } catch (error) {
     if (!(error instanceof AccountRestrictedError)) return new Response('Account check unavailable; retry', { status: 503 })
     try {

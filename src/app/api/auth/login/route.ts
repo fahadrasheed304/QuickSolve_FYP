@@ -35,8 +35,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
     }
 
-    await assertAccountAccess(user.email)
-
     // Seamlessly migrate old plaintext passwords after a successful login.
     if (user.password && !isPasswordHash(user.password)) {
       await DB.updateUserPassword(user.email, hashPassword(password))
@@ -52,6 +50,8 @@ export async function POST(request: Request) {
         actualRole: user.role,
       }, { status: 403 })
     }
+
+    await assertAccountAccess(user.email, sessionRole)
 
     await DB.ensureWallet(user.email, sessionRole)
 
