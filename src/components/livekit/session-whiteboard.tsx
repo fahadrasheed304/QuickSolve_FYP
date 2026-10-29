@@ -20,7 +20,7 @@ async function send(room: Room, message: Message) {
   catch (error) { console.warn('Whiteboard update could not be sent', error) }
 }
 
-export default function SessionWhiteboard({ problemId, readOnly = false, recording = false }: { problemId: string; readOnly?: boolean; recording?: boolean }) {
+export default function SessionWhiteboard({ problemId, readOnly = false, recording = false, onContentChange }: { problemId: string; readOnly?: boolean; recording?: boolean; onContentChange?: (hasContent: boolean) => void }) {
   const room = useRoomContext()
   const [snapshot, setSnapshot] = useState<TLStoreSnapshot | null>(null)
   const [loaded, setLoaded] = useState(recording)
@@ -91,6 +91,13 @@ export default function SessionWhiteboard({ problemId, readOnly = false, recordi
       for (const message of buffered.current.splice(0)) apply(message)
     }
   }, [apply, snapshot])
+
+  useEffect(() => {
+    if (!recording || !editor || !onContentChange) return
+    const updateContentState = () => onContentChange(editor.getCurrentPageShapes().length > 0)
+    updateContentState()
+    return editor.store.listen(updateContentState, { scope: 'document' })
+  }, [editor, onContentChange, recording])
 
   useEffect(() => {
     if (!editor || readOnly) return

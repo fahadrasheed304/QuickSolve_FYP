@@ -507,17 +507,17 @@ input:disabled {
   font-family: Arial, Helvetica, sans-serif;
 }
 .recording-template {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   height: 100%;
-  grid-template: 42px minmax(0, 1fr) / minmax(0, 1fr) 320px;
   gap: 8px;
   padding: 8px;
   box-sizing: border-box;
 }
 .recording-header {
-  grid-column: 1 / -1;
   display: flex;
+  flex: 0 0 42px;
   justify-content: space-between;
   align-items: center;
   padding: 0 12px;
@@ -526,16 +526,27 @@ input:disabled {
   font-size: 13px;
 }
 .recording-header span { color: #ff9b9b; font-weight: 700; }
+.recording-content { display: grid; flex: 1; min-width: 0; min-height: 0; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.recording-template--chat .recording-content { grid-template-columns: minmax(0, 1fr) minmax(240px, 25%); }
+.recording-stage { display: grid; min-width: 0; min-height: 0; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.recording-stage--board { grid-template-columns: minmax(0, 1.7fr) minmax(250px, 0.8fr); }
 .recording-board, .recording-videos, .recording-chat { min-width: 0; min-height: 0; overflow: hidden; border-radius: 8px; }
-.recording-board { position: relative; background: #fff; pointer-events: none; }
-.recording-side { display: grid; min-height: 0; grid-template-rows: minmax(150px, 36%) minmax(0, 1fr); gap: 8px; }
+.recording-board { position: fixed; top: 0; left: -10000px; width: 640px; height: 480px; background: #fff; pointer-events: none; }
+.recording-stage--board .recording-board { position: relative; top: auto; left: auto; width: auto; height: auto; overflow: hidden; border-radius: 8px; }
 .recording-videos { background: #16253b; }
 .recording-videos .lk-grid-layout { height: 100%; }
 .recording-empty { display: grid; height: 100%; place-items: center; padding: 16px; color: #b7c6d9; font-size: 13px; text-align: center; }
+.recording-audio-stage { display: grid; width: 100%; height: 100%; place-items: center; background: radial-gradient(ellipse at 50% 42%, #1c3760 0, #111f35 48%, #0b1423 100%); }
+.recording-audio-card { display: flex; max-width: 80%; flex-direction: column; align-items: center; gap: 12px; text-align: center; color: #d9e7fb; }
+.recording-audio-card strong { font-size: clamp(18px, 2vw, 28px); }
+.recording-audio-card > span:last-child { color: #a9bad2; font-size: 14px; }
+.recording-audio-mark { display: grid; width: 88px; height: 88px; place-items: center; border: 1px solid #ffffff33; border-radius: 50%; background: linear-gradient(145deg, #1768ff, #00a6a6); box-shadow: 0 14px 40px #0005; color: white; font-size: 36px; font-weight: 800; }
 .recording-chat { display: flex; flex-direction: column; background: #16253b; padding: 12px; }
 .recording-chat h2 { margin: 0 0 10px; border-bottom: 1px solid #ffffff24; padding-bottom: 8px; font-size: 14px; }
 .recording-messages { overflow: hidden; display: flex; flex: 1; flex-direction: column; gap: 10px; }
 .recording-messages article { overflow-wrap: anywhere; border-radius: 7px; background: #ffffff0c; padding: 8px; font-size: 12px; }
 .recording-messages strong { color: #93c5fd; }
 .recording-messages p { margin: 4px 0 0; white-space: pre-wrap; }
+.recording-template--class .recording-content { grid-template-columns: minmax(0, 1fr); }
+.recording-template--class.recording-template--chat .recording-content { grid-template-columns: minmax(0, 1fr) minmax(240px, 25%); }
 .recording-template-error { display: grid; position: fixed; inset: 0; place-items: center; background: #08111f; color: white; font: 16px Arial, sans-serif; }
