@@ -2,14 +2,17 @@
 export class AccountRestrictedError extends Error {
   constructor(message: string) { super(message); this.name = 'AccountRestrictedError' }
 }
-export async function assertAccountAccess(email: string) {
+export async function assertAccountAccess(email: string, role: string) {
   const normalized = email.toLowerCase().trim()
+  const normalizedRole = role.toLowerCase().trim()
+  if (normalizedRole === 'admin' && normalized === 'quicksolve.officials@gmail.com') return
+  if (!['student', 'tutor'].includes(normalizedRole)) throw new Error('Invalid account role')
   if (normalized === 'quicksolve.officials@gmail.com') return
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!url || !key) throw new Error('Account access check unavailable')
-  const params = new URLSearchParams({ select: 'status,suspended_until', user_email: `eq.${normalized}` })
-  const response = await fetch(`${url}/rest/v1/account_moderation?${params}`, {
+  const params = new URLSearchParams({ select: 'status,suspended_until', user_email: `eq.${normalized}`, role: `eq.${normalizedRole}` })
+  const response = await fetch(`${url}/rest/v1/role_account_moderation?${params}`, {
     headers: { apikey: key, Authorization: `Bearer ${key}` }, cache: 'no-store', signal: AbortSignal.timeout(10000),
   })
   if (!response.ok) throw new Error('Account access check unavailable. Please contact support.')

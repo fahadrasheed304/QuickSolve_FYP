@@ -26,8 +26,8 @@ export async function decrypt(session: string | undefined = '') {
       // Also cap existing seven-day tokens by their original issue time.
       maxTokenAge: SESSION_MAX_AGE_SECONDS,
     })
-    if (typeof payload.email !== 'string') return null
-    await assertAccountAccess(payload.email)
+    if (typeof payload.email !== 'string' || typeof payload.role !== 'string' || !['student', 'tutor', 'admin'].includes(payload.role)) return null
+    if (payload.role === 'student' || payload.role === 'tutor') await assertAccountAccess(payload.email, payload.role)
     return payload
   } catch {
     return null
@@ -35,7 +35,7 @@ export async function decrypt(session: string | undefined = '') {
 }
 
 export async function createSession(userId: string, email: string, role: string) {
-  await assertAccountAccess(email)
+  await assertAccountAccess(email, role)
   const expiresAt = new Date(Date.now() + SESSION_MAX_AGE_SECONDS * 1000)
   const session = await encrypt({ userId, email, role, expiresAt })
   return { session, expiresAt }

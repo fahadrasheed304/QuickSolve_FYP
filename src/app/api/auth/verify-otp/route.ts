@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Incorrect OTP code." }, { status: 401 })
     }
 
-    await assertAccountAccess(pending.user.email)
+    await assertAccountAccess(pending.user.email, pending.user.role)
     const hasRequestedRole = await DB.userHasRole(pending.user.email, pending.user.role)
     if (hasRequestedRole) {
       await removePendingSignup(normalizedEmail, pending.otpHash)
