@@ -30,3 +30,4 @@ Development notes:
 - October 22, 2026: Fixed timezone conversion bug in scheduled class calendar.
 - October 27, 2026: Enhanced password reset flow with secure token expiry.
 - October 31, 2026: Added session duration counter and overtime alert.
+- November 4, 2026: Added dark mode toggle and theme persistence in settings.
