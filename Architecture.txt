@@ -31,3 +31,4 @@ Development notes:
 - October 27, 2026: Enhanced password reset flow with secure token expiry.
 - October 31, 2026: Added session duration counter and overtime alert.
 - November 4, 2026: Added dark mode toggle and theme persistence in settings.
+- November 4, 2026: Fixed high-contrast styling issues in dark mode tables.
