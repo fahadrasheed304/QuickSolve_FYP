@@ -33,3 +33,4 @@ Development notes:
 - November 4, 2026: Added dark mode toggle and theme persistence in settings.
 - November 4, 2026: Fixed high-contrast styling issues in dark mode tables.
 - November 8, 2026: Implemented in-app notification center for booking updates.
+- November 12, 2026: Added instant refund handling for cancelled tutor sessions.
