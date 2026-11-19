@@ -35,3 +35,4 @@ Development notes:
 - November 8, 2026: Implemented in-app notification center for booking updates.
 - November 12, 2026: Added instant refund handling for cancelled tutor sessions.
 - November 16, 2026: Fixed WebRTC echo cancellation and noise suppression.
+- November 19, 2026: Added export session summary as PDF feature.
