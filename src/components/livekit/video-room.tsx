@@ -13,11 +13,18 @@ import '@livekit/components-styles'
 
 function RecordingNotice({ enabled }: { enabled: boolean }) {
   const recording = useIsRecording()
-  if (!enabled && !recording) return null
   return <div role="status" className="shrink-0 border-b border-white/10 bg-[#16253b] px-3 py-2 text-[11px] leading-4 text-white sm:px-4 sm:text-xs">
-    <span className={recording ? 'font-bold text-red-300' : 'font-bold text-amber-200'}>{recording ? 'Recording' : 'Recording is not active yet'}</span>
-    <span className="hidden sm:inline"> - Session audio, video and shared screens are recorded for admin dispute review. The student can download a copy within 15 minutes after the session ends. Server recordings are kept for 15 minutes, or until a held payment is resolved.</span>
-    <span className="sm:hidden"> - Audio, video and screen are recorded. The student can download a copy after the session.</span>
+    <span className={recording ? 'font-bold text-red-300' : 'font-bold text-amber-200'}>{recording ? 'Recording' : enabled ? 'Recording is not active yet' : 'Recording is unavailable'}</span>
+    <span className="hidden sm:inline"> - {recording
+      ? 'Session audio, video and shared screens are being recorded for admin dispute review. The student can download a copy within 15 minutes after the session ends. Server recordings are kept for 15 minutes, or until a held payment is resolved.'
+      : enabled
+        ? 'Recording is enabled and will start automatically. Do not treat this session as recorded until the recording status becomes active.'
+        : 'This session is not being recorded because recording has not been configured.'}</span>
+    <span className="sm:hidden"> - {recording
+      ? 'Session audio, video and shared screens are being recorded.'
+      : enabled
+        ? 'Recording is enabled but not active yet.'
+        : 'This session is not being recorded.'}</span>
   </div>
 }
 interface VideoRoomProps {

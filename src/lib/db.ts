@@ -578,6 +578,7 @@ export const DB = {
     passed: boolean;
     tabSwitches: number;
     warningsGiven: number;
+    warningDetails: { count: number; reason: string; occurredAt: string }[];
     testStatus: string;
     timeTakenSeconds: number;
   }) => {
@@ -594,6 +595,7 @@ export const DB = {
         passed: result.passed,
         tab_switches: result.tabSwitches,
         warnings_given: result.warningsGiven,
+        warning_details: result.warningDetails,
         test_status: result.testStatus,
         time_taken_seconds: result.timeTakenSeconds,
       })

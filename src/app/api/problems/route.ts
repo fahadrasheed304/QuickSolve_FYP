@@ -4,6 +4,13 @@ import { decrypt } from '@/lib/auth'
 import { DB } from '@/lib/db'
 import { supabaseAdmin } from '@/lib/supabase'
 import { rankStudentBids } from '@/lib/rank-student-bids'
+import { getStudentSubjects, isStudentClassLevel, SESSION_DURATIONS } from '@/lib/student-problem-options'
+
+const MAX_PROBLEM_IMAGE_BYTES = 5 * 1024 * 1024
+const IMAGE_SIGNATURES: Record<string, (bytes: Buffer) => boolean> = {
+  'image/jpeg': bytes => bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff,
+  'image/png': bytes => bytes.length >= 8 && bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])),
+}
 
 export async function POST(request: Request) {
   try {
@@ -20,22 +27,44 @@ export async function POST(request: Request) {
     }
 
     const formData = await request.formData()
-    const subject = formData.get('subject') as string
+    const subjectField = formData.get('subject')
+    const subject = typeof subjectField === 'string' ? subjectField.trim() : ''
     const amount = Number(formData.get('amount'))
     const duration = Number(formData.get('duration'))
-    const details = formData.get('details') as string | null
-    const studentClass = formData.get('class') as string | null
-    const image = formData.get('image') as File | null
+    const detailsField = formData.get('details')
+    const details = typeof detailsField === 'string' ? detailsField : ''
+    const classField = formData.get('class')
+    const studentClass = classField === null ? '10th' : typeof classField === 'string' ? classField.trim() : ''
+    const imageField = formData.get('image')
+    const image = imageField instanceof File && imageField.size > 0 ? imageField : null
 
     if (!subject || !amount || !duration) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
+    if (!isStudentClassLevel(studentClass)) {
+      return NextResponse.json({ error: 'Select a valid class level.' }, { status: 400 })
+    }
+    if (!(getStudentSubjects(studentClass) as readonly string[]).includes(subject)) {
+      return NextResponse.json({ error: 'Select a valid subject for this class level.' }, { status: 400 })
+    }
+    if (!(SESSION_DURATIONS as readonly number[]).includes(duration)) {
+      return NextResponse.json({ error: 'Choose a session duration of 15, 30, 45, or 60 minutes.' }, { status: 400 })
+    }
+    if (!details.trim() && !image) {
+      return NextResponse.json({ error: 'Enter problem details or attach an image.' }, { status: 400 })
+    }
+    if (image && (image.size > MAX_PROBLEM_IMAGE_BYTES || !IMAGE_SIGNATURES[image.type])) {
+      return NextResponse.json({ error: 'Upload a JPEG or PNG image no larger than 5 MB.' }, { status: 400 })
+    }
 
     let imageUrl: string | undefined = undefined
 
-    if (image && image.size > 0) {
+    if (image) {
       const bytes = await image.arrayBuffer()
       const buffer = Buffer.from(bytes)
+      if (!IMAGE_SIGNATURES[image.type](buffer)) {
+        return NextResponse.json({ error: 'The uploaded file does not match its image format.' }, { status: 400 })
+      }
       
       const fileName = `${Date.now()}-${image.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
       
@@ -64,7 +93,7 @@ export async function POST(request: Request) {
     const problem = await DB.createProblem({
       studentEmail: session.email as string,
       subject,
-      class: studentClass || '10th',
+      class: studentClass,
       details: details || '',
       offerPrice: amount,
       durationMin: duration,

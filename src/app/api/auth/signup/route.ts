@@ -18,6 +18,20 @@ export async function POST(request: Request) {
       );
     }
 
+    if (typeof email !== "string" || !/^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/.test(email.trim())) {
+      return NextResponse.json(
+        { error: "Please enter a valid email address, such as name@example.com." },
+        { status: 400 },
+      );
+    }
+
+    if (typeof password !== "string" || password.length < 8 || !/[A-Za-z]/.test(password) || !/[0-9!@#$%^&*()+=._-]/.test(password)) {
+      return NextResponse.json(
+        { error: "Password must be at least 8 characters long and include at least one letter and one number or symbol." },
+        { status: 400 },
+      );
+    }
+
     // Check if user already exists (case-insensitive)
     const normalizedEmail = email.toLowerCase().trim();
     const requestedRole = role === "tutor" ? "tutor" : "student";

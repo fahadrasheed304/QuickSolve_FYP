@@ -2,7 +2,7 @@ import { create } from 'zustand'
 
 export type AppNotification = {
   id: string
-  kind: 'new_request' | 'new_bid' | 'bid_accepted' | 'bid_rejected' | 'request_closed' | 'tutor_joined' | 'scheduled_class'
+  kind: 'new_request' | 'new_bid' | 'bid_accepted' | 'bid_rejected' | 'request_closed' | 'tutor_joined' | 'scheduled_class' | 'tutor_selected'
   problem_id: string | null
   class_id?: string | null
   message: string

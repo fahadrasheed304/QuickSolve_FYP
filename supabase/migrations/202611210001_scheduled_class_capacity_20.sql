@@ -1,11 +1,10 @@
 begin;
 
--- Allow scheduled classes up to five hours, enforced by both the table and RPC.
 alter table public.scheduled_classes
-  drop constraint if exists scheduled_classes_duration_min_check;
+  drop constraint if exists scheduled_classes_capacity_check;
+
 alter table public.scheduled_classes
-  add constraint scheduled_classes_duration_min_check
-  check (duration_min between 15 and 300);
+  add constraint scheduled_classes_capacity_check check (capacity between 1 and 20);
 
 create or replace function public.create_scheduled_class(
   p_id uuid,
@@ -20,19 +19,20 @@ create or replace function public.create_scheduled_class(
   p_capacity integer
 )
 returns public.scheduled_classes
-language plpgsql security definer set search_path=public,pg_temp as $$
+language plpgsql
+security definer
+set search_path=public,pg_temp
+as $$
 declare
   saved public.scheduled_classes;
   tutor public.tutor_profiles;
 begin
-  p_tutor := lower(trim(p_tutor));
+  p_tutor:=lower(trim(p_tutor));
   perform public.scheduled_assert_access(p_tutor);
-  perform pg_advisory_xact_lock(hashtextextended('scheduled-tutor:' || p_tutor, 0));
+  perform pg_advisory_xact_lock(hashtextextended('scheduled-tutor:'||p_tutor,0));
   select * into tutor from public.tutor_profiles where user_email=p_tutor for update;
-
-  if not found
-     or (tutor.verification_status is distinct from 'verified' and tutor.verification_stage is distinct from 'verified')
-     or exists(select 1 from public.tutor_conduct where tutor_email=p_tutor and status='restricted') then
+  if not found or (tutor.verification_status is distinct from 'verified' and tutor.verification_stage is distinct from 'verified')
+    or exists(select 1 from public.tutor_conduct where tutor_email=p_tutor and status='restricted') then
     raise exception 'A verified, unrestricted tutor is required';
   end if;
   if not (coalesce(to_jsonb(tutor.subjects),'[]'::jsonb) ? p_subject) then
@@ -42,27 +42,22 @@ begin
   select * into saved from public.scheduled_classes where id=p_id;
   if found then
     if saved.tutor_email<>p_tutor or saved.subject<>p_subject or saved.topic<>trim(p_topic)
-       or saved.class_level<>trim(p_level) or saved.description<>trim(coalesce(p_description,''))
-       or saved.starts_at<>p_starts or saved.duration_min<>p_duration or saved.fee<>p_fee
-       or saved.capacity<>p_capacity then
+      or saved.class_level<>trim(p_level) or saved.description<>trim(coalesce(p_description,''))
+      or saved.starts_at<>p_starts or saved.duration_min<>p_duration or saved.fee<>p_fee
+      or saved.capacity<>p_capacity then
       raise exception 'Class request conflict';
     end if;
     return saved;
   end if;
 
   if p_id is null or p_starts is null or p_starts<now()+interval '30 minutes'
-     or p_starts>now()+interval '90 days' then
+    or p_starts>now()+interval '90 days' or p_duration is null or p_duration not between 15 and 180
+    or p_fee is null or p_fee<=0 or p_fee>100000 or p_fee<>trunc(p_fee,2)
+    or p_capacity is null or p_capacity not between 1 and 20
+    or length(trim(coalesce(p_topic,''))) not between 3 and 120
+    or length(trim(coalesce(p_level,''))) not between 1 and 60
+    or length(coalesce(p_description,''))>2000 then
     raise exception 'Invalid class details or start time (30 minutes to 90 days ahead)';
-  end if;
-  if p_duration is null or p_duration not between 15 and 300 then
-    raise exception 'Duration must be between 15 and 300 minutes (maximum 5 hours)';
-  end if;
-  if p_fee is null or p_fee<=0 or p_fee>100000 or p_fee<>trunc(p_fee,2)
-     or p_capacity is null or p_capacity not between 2 and 10
-     or length(trim(coalesce(p_topic,''))) not between 3 and 120
-     or length(trim(coalesce(p_level,''))) not between 1 and 60
-     or length(coalesce(p_description,''))>2000 then
-    raise exception 'Invalid class details';
   end if;
 
   if exists(select 1 from public.scheduled_classes
@@ -86,12 +81,8 @@ begin
     trim(coalesce(p_description,'')),p_starts,p_starts+p_duration*interval '1 minute',p_duration,p_fee,p_capacity
   ) returning * into saved;
   return saved;
-end $$;
-
-revoke all on function public.create_scheduled_class(uuid,text,text,text,text,text,timestamptz,integer,numeric,integer)
-  from public,anon,authenticated;
-grant execute on function public.create_scheduled_class(uuid,text,text,text,text,text,timestamptz,integer,numeric,integer)
-  to service_role;
+end;
+$$;
 
 notify pgrst,'reload schema';
 commit;

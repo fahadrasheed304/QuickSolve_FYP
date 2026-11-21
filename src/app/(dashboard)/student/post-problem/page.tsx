@@ -12,30 +12,14 @@ import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import { useBidsStore } from '@/stores/bids-store'
 import { notifyError, notifySuccess } from '@/lib/toast'
+import { getStudentSubjects, SESSION_DURATIONS, STUDENT_CLASS_LEVELS, type StudentClassLevel } from '@/lib/student-problem-options'
 
-const SUBJECTS_MATRIC = [
-  'Mathematics', 'Physics', 'Chemistry', 'Biology',
-  'Computer Science', 'General Science', 'English', 'Urdu', 'Islamiat', 'Pak Studies'
-]
-const SUBJECTS_INTER = [
-  'Mathematics (FSc)', 'Physics (FSc)', 'Chemistry (FSc)', 'Biology (FSc)',
-  'Computer Science (ICS)', 'Statistics (ICS)', 'Economics (FA/ICS)', 
-  'Accounting (ICom)', 'Business Math (ICom)', 'Principles of Commerce (ICom)',
-  'Education (FA)', 'Sociology (FA)',
-  'English (Compulsory)', 'Urdu (Compulsory)', 'Islamic Studies (Compulsory)', 'Pakistan Studies (Compulsory)'
-]
-
-const DURATIONS = [
-  { label: '15 min', price: 200, value: 15 },
-  { label: '30 min', price: 400, value: 30 },
-  { label: '45 min', price: 600, value: 45 },
-  { label: '60 min', price: 800, value: 60 },
-]
+const DURATIONS = SESSION_DURATIONS.map(value => ({ label: `${value} min`, price: value / 15 * 200, value }))
 
 export default function PostProblemPage() {
   const router = useRouter()
   const postProblem = useBidsStore((state) => state.postProblem)
-  const [activeClass, setActiveClass] = useState('10th')
+  const [activeClass, setActiveClass] = useState<StudentClassLevel>('10th')
   const [selectedSubject, setSelectedSubject] = useState('')
   const [selectedDuration, setSelectedDuration] = useState(30)
   const [offerPrice, setOfferPrice] = useState('400')
@@ -44,8 +28,7 @@ export default function PostProblemPage() {
   const [details, setDetails] = useState('')
   const [imageFile, setImageFile] = useState<File | null>(null)
 
-  const isInter = ['1st Year', '2nd Year'].includes(activeClass)
-  const subjects = isInter ? SUBJECTS_INTER : SUBJECTS_MATRIC
+  const subjects = getStudentSubjects(activeClass)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -88,7 +71,7 @@ export default function PostProblemPage() {
               <div className="space-y-3">
                 <label className="text-sm font-bold text-text-main">Your Class</label>
                 <div className="grid grid-cols-2 gap-2 rounded-lg bg-surface-hover p-1 sm:grid-cols-4">
-                  {['9th', '10th', '1st Year', '2nd Year'].map((cls) => (
+                  {STUDENT_CLASS_LEVELS.map((cls) => (
                     <button
                       key={cls}
                       type="button"
@@ -151,10 +134,21 @@ export default function PostProblemPage() {
                     id="problem-image"
                     type="file"
                     className="hidden"
-                    accept="image/*"
+                    accept="image/jpeg,image/png"
                     onChange={(e) => {
                       if (e.target.files && e.target.files[0]) {
-                        setImageFile(e.target.files[0])
+                        const file = e.target.files[0]
+                        if (!['image/jpeg', 'image/png'].includes(file.type)) {
+                          notifyError('Please choose a JPG or PNG image.')
+                          e.target.value = ''
+                          return
+                        }
+                        if (file.size > 5 * 1024 * 1024) {
+                          notifyError('The image must be no larger than 5 MB.')
+                          e.target.value = ''
+                          return
+                        }
+                        setImageFile(file)
                       }
                     }}
                   />

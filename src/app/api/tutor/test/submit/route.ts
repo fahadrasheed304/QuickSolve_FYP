@@ -74,6 +74,7 @@ export async function POST(request: Request) {
       answers,  // Array of {questionId, answerGiven, timeTaken}
       tabSwitches,
       warningsGiven,
+      warningDetails,
       testStatus,
       timeTakenSeconds,
     } = body
@@ -182,6 +183,23 @@ export async function POST(request: Request) {
       passed: finalPassed,
       tabSwitches: tabSwitches || 0,
       warningsGiven: warningsGiven || 0,
+      warningDetails: Array.isArray(warningDetails)
+        ? warningDetails.slice(0, 100).flatMap((warning: unknown) => {
+            if (!warning || typeof warning !== 'object') return []
+            const item = warning as { count?: unknown; reason?: unknown; occurredAt?: unknown }
+            if (
+              !Number.isInteger(item.count) ||
+              typeof item.reason !== 'string' ||
+              typeof item.occurredAt !== 'string' ||
+              Number.isNaN(Date.parse(item.occurredAt))
+            ) return []
+            return [{
+              count: item.count as number,
+              reason: item.reason.slice(0, 250),
+              occurredAt: item.occurredAt,
+            }]
+          })
+        : [],
       testStatus: finalStatus,
       timeTakenSeconds: timeTakenSeconds || 0,
     })
