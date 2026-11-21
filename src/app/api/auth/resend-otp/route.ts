@@ -1,18 +1,17 @@
 import { after, NextResponse } from 'next/server'
 import { getPendingSignup, savePendingSignup, generateOtp } from '@/lib/pending-signups'
 import { sendMail } from '@/lib/mail'
+import { normalizeEmail } from '@/lib/auth-input-validation'
 
 export const runtime = 'nodejs'
 
 export async function POST(request: Request) {
   try {
-    const { email } = await request.json()
-
-    if (!email) {
-      return NextResponse.json({ error: "Email is required" }, { status: 400 })
-    }
-
-    const normalizedEmail = email.toLowerCase().trim()
+    const body = await request.json().catch(() => null)
+    const normalizedEmail = body && typeof body === 'object' && !Array.isArray(body)
+      ? normalizeEmail((body as Record<string, unknown>).email)
+      : null
+    if (!normalizedEmail) return NextResponse.json({ error: 'Please enter a valid email address.' }, { status: 400 })
     const pending = await getPendingSignup(normalizedEmail)
 
     if (!pending) {

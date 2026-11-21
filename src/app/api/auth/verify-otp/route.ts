@@ -4,19 +4,22 @@ import { createSession } from '@/lib/auth'
 import { DB } from '@/lib/db'
 
 import { getPendingSignup, removePendingSignup, matchesOtp } from '@/lib/pending-signups'
+import { normalizeEmail } from '@/lib/auth-input-validation'
 
 // Admin emails that get automatic admin access
 const ADMIN_EMAILS = ['quicksolve.officials@gmail.com']
 
 export async function POST(request: Request) {
   try {
-    const { email, otp } = await request.json()
-
-    if (!email || !otp) {
+    const body = await request.json().catch(() => null)
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
       return NextResponse.json({ error: "Missing email or OTP" }, { status: 400 })
     }
-
-    const normalizedEmail = email.toLowerCase().trim()
+    const { email, otp } = body as Record<string, unknown>
+    const normalizedEmail = normalizeEmail(email)
+    if (!normalizedEmail || typeof otp !== 'string' || !/^\d{6}$/.test(otp)) {
+      return NextResponse.json({ error: 'Enter a valid email address and 6-digit OTP.' }, { status: 400 })
+    }
     const pending = await getPendingSignup(normalizedEmail)
 
     if (!pending) {

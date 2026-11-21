@@ -1,17 +1,22 @@
 import { NextResponse } from 'next/server'
 import { createSession } from '@/lib/auth'
 import { ADMIN_EMAIL, verifyAdminCredentials } from '@/lib/admin-auth'
+import { normalizeEmail } from '@/lib/auth-input-validation'
 
 export async function POST(request: Request) {
   try {
     if (!process.env.ADMIN_PASSWORD) return NextResponse.json({ error: 'Admin password is not configured' }, { status: 503 })
-    const { email, password } = await request.json()
-
-    if (!email || !password) {
-      return NextResponse.json({ error: 'Missing email or password' }, { status: 400 })
+    const body = await request.json().catch(() => null)
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json({ error: 'Invalid admin login details' }, { status: 400 })
+    }
+    const { email, password } = body as Record<string, unknown>
+    const normalizedEmail = normalizeEmail(email)
+    if (!normalizedEmail || typeof password !== 'string' || !password || password.length > 512) {
+      return NextResponse.json({ error: 'Enter the admin email and password.' }, { status: 400 })
     }
 
-    if (!verifyAdminCredentials(email, password)) {
+    if (!verifyAdminCredentials(normalizedEmail, password)) {
       return NextResponse.json({ error: 'Invalid admin credentials' }, { status: 401 })
     }
 

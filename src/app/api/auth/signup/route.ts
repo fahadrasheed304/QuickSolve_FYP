@@ -3,38 +3,46 @@ import { DB } from "@/lib/db";
 import { sendMail } from "@/lib/mail";
 import { getPendingSignup, savePendingSignup, generateOtp } from "@/lib/pending-signups";
 import { hashPassword } from "@/lib/password";
+import { isStrongPassword, isValidSignupPhone, normalizeEmail, normalizeFullName, PASSWORD_REQUIREMENTS } from "@/lib/auth-input-validation";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { fullname, email, phone, password, role } = body;
-
-    if (!email || !password || !fullname) {
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Invalid signup details" },
         { status: 400 },
       );
     }
+    const { fullname, email, phone, password, role } = body as Record<string, unknown>;
 
-    if (typeof email !== "string" || !/^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/.test(email.trim())) {
+    const normalizedEmail = normalizeEmail(email);
+    if (!normalizedEmail) {
       return NextResponse.json(
         { error: "Please enter a valid email address, such as name@example.com." },
         { status: 400 },
       );
     }
 
-    if (typeof password !== "string" || password.length < 8 || !/[A-Za-z]/.test(password) || !/[0-9!@#$%^&*()+=._-]/.test(password)) {
+    if (!isStrongPassword(password)) {
       return NextResponse.json(
-        { error: "Password must be at least 8 characters long and include at least one letter and one number or symbol." },
+        { error: PASSWORD_REQUIREMENTS },
         { status: 400 },
       );
     }
 
+    const normalizedFullname = normalizeFullName(fullname);
+    if (!normalizedFullname) {
+      return NextResponse.json({ error: 'Enter a valid name using letters, spaces, apostrophes, or hyphens.' }, { status: 400 });
+    }
+
+    if (!isValidSignupPhone(phone)) return NextResponse.json({ error: 'Enter a valid phone number for the selected country.' }, { status: 400 });
+    if (role !== 'student' && role !== 'tutor') return NextResponse.json({ error: 'Choose student or tutor signup.' }, { status: 400 });
+
     // Check if user already exists (case-insensitive)
-    const normalizedEmail = email.toLowerCase().trim();
-    const requestedRole = role === "tutor" ? "tutor" : "student";
+    const requestedRole = role;
     const hasRequestedRole = await DB.userHasRole(
       normalizedEmail,
       requestedRole,
@@ -59,7 +67,7 @@ export async function POST(request: Request) {
     const otp = generateOtp();
 
     await savePendingSignup(normalizedEmail, {
-      fullname, email: normalizedEmail, phone,
+      fullname: normalizedFullname, email: normalizedEmail, phone,
       password: hashPassword(password), role: requestedRole,
     }, otp);
 

@@ -2,18 +2,18 @@ import { NextResponse } from 'next/server'
 import { verifyResetToken } from '@/lib/auth'
 import { DB } from '@/lib/db'
 import { hashPassword } from '@/lib/password'
+import { isStrongPassword, PASSWORD_REQUIREMENTS } from '@/lib/auth-input-validation'
 
 export async function POST(request: Request) {
   try {
-    const { token, newPassword } = await request.json()
-
-    if (!token || !newPassword) {
-      return NextResponse.json({ error: "Token and new password are required" }, { status: 400 })
+    const body = await request.json().catch(() => null)
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json({ error: 'Invalid password reset details' }, { status: 400 })
     }
+    const { token, newPassword } = body as Record<string, unknown>
 
-    if (newPassword.length < 8) {
-      return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 })
-    }
+    if (typeof token !== 'string' || !token) return NextResponse.json({ error: 'Reset token is required' }, { status: 400 })
+    if (!isStrongPassword(newPassword)) return NextResponse.json({ error: PASSWORD_REQUIREMENTS }, { status: 400 })
 
     const email = await verifyResetToken(token)
 

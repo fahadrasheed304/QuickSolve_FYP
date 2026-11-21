@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { PasswordInput } from '@/components/auth/PasswordInput'
 import { getApiMessage, notifyError, notifySuccess } from '@/lib/toast'
+import { isStrongPassword, PASSWORD_REQUIREMENTS } from '@/lib/auth-input-validation'
 
 function ResetPasswordForm() {
   const router = useRouter()
@@ -37,8 +38,8 @@ function ResetPasswordForm() {
       return
     }
 
-    if (password.length < 8) {
-      const message = "Password must be at least 8 characters."
+    if (!isStrongPassword(password)) {
+      const message = PASSWORD_REQUIREMENTS
       setError(message)
       notifyError(message)
       return
@@ -76,7 +77,8 @@ function ResetPasswordForm() {
   }
 
   // Password strength logic (basic)
-  const strength = password.length > 7 ? (/[A-Z]/.test(password) ? (/[0-9]/.test(password) ? 3 : 2) : 1) : 0
+  const strength = (password.length >= 8 ? 1 : 0) + (/[A-Z]/.test(password) ? 1 : 0)
+    + (/[A-Za-z]/.test(password) ? 1 : 0) + (/[\d\p{P}\p{S}]/u.test(password) ? 1 : 0)
 
   return (
     <main className="flex min-h-screen w-full bg-surface text-on-surface overflow-x-hidden">
@@ -128,8 +130,10 @@ function ResetPasswordForm() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full h-11 px-4 bg-surface-container-low border border-outline-variant/60 focus:border-primary focus:bg-surface focus:ring-1 focus:ring-primary/20 transition-all duration-200 outline-none text-on-surface rounded-lg tracking-widest placeholder:tracking-normal placeholder:text-sm" 
                   id="password" 
+                  maxLength={128}
                   placeholder="Enter new password"
                 />
+                <p className="mt-2 text-xs text-on-surface-variant">8 to 128 characters, with at least one letter and one number or symbol.</p>
                 {password.length > 0 && (
                   <div className="h-1 w-full bg-surface-container-high rounded-full overflow-hidden mt-2">
                     <div className={`h-full transition-all duration-300 ${strength === 0 ? 'w-0' : strength === 1 ? 'w-1/3 bg-red-400' : strength === 2 ? 'w-2/3 bg-amber-400' : 'w-full bg-primary'}`}></div>
@@ -151,7 +155,7 @@ function ResetPasswordForm() {
               </div>
 
               <button 
-                disabled={loading || !token || password !== confirmPassword || password.length < 8}
+                disabled={loading || !token || password !== confirmPassword || !isStrongPassword(password)}
                 className="w-full h-11 bg-[#0A52D1] hover:bg-primary-container disabled:opacity-70 text-white font-bold rounded-lg shadow-lg shadow-primary/20 transition-all active:scale-[0.98] mt-2 tracking-widest text-[13px]" 
                 type="submit"
               >

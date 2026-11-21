@@ -10,6 +10,7 @@ import { AuthDivider } from '@/components/auth/AuthDivider'
 import { PasswordInput } from '@/components/auth/PasswordInput'
 import { getApiMessage, notifyError, notifySuccess } from '@/lib/toast'
 import { COUNTRY_PHONE_OPTIONS, formatCountryPhoneOption, getCountryPhoneOption, sanitizePhoneDigits } from '@/lib/phone'
+import { isStrongPassword, isValidSignupPhone, normalizeEmail, normalizeFullName, PASSWORD_REQUIREMENTS } from '@/lib/auth-input-validation'
 export default function TutorSignupPage() {
   const router = useRouter()
 
@@ -30,9 +31,9 @@ export default function TutorSignupPage() {
 
   const calculateStrength = () => {
     let score = 0
-    if (password.length > 7) score++
-    if (/[A-Z]/.test(password)) score++
-    if (/[0-9!@#$%^&*)(+=._-]/.test(password)) score++
+    if (password.length >= 8) score++
+    if (/[A-Za-z]/.test(password)) score++
+    if (/[\d\p{P}\p{S}]/u.test(password)) score++
     return score
   }
   const strength = calculateStrength()
@@ -42,16 +43,27 @@ export default function TutorSignupPage() {
     e.preventDefault()
     setError('')
 
+    const normalizedEmail = normalizeEmail(email)
+    if (!normalizedEmail) {
+      showError('Please enter a valid email address, such as name@example.com.')
+      return
+    }
+    const normalizedFullname = normalizeFullName(fullname)
+    if (!normalizedFullname) {
+      showError('Enter a valid name using letters, spaces, apostrophes, or hyphens.')
+      return
+    }
+
     if (!terms) {
       showError("Please agree to the Terms of Service before creating your tutor account.")
       return
     }
-    if (strength < 2) {
-      showError("Please choose a stronger password with at least 8 characters and a number or symbol.")
+    if (!isStrongPassword(password)) {
+      showError(PASSWORD_REQUIREMENTS)
       return
     }
-    if (phone.length !== selectedCountry.maxDigits) {
-      showError(`Please enter a valid ${selectedCountry.maxDigits}-digit phone number for ${selectedCountry.label}.`)
+    if (!isValidSignupPhone(`${countryCode}${phone}`)) {
+      showError(`Please enter a valid phone number for ${selectedCountry.label}.`)
       return
     }
 
@@ -62,7 +74,7 @@ export default function TutorSignupPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          fullname, email, phone: `${countryCode}${phone}`, password, role: 'tutor',
+          fullname: normalizedFullname, email: normalizedEmail, phone: `${countryCode}${phone}`, password, role: 'tutor',
         }),
       })
 
@@ -70,7 +82,7 @@ export default function TutorSignupPage() {
 
       if (res.ok) {
         notifySuccess(data.message, "We are sending your tutor verification code now.")
-        router.push(`/tutor/verify-email?email=${encodeURIComponent(email)}`)
+        router.push(`/tutor/verify-email?email=${encodeURIComponent(normalizedEmail)}`)
       } else {
         showError(getApiMessage(data, "We could not create your tutor account. Please review your details and try again."))
               }
@@ -179,7 +191,9 @@ export default function TutorSignupPage() {
                 <input
                   required
                   value={fullname}
-                  onChange={(e) => setFullname(e.target.value.replace(/[^A-Za-z\s]/g, ''))}
+                  onChange={(e) => setFullname(e.target.value)}
+                  minLength={2}
+                  maxLength={80}
                   className="w-full h-11 px-4 bg-surface-container-low border-b-2 border-outline-variant focus:border-primary focus:ring-0 transition-all duration-200 outline-none text-on-surface rounded-t-lg"
                   name="quicksolve-tutor-signup-fullname"
                   autoComplete="off"
@@ -195,6 +209,10 @@ export default function TutorSignupPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    onBlur={() => setEmail((current) => current.trim())}
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    maxLength={254}
                     className="w-full h-11 px-4 bg-surface-container-low border-b-2 border-outline-variant focus:border-primary focus:ring-0 transition-all duration-200 outline-none text-on-surface rounded-t-lg"
                     name="quicksolve-tutor-signup-email"
                     autoComplete="off"
@@ -244,8 +262,10 @@ export default function TutorSignupPage() {
                   name="quicksolve-tutor-signup-password"
                   autoComplete="new-password"
                   id="password"
+                  maxLength={128}
                   placeholder="Enter password"
                 />
+                <p className="text-xs text-on-surface-variant">8 to 128 characters, with at least one letter and one number or symbol.</p>
                 <div className="h-1 w-full bg-surface-container-high rounded-full overflow-hidden">
                   <div className={`h-full transition-all duration-300 ${strength === 0 ? 'w-0' : strength === 1 ? 'w-1/3 bg-red-400' : strength === 2 ? 'w-2/3 bg-amber-400' : 'w-full bg-primary'}`}></div>
                 </div>

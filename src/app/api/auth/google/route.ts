@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { createSession } from '@/lib/auth'
 import { DB } from '@/lib/db'
 import { getTutorVerificationState } from '@/lib/tutor-verification'
+import { normalizeEmail } from '@/lib/auth-input-validation'
 
 // Admin emails that get automatic admin access
 const ADMIN_EMAILS = [
@@ -11,9 +12,13 @@ const ADMIN_EMAILS = [
 
 export async function POST(request: Request) {
   try {
-    const { token, role: requestedRole } = await request.json()
-
-    if (!token) {
+    const body = await request.json().catch(() => null)
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+       return NextResponse.json({ error: 'Invalid Google sign in details' }, { status: 400 })
+    }
+    const { token, role: requestedRole } = body as Record<string, unknown>
+    if (typeof token !== 'string' || !token || token.length > 4096
+      || (requestedRole !== undefined && requestedRole !== 'student' && requestedRole !== 'tutor')) {
        return NextResponse.json({ error: "Missing Google Token" }, { status: 400 })
     }
     
@@ -30,7 +35,10 @@ export async function POST(request: Request) {
     }
 
     const googleUser = await googleResponse.json()
-    const googleEmail = googleUser.email
+    const googleEmail = normalizeEmail(googleUser.email)
+    if (!googleEmail || googleUser.email_verified !== true) {
+      return NextResponse.json({ error: 'Google did not provide a verified email address.' }, { status: 401 })
+    }
     await assertAccountAccess(googleEmail, userRole)
 
     // Check if user already exists

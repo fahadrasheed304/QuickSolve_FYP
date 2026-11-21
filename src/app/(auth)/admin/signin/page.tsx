@@ -6,6 +6,7 @@ import { ShieldCheck, Mail, LockKeyhole, Loader2 } from 'lucide-react'
 import { PasswordInput } from '@/components/auth/PasswordInput'
 import { AuthSidebar } from '@/components/layout/AuthSidebar'
 import { getApiMessage, notifyError, notifySuccess } from '@/lib/toast'
+import { normalizeEmail } from '@/lib/auth-input-validation'
 
 export default function AdminSigninPage() {
   const [email, setEmail] = useState('')
@@ -16,13 +17,26 @@ export default function AdminSigninPage() {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     setError('')
+    const normalizedEmail = normalizeEmail(email)
+    if (!normalizedEmail) {
+      const message = 'Please enter a valid email address, such as name@example.com.'
+      setError(message)
+      notifyError(message)
+      return
+    }
+    if (!password) {
+      const message = 'Please enter your password.'
+      setError(message)
+      notifyError(message)
+      return
+    }
     setLoading(true)
 
     try {
       const res = await fetch('/api/auth/admin-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: normalizedEmail, password }),
       })
       const data = await res.json()
 
@@ -90,6 +104,10 @@ export default function AdminSigninPage() {
                   autoComplete="off"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
+                  onBlur={() => setEmail((current) => current.trim())}
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  maxLength={254}
                   className="w-full h-12 rounded-lg border border-border bg-surface-hover px-4 pl-11 text-sm text-text-main outline-none transition-all focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/20"
                   placeholder="Enter admin email"
                 />
