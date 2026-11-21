@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { getApiMessage, notifyError, notifySuccess } from '@/lib/toast'
+import { normalizeEmail } from '@/lib/auth-input-validation'
 
 export default function TutorForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -14,13 +15,20 @@ export default function TutorForgotPasswordPage() {
     e.preventDefault()
     setError('')
     setMessage('')
+    const normalizedEmail = normalizeEmail(email)
+    if (!normalizedEmail) {
+      const message = 'Please enter a valid email address, such as name@example.com.'
+      setError(message)
+      notifyError(message)
+      return
+    }
     setLoading(true)
 
     try {
       const res = await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ email: normalizedEmail })
       })
 
       const data = await res.json()
@@ -89,6 +97,10 @@ export default function TutorForgotPasswordPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onBlur={() => setEmail((current) => current.trim())}
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  maxLength={254}
                   className="w-full h-11 px-4 bg-surface-container-low border border-outline-variant/60 focus:border-[#006c4a] focus:bg-surface focus:ring-1 focus:ring-[#006c4a]/20 transition-all duration-200 outline-none text-on-surface rounded-lg text-sm"
                   id="email"
                   placeholder="name@example.com"

@@ -12,6 +12,7 @@ import { AuthDivider } from '@/components/auth/AuthDivider';
 import { PasswordInput } from '@/components/auth/PasswordInput';
 import { getApiMessage, notifyError, notifySuccess } from '@/lib/toast';
 import { COUNTRY_PHONE_OPTIONS, formatCountryPhoneOption, getCountryPhoneOption, sanitizePhoneDigits } from '@/lib/phone';
+import { isStrongPassword, isValidSignupPhone, normalizeEmail, normalizeFullName, PASSWORD_REQUIREMENTS } from '@/lib/auth-input-validation';
 export default function SignupPagePage() {
   const router = useRouter();
   
@@ -40,9 +41,8 @@ export default function SignupPagePage() {
   const calculateStrength = () => {
     let score = 0;
     if (password.length >= 8) score++;
-    if (/[A-Z]/.test(password)) score++;
-    if (/[a-z]/.test(password)) score++;
-    if (/[0-9!@#$%^&*()+=._-]/.test(password)) score++;
+    if (/[A-Za-z]/.test(password)) score++;
+    if (/[\d\p{P}\p{S}]/u.test(password)) score++;
     return score;
   };
   const strength = calculateStrength();
@@ -52,10 +52,14 @@ export default function SignupPagePage() {
     e.preventDefault();
     setError('');
 
-    const normalizedEmail = email.trim().toLowerCase();
-    // Require a dotted domain so addresses like "name@gmail" cannot pass.
-    if (!/^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/.test(normalizedEmail)) {
+    const normalizedEmail = normalizeEmail(email);
+    if (!normalizedEmail) {
       showError("Please enter a valid email address, such as name@example.com.");
+      return;
+    }
+    const normalizedFullname = normalizeFullName(fullname);
+    if (!normalizedFullname) {
+      showError('Enter a valid name using letters, spaces, apostrophes, or hyphens.');
       return;
     }
     
@@ -63,12 +67,12 @@ export default function SignupPagePage() {
       showError("Please agree to the Terms of Service before creating your account.");
       return;
     }
-    if (password.length < 8 || !/[A-Za-z]/.test(password) || !/[0-9!@#$%^&*()+=._-]/.test(password)) {
-      showError("Password must be at least 8 characters long and include at least one letter and one number or symbol.");
+    if (!isStrongPassword(password)) {
+      showError(PASSWORD_REQUIREMENTS);
       return;
     }
-    if (phone.length !== selectedCountry.maxDigits) {
-      showError(`Please enter a valid ${selectedCountry.maxDigits}-digit phone number for ${selectedCountry.label}.`);
+    if (!isValidSignupPhone(`${countryCode}${phone}`)) {
+      showError(`Please enter a valid phone number for ${selectedCountry.label}.`);
       return;
     }
 
@@ -78,7 +82,7 @@ export default function SignupPagePage() {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fullname, email: normalizedEmail, phone: `${countryCode}${phone}`, password, role }),
+        body: JSON.stringify({ fullname: normalizedFullname, email: normalizedEmail, phone: `${countryCode}${phone}`, password, role }),
       });
 
       const data = await res.json();
@@ -210,7 +214,9 @@ export default function SignupPagePage() {
                 <input 
                   required
                   value={fullname}
-                  onChange={(e) => setFullname(e.target.value.replace(/[^A-Za-z\s]/g, ''))}
+                  onChange={(e) => setFullname(e.target.value)}
+                  minLength={2}
+                  maxLength={80}
                   className="w-full h-12 px-4 bg-surface-hover border border-border focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none text-text-main rounded-xl" 
                   name="quicksolve-signup-fullname"
                   autoComplete="off"
@@ -228,6 +234,7 @@ export default function SignupPagePage() {
                   onBlur={() => setEmail((current) => current.trim())}
                   autoCapitalize="none"
                   spellCheck={false}
+                  maxLength={254}
                   className="w-full h-12 px-4 bg-surface-hover border border-border focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none text-text-main rounded-xl" 
                   name="quicksolve-signup-email"
                   autoComplete="off"
@@ -278,8 +285,10 @@ export default function SignupPagePage() {
                   name="quicksolve-signup-password"
                   autoComplete="new-password"
                   id="password"
+                  maxLength={128}
                   placeholder="Enter password"
                 />
+                <p className="text-xs text-text-muted">8 to 128 characters, with at least one letter and one number or symbol.</p>
                 
                 {/* Password Strength Meter */}
                 <div className="h-1.5 w-full bg-border rounded-full overflow-hidden">

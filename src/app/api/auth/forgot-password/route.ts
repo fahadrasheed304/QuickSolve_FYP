@@ -3,14 +3,15 @@ import { DB } from '@/lib/db'
 import { sendMail } from '@/lib/mail'
 import { createResetToken } from '@/lib/auth'
 import { getAppUrl } from '@/lib/app-url'
+import { normalizeEmail } from '@/lib/auth-input-validation'
 
 export async function POST(request: Request) {
   try {
-    const { email } = await request.json()
-
-    if (!email) {
-      return NextResponse.json({ error: "Email is required" }, { status: 400 })
-    }
+    const body = await request.json().catch(() => null)
+    const email = body && typeof body === 'object' && !Array.isArray(body)
+      ? normalizeEmail((body as Record<string, unknown>).email)
+      : null
+    if (!email) return NextResponse.json({ error: 'Please enter a valid email address.' }, { status: 400 })
 
     const user = await DB.findUserByEmail(email)
 

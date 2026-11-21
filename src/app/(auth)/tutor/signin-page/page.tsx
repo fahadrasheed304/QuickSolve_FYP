@@ -8,6 +8,7 @@ import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton'
 import { AuthDivider } from '@/components/auth/AuthDivider'
 import { PasswordInput } from '@/components/auth/PasswordInput'
 import { getApiMessage, notifyError, notifySuccess } from '@/lib/toast'
+import { normalizeEmail } from '@/lib/auth-input-validation'
 
 export default function TutorSigninPage() {
   const [email, setEmail] = useState('')
@@ -23,13 +24,22 @@ export default function TutorSigninPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    const normalizedEmail = normalizeEmail(email)
+    if (!normalizedEmail) {
+      showError('Please enter a valid email address, such as name@example.com.')
+      return
+    }
+    if (!password) {
+      showError('Please enter your password.')
+      return
+    }
     setLoading(true)
 
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, requestedRole: 'tutor' }),
+        body: JSON.stringify({ email: normalizedEmail, password, requestedRole: 'tutor' }),
       })
 
       const data = await res.json()
@@ -177,6 +187,10 @@ export default function TutorSigninPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onBlur={() => setEmail((current) => current.trim())}
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  maxLength={254}
                   className="w-full h-11 px-4 bg-surface-container-low border border-outline-variant/60 focus:border-[#006c4a] focus:bg-surface focus:ring-1 focus:ring-[#006c4a]/20 transition-all duration-200 outline-none text-on-surface rounded-lg text-sm"
                   id="email"
                   name="quicksolve-tutor-signin-email"

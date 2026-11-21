@@ -11,6 +11,7 @@ import { PasswordInput } from '@/components/auth/PasswordInput';
 import { getApiMessage, notifyError, notifySuccess } from '@/lib/toast';
 import { ShieldCheck } from 'lucide-react';
 import { demoReviewReturnPath } from '@/lib/teaching-demos';
+import { normalizeEmail } from '@/lib/auth-input-validation';
 export default function SigninPage() {
   const [selectedRole, setRole] = useState<'student'|'tutor' | null>(null);
   const queryRole = useQueryRole();
@@ -31,8 +32,16 @@ export default function SigninPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Submitting login...")
     setError('');
+    const normalizedEmail = normalizeEmail(email);
+    if (!normalizedEmail) {
+      showError('Please enter a valid email address, such as name@example.com.');
+      return;
+    }
+    if (!password) {
+      showError('Please enter your password.');
+      return;
+    }
     setLoading(true);
 
     try {
@@ -41,7 +50,7 @@ export default function SigninPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password, requestedRole: role }),
+        body: JSON.stringify({ email: normalizedEmail, password, requestedRole: role }),
       });
 
       const data = await res.json();
@@ -233,6 +242,10 @@ export default function SigninPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onBlur={() => setEmail((current) => current.trim())}
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  maxLength={254}
                   className="w-full h-12 px-4 bg-surface-hover border border-border focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none text-text-main rounded-xl"
                   name="quicksolve-signin-email"
                   autoComplete="off"

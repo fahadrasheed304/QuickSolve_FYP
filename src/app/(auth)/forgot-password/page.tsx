@@ -8,6 +8,7 @@ import { AuthSidebar } from '@/components/layout/AuthSidebar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { getApiMessage, notifyError, notifySuccess } from '@/lib/toast'
+import { normalizeEmail } from '@/lib/auth-input-validation'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -19,13 +20,20 @@ export default function ForgotPasswordPage() {
     e.preventDefault()
     setError('')
     setMessage('')
+    const normalizedEmail = normalizeEmail(email)
+    if (!normalizedEmail) {
+      const message = 'Please enter a valid email address, such as name@example.com.'
+      setError(message)
+      notifyError(message)
+      return
+    }
     setLoading(true)
 
     try {
       const res = await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ email: normalizedEmail })
       })
       const data = await res.json()
       if (res.ok) {
@@ -99,6 +107,10 @@ export default function ForgotPasswordPage() {
                   placeholder="name@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onBlur={() => setEmail((current) => current.trim())}
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  maxLength={254}
                 />
               </div>
               <Button disabled={loading} type="submit" className="h-12 w-full">

@@ -4,6 +4,7 @@ import { createSession } from '@/lib/auth'
 import { DB } from '@/lib/db'
 import { hashPassword, isPasswordHash, verifyPassword } from '@/lib/password'
 import { getTutorVerificationState } from '@/lib/tutor-verification'
+import { normalizeEmail } from '@/lib/auth-input-validation'
 
 // Admin emails that get automatic admin access
 const ADMIN_EMAILS = [
@@ -12,18 +13,21 @@ const ADMIN_EMAILS = [
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
-    const { email, password, requestedRole } = body
+    const body = await request.json().catch(() => null)
+    if (!body || typeof body !== 'object' || Array.isArray(body)) return NextResponse.json({ error: 'Invalid login details' }, { status: 400 })
+    const { email, password, requestedRole } = body as Record<string, unknown>
+    const normalizedEmail = normalizeEmail(email)
+    if (!normalizedEmail || typeof password !== 'string' || !password || password.length > 1024) {
+      return NextResponse.json({ error: 'Enter a valid email address and password.' }, { status: 400 })
+    }
+    if (requestedRole !== undefined && requestedRole !== 'student' && requestedRole !== 'tutor') {
+      return NextResponse.json({ error: 'Choose student or tutor sign in.' }, { status: 400 })
+    }
     
     // Check if this is admin email
-    const isAdminEmail = ADMIN_EMAILS.includes(email.toLowerCase())
-
-    if (!email || !password) {
-      return NextResponse.json({ error: "Missing email or password" }, { status: 400 })
-    }
+    const isAdminEmail = ADMIN_EMAILS.includes(normalizedEmail)
 
     // Check DB (case-insensitive)
-    const normalizedEmail = email.toLowerCase().trim()
     const user = await DB.findUserByEmail(normalizedEmail)
 
     // Check if this is a Google OAuth account (no password set)
