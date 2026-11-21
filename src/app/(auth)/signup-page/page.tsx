@@ -39,9 +39,10 @@ export default function SignupPagePage() {
 
   const calculateStrength = () => {
     let score = 0;
-    if (password.length > 7) score++;
+    if (password.length >= 8) score++;
     if (/[A-Z]/.test(password)) score++;
-    if (/[0-9!@#\$%\^\&*\)\(+=._-]/.test(password)) score++;
+    if (/[a-z]/.test(password)) score++;
+    if (/[0-9!@#$%^&*()+=._-]/.test(password)) score++;
     return score;
   };
   const strength = calculateStrength();
@@ -50,13 +51,20 @@ export default function SignupPagePage() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    const normalizedEmail = email.trim().toLowerCase();
+    // Require a dotted domain so addresses like "name@gmail" cannot pass.
+    if (!/^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/.test(normalizedEmail)) {
+      showError("Please enter a valid email address, such as name@example.com.");
+      return;
+    }
     
     if (!terms) {
       showError("Please agree to the Terms of Service before creating your account.");
       return;
     }
-    if (strength < 2) {
-      showError("Please choose a stronger password with at least 8 characters and a number or symbol.");
+    if (password.length < 8 || !/[A-Za-z]/.test(password) || !/[0-9!@#$%^&*()+=._-]/.test(password)) {
+      showError("Password must be at least 8 characters long and include at least one letter and one number or symbol.");
       return;
     }
     if (phone.length !== selectedCountry.maxDigits) {
@@ -70,13 +78,13 @@ export default function SignupPagePage() {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fullname, email, phone: `${countryCode}${phone}`, password, role }),
+        body: JSON.stringify({ fullname, email: normalizedEmail, phone: `${countryCode}${phone}`, password, role }),
       });
 
       const data = await res.json();
       if (res.ok) {
         notifySuccess(data.message, "We are sending your verification code now.");
-        router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+        router.push(`/verify-email?email=${encodeURIComponent(normalizedEmail)}`);
       } else {
         showError(getApiMessage(data, "We could not create your account. Please review your details and try again."));
       }
@@ -217,10 +225,13 @@ export default function SignupPagePage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onBlur={() => setEmail((current) => current.trim())}
+                  autoCapitalize="none"
+                  spellCheck={false}
                   className="w-full h-12 px-4 bg-surface-hover border border-border focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none text-text-main rounded-xl" 
                   name="quicksolve-signup-email"
                   autoComplete="off"
-                  id="email" placeholder="Enter email" type="email" 
+                  id="email" placeholder="Enter email" type="email" inputMode="email" 
                 />
               </div>
 

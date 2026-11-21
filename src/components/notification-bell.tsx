@@ -57,7 +57,7 @@ export function NotificationBell() {
         {!visible.length && !error && <p className="p-6 text-center text-sm text-text-muted">No notifications yet.</p>}
         {visible.map(item => <Link key={item.id} href={item.class_id
           ? `/${user?.role === 'tutor' ? 'tutor' : 'student'}/scheduled-classes/${item.class_id}`
-          : item.kind === 'tutor_joined' && user?.role === 'student'
+          : (item.kind === 'tutor_joined' || item.kind === 'tutor_selected') && user?.role === 'student'
           ? `/student/session/${item.problem_id}`
           : `/${user?.role === 'tutor' ? 'tutor' : 'student'}/dashboard`}
           onClick={() => { if (!item.read_at) void markRead([item.id]); setOpen(false) }}

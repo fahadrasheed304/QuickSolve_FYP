@@ -226,6 +226,7 @@ export default function TakeTestPage() {
   const streamRef = useRef<MediaStream | null>(null)
   const handleSubmitRef = useRef<((autoSubmit?: boolean) => Promise<void>) | null>(null)
   const warningCountRef = useRef(0)
+  const warningEventsRef = useRef<{ count: number; reason: string; occurredAt: string }[]>([])
   const tabSwitchesRef = useRef(0)
   const submitInProgressRef = useRef(false)
   const lastTabSwitchWarningAtRef = useRef(0)
@@ -336,19 +337,22 @@ export default function TakeTestPage() {
   }, [])
 
   const handleProctoringWarning = useCallback((reason: string) => {
-    setWarningCount(prev => {
-      if (prev >= MAX_WARNINGS) {
-        setWarningMessage(reason)
-        setShowWarningModal(true)
-        return prev
-      }
-
-      const newCount = prev + 1
-      warningCountRef.current = newCount
+    if (warningCountRef.current >= MAX_WARNINGS) {
       setWarningMessage(reason)
       setShowWarningModal(true)
-      return newCount
+      return
+    }
+
+    const newCount = warningCountRef.current + 1
+    warningCountRef.current = newCount
+    warningEventsRef.current.push({
+      count: newCount,
+      reason,
+      occurredAt: new Date().toISOString(),
     })
+    setWarningCount(newCount)
+    setWarningMessage(reason)
+    setShowWarningModal(true)
   }, [])
 
   const handleTabSwitchWarning = useCallback(() => {
@@ -731,6 +735,7 @@ export default function TakeTestPage() {
           timeTakenSeconds: (testData?.timeLimit || TEST_DURATION) - timeLeft,
           tabSwitches: tabSwitchesRef.current,
           warningsGiven: finalWarningCount,
+          warningDetails: warningEventsRef.current,
           testStatus: finalTestStatus,
           autoSubmitted: autoSubmit,
         })

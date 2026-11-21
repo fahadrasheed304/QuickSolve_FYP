@@ -55,6 +55,25 @@ interface TutorNote {
   created_at: string
 }
 
+interface TutorTestWarning {
+  count: number
+  reason: string
+  occurredAt: string
+}
+
+interface TutorTestResult {
+  id?: string
+  test_date?: string | null
+  score_percentage?: number | null
+  passed?: boolean
+  test_status?: string | null
+  total_questions?: number | null
+  correct_answers?: number | null
+  tab_switches?: number | null
+  warnings_given?: number | null
+  warning_details?: TutorTestWarning[] | null
+}
+
 interface Tutor {
   user_email: string
   fullname: string
@@ -71,7 +90,7 @@ interface Tutor {
    degrees?: TutorDegree[]
   documents?: TutorDocument[]
   notes?: TutorNote[]
-  testResults?: unknown[]
+  testResults?: TutorTestResult[]
   users?: {
     email?: string
     fullname?: string
@@ -85,7 +104,7 @@ interface TutorDetailResponse {
   degrees?: TutorDegree[]
   documents?: TutorDocument[]
   notes?: TutorNote[]
-  testResults?: unknown[]
+  testResults?: TutorTestResult[]
   user?: {
     email?: string
     fullname?: string
@@ -653,6 +672,61 @@ export default function AdminVerificationsPage() {
                       <TutorPerformance key={selectedTutor.user_email} tutorEmail={selectedTutor.user_email} />
                     )}
                     <AdminTeachingDemos key={`demos-${selectedTutor.user_email}`} tutorEmail={selectedTutor.user_email} />
+                    <section className="qs-panel rounded-lg p-5">
+                      <div className="mb-4 flex items-center gap-3 border-b border-border/80 pb-4">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-subtle text-primary">
+                          <ClipboardCheck className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-black text-text-main">Subject evaluation results</h3>
+                          <p className="text-sm text-text-muted">Scores, outcomes, and recorded proctoring warnings</p>
+                        </div>
+                      </div>
+
+                      {(selectedTutor.testResults?.length ?? 0) > 0 ? (
+                        <div className="space-y-3">
+                          {selectedTutor.testResults!.map((test, index) => {
+                            const warnings = Array.isArray(test.warning_details) ? test.warning_details : []
+                            return (
+                              <article key={test.id || `${test.test_date || 'attempt'}-${index}`} className="rounded-lg border border-border/80 bg-surface/76 p-4">
+                                <div className="flex flex-wrap items-start justify-between gap-3">
+                                  <div>
+                                    <p className="font-black text-text-main">Attempt {selectedTutor.testResults!.length - index}</p>
+                                    <p className="mt-1 text-xs text-text-muted">{formatDate(test.test_date)}</p>
+                                  </div>
+                                  <span className={`rounded-full border px-2.5 py-1 text-xs font-black ${test.test_status === 'cancelled' ? 'border-red-200 bg-red-50 text-red-700' : test.passed ? 'border-green-200 bg-green-50 text-green-700' : 'border-amber-200 bg-amber-50 text-amber-800'}`}>
+                                    {test.test_status === 'cancelled' ? 'Cancelled' : test.passed ? 'Passed' : 'Failed'}
+                                  </span>
+                                </div>
+                                <div className="mt-3 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
+                                  <div className="rounded-md bg-surface-container-low p-2"><span className="block text-xs text-text-muted">Score</span><span className="font-bold text-text-main">{test.score_percentage ?? 0}%</span></div>
+                                  <div className="rounded-md bg-surface-container-low p-2"><span className="block text-xs text-text-muted">Correct answers</span><span className="font-bold text-text-main">{test.correct_answers ?? 0}/{test.total_questions ?? 0}</span></div>
+                                  <div className="rounded-md bg-surface-container-low p-2"><span className="block text-xs text-text-muted">Warnings</span><span className="font-bold text-text-main">{test.warnings_given ?? 0}</span></div>
+                                  <div className="rounded-md bg-surface-container-low p-2"><span className="block text-xs text-text-muted">Tab switches</span><span className="font-bold text-text-main">{test.tab_switches ?? 0}</span></div>
+                                </div>
+                                {warnings.length > 0 ? (
+                                  <div className="mt-3">
+                                    <p className="mb-2 text-xs font-black uppercase text-text-muted">Warning details</p>
+                                    <ul className="space-y-1.5">
+                                      {warnings.map((warning, warningIndex) => (
+                                        <li key={`${warning.count}-${warning.occurredAt}-${warningIndex}`} className="flex flex-wrap justify-between gap-x-4 gap-y-1 rounded-md border border-amber-200/70 bg-amber-50/70 px-3 py-2 text-xs text-amber-900">
+                                          <span>Warning {warning.count}: {warning.reason}</span>
+                                          <span className="shrink-0 text-amber-800">{formatDate(warning.occurredAt)}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                ) : (
+                                  <p className="mt-3 text-xs text-text-muted">No warning details recorded for this attempt.</p>
+                                )}
+                              </article>
+                            )
+                          })}
+                        </div>
+                      ) : (
+                        <p className="rounded-lg border border-border bg-surface/76 p-4 text-sm text-text-muted">No subject evaluation attempts recorded.</p>
+                      )}
+                    </section>
                     <section className="qs-panel rounded-lg p-5">
                       <div className="flex items-center justify-between border-b border-border/80 pb-4">
                         <div className="flex items-center gap-3">

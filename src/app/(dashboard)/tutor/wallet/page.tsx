@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from 'react'
-import { SessionPayments } from '@/components/session-payments'
 import ScheduledWalletSummary from '@/components/scheduled-wallet-summary'
 import { ArrowDownLeft, ArrowUpRight, BadgeAlert, ChevronLeft, ChevronRight, Clock3, RefreshCw, RotateCcw, Wallet as WalletIcon } from 'lucide-react'
 
@@ -107,6 +106,5 @@ export default function TutorWalletPage() {
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-4 md:px-6"><p className="text-xs text-text-muted">Showing newest transactions first</p><nav aria-label="Transaction pages" className="flex items-center gap-2"><button aria-label="Previous page" disabled={loading || cursors.length === 1} className={`${button} min-h-10 border border-border bg-background px-3 text-text-main hover:bg-surface-container-low`} onClick={() => setCursors(value => value.slice(0, -1))}><ChevronLeft size={17}/>Previous</button><span className="px-2 text-sm font-bold text-text-muted">{cursors.length}</span><button aria-label="Next page" disabled={loading || !data.nextCursor} className={`${button} min-h-10 border border-border bg-background px-3 text-text-main hover:bg-surface-container-low`} onClick={() => { if (data.nextCursor) setCursors(value => [...value, data.nextCursor]) }}>Next<ChevronRight size={17}/></button></nav></div>
       </>}
     </section>
-    <SessionPayments />
   </main>
 }
