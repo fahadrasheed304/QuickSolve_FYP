@@ -37,3 +37,4 @@ Development notes:
 - November 16, 2026: Fixed WebRTC echo cancellation and noise suppression.
 - November 19, 2026: Added export session summary as PDF feature.
 - November 21, 2026: Update session status badges and empty state illustrations.
+- November 21, 2026: Fixed booking concurrency race condition on last seat.
