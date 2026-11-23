@@ -38,3 +38,4 @@ Development notes:
 - November 19, 2026: Added export session summary as PDF feature.
 - November 21, 2026: Update session status badges and empty state illustrations.
 - November 21, 2026: Fixed booking concurrency race condition on last seat.
+- November 23, 2026: Added performance logging for video call handshakes.
