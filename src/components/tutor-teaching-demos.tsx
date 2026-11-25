@@ -12,7 +12,7 @@ async function command(body: object) {
   return data
 }
 
-export function TutorTeachingDemos({ subjects, onReadyChange, onRequiredChange }: { subjects: string[]; onReadyChange?: (subjects: string[]) => void; onRequiredChange?: (required: boolean) => void }) {
+export function TutorTeachingDemos({ subjects, onReadyChange, onRequiredChange, onDemosChange }: { subjects: string[]; onReadyChange?: (subjects: string[]) => void; onRequiredChange?: (required: boolean) => void; onDemosChange?: (demos: TeachingDemo[]) => void }) {
   const [demos, setDemos] = useState<TeachingDemo[]>([])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
@@ -26,13 +26,15 @@ export function TutorTeachingDemos({ subjects, onReadyChange, onRequiredChange }
       if (!response.ok) throw new Error(data.error)
       const rows = data.demos as TeachingDemo[]
       setDemos(rows); setError('')
+      onDemosChange?.(rows)
       onRequiredChange?.(data.required === true)
       onReadyChange?.(rows.filter(d => ['pending', 'approved'].includes(d.status)).map(d => d.subject))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load demos')
+      onDemosChange?.([])
       onReadyChange?.([])
     } finally { setLoading(false) }
-  }, [onReadyChange, onRequiredChange])
+  }, [onDemosChange, onReadyChange, onRequiredChange])
   useEffect(() => { const timer = setTimeout(() => void load(), 0); return () => clearTimeout(timer) }, [load])
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get('demo')

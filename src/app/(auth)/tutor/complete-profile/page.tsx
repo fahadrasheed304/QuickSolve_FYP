@@ -6,13 +6,15 @@ import React, { useState, useEffect } from 'react'
 import NextImage from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { CheckCircle, BookOpen, GraduationCap, FileText, Camera, ChevronRight, ChevronLeft, Plus, X, Upload, Eye, AlertCircle, User, ShieldCheck, MapPin, Hash, ClipboardCheck, LogOut } from 'lucide-react'
+import { CheckCircle, BookOpen, GraduationCap, FileText, Camera, ChevronRight, ChevronLeft, Plus, X, Upload, Eye, AlertCircle, User, ShieldCheck, MapPin, Hash, ClipboardCheck, LogOut, Video } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth-store'
 import { getApiMessage, notifyError, notifySuccess } from '@/lib/toast'
 import Tesseract from 'tesseract.js'
 import { TutorTeachingDemos } from '@/components/tutor-teaching-demos'
+import { TeachingDemoPlayer } from '@/components/teaching-demo-player'
 import { getStudentSubjects, STUDENT_CLASS_LEVELS, type StudentClassLevel } from '@/lib/student-problem-options'
+import type { TeachingDemo } from '@/lib/teaching-demos'
 
 // Degree categories
 const SCHOOL_DEGREES = [
@@ -570,6 +572,7 @@ export default function TutorCompleteProfilePage() {
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([])
   const [activeClass, setActiveClass] = useState<StudentClassLevel>('10th')
   const [readyDemoSubjects, setReadyDemoSubjects] = useState<string[]>([])
+  const [teachingDemos, setTeachingDemos] = useState<TeachingDemo[]>([])
   const [demoRequired, setDemoRequired] = useState(true)
   const availableSubjects = getStudentSubjects(activeClass)
   
@@ -996,6 +999,7 @@ export default function TutorCompleteProfilePage() {
   const subjectsStepComplete = selectedSubjects.length > 0
   const educationStepComplete = degrees.length > 0
   const demosStepComplete = !demoRequired || selectedSubjects.every(subject => readyDemoSubjects.includes(subject))
+  const submittedDemoCount = selectedSubjects.filter(subject => readyDemoSubjects.includes(subject)).length
   const documentsStepComplete = requiredDocs.every(doc => getDocumentByType(doc.type))
     && degreeCertificates.length > 0
     && demosStepComplete
@@ -1394,7 +1398,7 @@ export default function TutorCompleteProfilePage() {
 
               {step === 4 && (
                                 <div className="space-y-5">
-                  <TutorTeachingDemos subjects={selectedSubjects} onReadyChange={setReadyDemoSubjects} onRequiredChange={setDemoRequired} />
+                  <TutorTeachingDemos subjects={selectedSubjects} onReadyChange={setReadyDemoSubjects} onRequiredChange={setDemoRequired} onDemosChange={setTeachingDemos} />
                   <div className="grid gap-4 md:grid-cols-3">
                     {requiredDocs.map((doc) => {
                       const uploadedDoc = getDocumentByType(doc.type)
@@ -1525,7 +1529,38 @@ export default function TutorCompleteProfilePage() {
 
               {step === 5 && (
                                 <div className="space-y-5">
-                    <p className="text-sm font-semibold">{demoRequired ? 'Required' : 'Optional'} teaching demos: {selectedSubjects.length} selected subjects</p>
+                    <div className="rounded-lg border border-border bg-surface p-4">
+                      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                        <h3 className="flex items-center gap-2 font-bold text-text-main"><Video className="h-4 w-4 text-primary" />Teaching demos</h3>
+                        <span className="text-xs font-semibold text-text-muted">{submittedDemoCount} of {selectedSubjects.length} submitted · {demoRequired ? 'Required' : 'Optional'}</span>
+                      </div>
+                      <div className="grid gap-3 md:grid-cols-2">
+                        {selectedSubjects.map(subject => {
+                          const demo = teachingDemos
+                            .filter(item => item.subject === subject && !['cancelled', 'superseded'].includes(item.status))
+                            .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))[0]
+
+                          return (
+                            <div key={subject} className="rounded-lg border border-border bg-surface-container-low p-3">
+                              <p className="font-bold text-text-main">{subject}</p>
+                              {demo ? (
+                                <>
+                                  <p className="mt-1 text-sm text-text-muted">{demo.topic} · {demo.class_level}</p>
+                                  <p className={`mt-2 text-xs font-bold ${demo.status === 'approved' ? 'text-success' : demo.status === 'rejected' ? 'text-warning' : 'text-primary'}`}>
+                                    {demo.status === 'approved' ? 'Approved' : demo.status === 'rejected' ? 'Changes requested' : demo.status === 'pending' ? 'In review' : 'Upload incomplete'}
+                                  </p>
+                                  {['pending', 'approved', 'rejected'].includes(demo.status) && <TeachingDemoPlayer id={demo.id} />}
+                                  {demo.status === 'rejected' && demo.feedback && <p className="mt-2 text-sm text-text-muted">{demo.feedback}</p>}
+                                </>
+                              ) : (
+                                <p className="mt-1 text-sm text-text-muted">No demo submitted</p>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="rounded-lg border border-border bg-surface p-4">
                       <h3 className="mb-3 flex items-center gap-2 font-bold text-text-main"><User className="h-4 w-4 text-primary" /> Personal</h3>
