@@ -662,7 +662,6 @@ export default function TutorCompleteProfilePage() {
     if (docType === 'cnic_front') {
       let worker: Awaited<ReturnType<typeof Tesseract.createWorker>> | null = null
       let cnicShouldBlock = false
-      let cnicInconclusive = false
       try {
          setOcrLoading(true)
         const ocrVariants = await createCnicOcrVariants(file)
@@ -684,11 +683,9 @@ export default function TutorCompleteProfilePage() {
           if (match.matched) break
         }
 
-        cnicInconclusive = match.inconclusive
         cnicShouldBlock = match.shouldBlock
       } catch (err) {
         console.error('CNIC OCR error:', err)
-        cnicInconclusive = true
       } finally {
         if (worker) await worker.terminate()
         setOcrLoading(false)
@@ -700,11 +697,6 @@ export default function TutorCompleteProfilePage() {
         return
       }
 
-      if (cnicInconclusive) {
-        setUploading(null)
-        setError('CNIC image could not be verified. Upload blocked. Please upload a clear front-side CNIC image that shows the entered CNIC number.')
-        return
-      }
     }
 
     if (docType === 'profile_photo') {
