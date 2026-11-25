@@ -559,10 +559,12 @@ input:disabled {
 .recording-template--class.recording-template--chat .recording-content { grid-template-columns: minmax(0, 1fr) minmax(240px, 25%); }
 .recording-template-error { display: grid; position: fixed; inset: 0; place-items: center; background: #08111f; color: white; font: 16px Arial, sans-serif; }
 .session-livekit .lk-video-conference { position: relative; min-width: 0; width: 100%; flex: 1 1 0%; overflow: hidden; }
-.session-livekit .lk-video-conference-inner { min-width: 0; width: 100%; height: 100%; flex: 1 1 0%; }
+.session-livekit .lk-video-conference-inner { position: static; min-width: 0; width: 100%; height: 100%; flex: 1 1 0%; }
 .session-livekit .lk-video-conference:has(.lk-chat[style*="display: grid"]) .lk-video-conference-inner { width: calc(100% - clamp(220px, 40%, 480px)); flex: 0 0 calc(100% - clamp(220px, 40%, 480px)); }
-.session-livekit .lk-chat { position: absolute; z-index: 5; top: 0; right: 0; bottom: var(--lk-control-bar-height); min-width: 0; width: clamp(220px, 40%, 480px); }
-.session-livekit .lk-control-bar { position: absolute; z-index: 6; right: 0; bottom: 0; left: 0; width: 100%; flex-wrap: nowrap; background: #08111f; }
+.session-livekit .lk-chat { position: absolute; z-index: 5; top: 0; right: 0; bottom: 0; min-width: 0; width: clamp(220px, 40%, 480px); }
+.session-livekit .lk-chat-form { position: absolute; z-index: 8; right: 0; bottom: var(--lk-control-bar-height); left: 0; }
+.session-livekit .lk-control-bar { position: absolute; z-index: 9; right: 0; bottom: 0; left: 0; box-sizing: border-box; width: 100%; flex-wrap: nowrap; gap: .25rem; justify-content: center; padding: .5rem .25rem; background: #08111f; }
+.session-livekit .lk-control-bar > .lk-button, .session-livekit .lk-control-bar > .lk-button-group > .lk-button, .session-livekit .lk-control-bar > .lk-chat-toggle, .session-livekit .lk-control-bar > .lk-disconnect-button { padding-right: .65rem; padding-left: .65rem; }
 .scheduled-class-livekit, .scheduled-class-livekit .lk-room-container { min-height: 0; }
 .scheduled-class-livekit .lk-room-container { display: flex; flex: 1 1 0%; flex-direction: column; height: auto; }
 .scheduled-class-conference > .lk-video-conference { min-height: 0; height: 100%; flex: 1 1 0%; }
