@@ -494,6 +494,7 @@ export default function TutorDashboard() {
                       <p className="text-sm font-bold text-text-main">Student: {problem.student_name || 'Student'}</p>
                       <p className="mt-1 flex items-center gap-2 text-sm font-semibold text-text-muted"><Star className="h-4 w-4 text-amber-500" />{problem.student_rating_available === false ? "Rating unavailable" : problem.student_rating != null ? `${Number(problem.student_rating).toFixed(2)}/5 (${problem.student_review_count} reviews)` : "New student · No ratings yet"}</p>
                       <h4 className="text-lg font-black text-text-main">Rs. {Number(problem.offer_price || 0).toLocaleString()} student offer</h4>
+                      {problem.image_url && <a href={problem.image_url} target="_blank" rel="noreferrer" className="mt-3 block overflow-hidden rounded-xl border border-border bg-surface-hover" aria-label="Open full problem image in a new tab"><img src={problem.image_url} alt="Student's problem" loading="lazy" className="max-h-80 w-full object-contain" /></a>}
                       <p className="mt-2 line-clamp-2 text-sm leading-6 text-text-muted">
                         {problem.details || 'Student uploaded a problem and is waiting for tutor bids.'}
                       </p>
