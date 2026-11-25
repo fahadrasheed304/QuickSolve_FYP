@@ -558,6 +558,9 @@ input:disabled {
 .recording-template--class .recording-content { grid-template-columns: minmax(0, 1fr); }
 .recording-template--class.recording-template--chat .recording-content { grid-template-columns: minmax(0, 1fr) minmax(240px, 25%); }
 .recording-template-error { display: grid; position: fixed; inset: 0; place-items: center; background: #08111f; color: white; font: 16px Arial, sans-serif; }
+.session-livekit .lk-video-conference { min-width: 0; width: 100%; flex: 1 1 0%; overflow: hidden; }
+.session-livekit .lk-video-conference-inner { min-width: 0; width: auto; flex: 1 1 0%; }
+.session-livekit .lk-chat { min-width: 220px; width: clamp(220px, 40%, 480px); flex: 0 1 clamp(220px, 40%, 480px); }
 .scheduled-class-livekit, .scheduled-class-livekit .lk-room-container { min-height: 0; }
 .scheduled-class-livekit .lk-room-container { display: flex; flex: 1 1 0%; flex-direction: column; height: auto; }
 .scheduled-class-conference > .lk-video-conference { min-height: 0; height: 100%; flex: 1 1 0%; }

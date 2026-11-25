@@ -1,7 +1,7 @@
 "use client"
 
 import { useSessionStore } from '@/stores/session-store'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   LiveKitRoom,
   VideoConference,
@@ -43,6 +43,14 @@ export default function VideoRoom({ roomName, onRecordingConfigured, onDisconnec
   const [connected, setConnected] = useState(false)
   const [recordingEnabled, setRecordingEnabled] = useState(false)
   const [mobileTab, setMobileTab] = useState<'call' | 'board'>('call')
+  const chatOpenedOnConnect = useRef(false)
+
+  useEffect(() => {
+    if (!connected || chatOpenedOnConnect.current) return
+    chatOpenedOnConnect.current = true
+    const chatButton = document.querySelector<HTMLButtonElement>('.session-livekit .lk-chat-toggle')
+    if (chatButton?.getAttribute('aria-pressed') !== 'true') chatButton?.click()
+  }, [connected])
 
   const handleDisconnected = async () => {
     setConnected(false)
@@ -138,7 +146,7 @@ export default function VideoRoom({ roomName, onRecordingConfigured, onDisconnec
   }
 
   return (
-    <div className="h-full w-full [--lk-bg:#08111f] [--lk-bg2:#16253b] [--lk-accent-bg:#1667ff] [--lk-control-bg:rgba(255,255,255,0.1)] [--lk-control-hover-bg:rgba(255,255,255,0.15)]">
+    <div className="session-livekit h-full w-full [--lk-bg:#08111f] [--lk-bg2:#16253b] [--lk-accent-bg:#1667ff] [--lk-control-bg:rgba(255,255,255,0.1)] [--lk-control-hover-bg:rgba(255,255,255,0.15)]">
       <LiveKitRoom
         video={false}
         audio={false}
