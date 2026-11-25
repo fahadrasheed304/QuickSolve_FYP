@@ -14,6 +14,7 @@ import { NotificationBell } from '@/components/notification-bell'
 import { subscribeToRequestUpdates } from '@/hooks/use-notifications'
 import Link from 'next/link'
 import { TutorPerformance } from '@/components/tutor-performance'
+import ActiveScheduledClasses from '@/components/active-scheduled-classes'
 
 interface OpenProblem {
   student_name?: string | null
@@ -322,6 +323,8 @@ export default function TutorDashboard() {
           <NotificationBell />
         </div>
       </div>
+
+      <ActiveScheduledClasses role="tutor" />
 
       {verificationStatus !== 'verified' && (
         <Card className="mb-8">
