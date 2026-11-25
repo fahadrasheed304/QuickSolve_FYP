@@ -19,7 +19,7 @@ const sections = [
   },
   {
     title: 'Scheduled Group Classes',
-    body: 'Class time, topic, per-student fee and maximum seats are fixed when published. Booking reserves the fee from your wallet. Student cancellation at least two hours before start gets a full refund; late cancellation or student absence is charged if the class takes place. Tutor cancellation or failure to join within ten minutes of the announced start refunds reserved fees. Join opens ten minutes before start. Report payment issues within twenty minutes after class ends; disputed, early-ended or insufficient-attendance classes require administrator payment review. Recorded group classes require recording consent, and booked students have a fifteen-minute download window for each available recording part.',
+    body: 'Class time, topic, per-student fee and maximum seats are fixed when published. Booking reserves the fee from your wallet. Students can cancel at least five minutes before class start for a full refund; cancellation is unavailable during the final five minutes. Tutor cancellation or failure to join within ten minutes of the announced start refunds reserved fees. Join opens ten minutes before start. Report payment issues within twenty minutes after class ends; disputed, early-ended or insufficient-attendance classes require administrator payment review. Recorded group classes require recording consent, and booked students have a fifteen-minute download window for each available recording part.',
   },
   {
     title: 'Platform Changes',
