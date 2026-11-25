@@ -398,7 +398,7 @@ const addDigitWindows = (value: string, candidates: Set<string>) => {
   }
 }
 
-const extractCnicCandidates = (ocrText: string): string[] => {
+const extractCnicCandidates = (ocrText: string, allowSplitLines = false): string[] => {
   const normalizedText = normalizeOcrTextForCnic(ocrText)
   const candidates = new Set<string>()
   const formattedCnicPattern = /(?:^|[^\d])(\d{5})[^\d]{0,6}(\d{7})[^\d]{0,6}(\d)(?=$|[^\d])/g
@@ -416,19 +416,24 @@ const extractCnicCandidates = (ocrText: string): string[] => {
     addDigitWindows(line, candidates)
   }
 
+  // Tesseract can split the three printed CNIC groups onto separate lines
+  // even when given a tight number-only crop. Rejoin only those focused crops.
+  if (allowSplitLines) addDigitWindows(normalizedText, candidates)
+
   return Array.from(candidates)
 }
 
-const hasFormattedCnicCandidate = (ocrText: string) => {
+const hasFormattedCnicCandidate = (ocrText: string, allowSplitLines = false) => {
   const normalizedText = normalizeOcrTextForCnic(ocrText)
   const formattedCnicPattern = /(?:^|[^\d])(\d{5})[^\d]{0,6}(\d{7})[^\d]{0,6}(\d)(?=$|[^\d])/g
   return normalizedText.split(/\r?\n/).some(line => formattedCnicPattern.test(line))
+    || (allowSplitLines && formattedCnicPattern.test(normalizedText.replace(/\r?\n/g, ' ')))
 }
 
-const getCnicOcrMatch = (expectedCnic: string, ocrText: string) => {
+const getCnicOcrMatch = (expectedCnic: string, ocrText: string, allowSplitLines = false) => {
   const expected = normalizeCnic(expectedCnic)
-  const candidates = extractCnicCandidates(ocrText)
-  const hasClearCnicShape = hasFormattedCnicCandidate(ocrText)
+  const candidates = extractCnicCandidates(ocrText, allowSplitLines)
+  const hasClearCnicShape = hasFormattedCnicCandidate(ocrText, allowSplitLines)
 
   if (expected.length !== CNIC_LENGTH) {
     return { matched: false, inconclusive: false, shouldBlock: true, candidates }
@@ -679,7 +684,7 @@ export default function TutorCompleteProfilePage() {
             user_defined_dpi: '300',
           })
           const ret = await worker.recognize(variant.source)
-          const match = getCnicOcrMatch(personalDetails.cnic, ret.data.text)
+          const match = getCnicOcrMatch(personalDetails.cnic, ret.data.text, variant.singleLine)
           if (match.matched) {
             cnicMatched = true
             break
