@@ -247,6 +247,7 @@ const CNIC_OCR_CROPS: CnicCrop[] = [
   { name: 'left-number-area', x: 0, y: 0.34, width: 0.72, height: 0.55 },
   { name: 'number-line-wide', x: 0.18, y: 0.25, width: 0.72, height: 0.25 },
   { name: 'number-line-center', x: 0.30, y: 0.28, width: 0.58, height: 0.18 },
+  { name: 'number-line-tight', x: 0.32, y: 0.30, width: 0.48, height: 0.15 },
 ]
 
 // Build several OCR-friendly versions because CNIC photos vary a lot in glare,
@@ -261,7 +262,7 @@ const createCnicOcrVariants = (file: File): Promise<CnicOcrVariant[]> => {
       const minWidth = 1400
       const maxWidth = 2200
 
-      const renderVariant = (crop: CnicCrop, threshold: boolean) => {
+      const renderVariant = (crop: CnicCrop, threshold: number | null) => {
         const sourceX = Math.round(img.width * crop.x)
         const sourceY = Math.round(img.height * crop.y)
         const sourceWidth = Math.round(img.width * crop.width)
@@ -284,8 +285,8 @@ const createCnicOcrVariants = (file: File): Promise<CnicOcrVariant[]> => {
           let gray = 0.299 * r + 0.587 * g + 0.114 * b
           gray = (gray - 128) * 2.55 + 145
           gray = Math.max(0, Math.min(255, gray))
-          if (threshold) {
-            gray = gray > 150 ? 255 : 0
+          if (threshold !== null) {
+            gray = gray > threshold ? 255 : 0
           }
 
           data[i] = gray
@@ -295,22 +296,28 @@ const createCnicOcrVariants = (file: File): Promise<CnicOcrVariant[]> => {
 
         ctx.putImageData(imageData, 0, 0)
         variants.push({
-          name: `${crop.name}${threshold ? '-threshold' : ''}`,
+          name: `${crop.name}${threshold === null ? '' : `-threshold-${threshold}`}`,
           source: canvas.toDataURL('image/png'),
           singleLine: crop.name.startsWith('number-line-'),
         })
       }
 
       for (const crop of CNIC_OCR_CROPS) {
-        renderVariant(crop, false)
+        renderVariant(crop, null)
       }
 
       for (const crop of CNIC_OCR_CROPS.filter(item => item.name.startsWith('number-line-'))) {
-        renderVariant(crop, true)
+        renderVariant(crop, null)
+        renderVariant(crop, 150)
       }
 
-      renderVariant(CNIC_OCR_CROPS[0], true)
-      renderVariant(CNIC_OCR_CROPS[1], true)
+      for (const crop of CNIC_OCR_CROPS.filter(item => item.name === 'number-line-tight' || item.name === 'number-line-center')) {
+        renderVariant(crop, 120)
+        renderVariant(crop, 180)
+      }
+
+      renderVariant(CNIC_OCR_CROPS[0], 150)
+      renderVariant(CNIC_OCR_CROPS[1], 150)
 
       URL.revokeObjectURL(objectUrl)
       resolve(variants)
