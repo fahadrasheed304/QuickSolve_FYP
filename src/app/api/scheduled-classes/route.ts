@@ -23,7 +23,7 @@ export async function GET(request: Request) {
       if (account.role==='tutor') query=query.eq('tutor_email',account.email)
       if (mode==='past') query=query.in('status',['completed','cancelled'])
       else query=query.in('status',['scheduled','live'])
-      if (account.role==='student') query=query.gt('starts_at',new Date(Date.now()+10*60000).toISOString())
+      if (account.role==='student') query=query.gt('starts_at',new Date(Date.now()+5*60000).toISOString())
       const result = await query.order('starts_at',{ascending:mode!=='past'}).order('id').range(page*12,page*12+11)
       if (result.error) throw result.error
       count=result.count || 0
