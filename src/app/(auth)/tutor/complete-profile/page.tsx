@@ -229,6 +229,7 @@ const CNIC_LENGTH = 13
 type CnicOcrVariant = {
   name: string
   source: string | File
+  singleLine?: boolean
 }
 
 type CnicCrop = {
@@ -244,6 +245,8 @@ const CNIC_OCR_CROPS: CnicCrop[] = [
   { name: 'lower-text-band', x: 0, y: 0.42, width: 1, height: 0.52 },
   { name: 'right-number-area', x: 0.32, y: 0.32, width: 0.66, height: 0.55 },
   { name: 'left-number-area', x: 0, y: 0.34, width: 0.72, height: 0.55 },
+  { name: 'number-line-wide', x: 0.18, y: 0.25, width: 0.72, height: 0.25 },
+  { name: 'number-line-center', x: 0.30, y: 0.28, width: 0.58, height: 0.18 },
 ]
 
 // Build several OCR-friendly versions because CNIC photos vary a lot in glare,
@@ -256,14 +259,14 @@ const createCnicOcrVariants = (file: File): Promise<CnicOcrVariant[]> => {
     img.onload = () => {
       const variants: CnicOcrVariant[] = [{ name: 'original', source: file }]
       const minWidth = 1400
-       const maxWidth = 2200
-      const scale = img.width < minWidth ? minWidth / img.width : img.width > maxWidth ? maxWidth / img.width : 1
+      const maxWidth = 2200
 
       const renderVariant = (crop: CnicCrop, threshold: boolean) => {
         const sourceX = Math.round(img.width * crop.x)
         const sourceY = Math.round(img.height * crop.y)
         const sourceWidth = Math.round(img.width * crop.width)
         const sourceHeight = Math.round(img.height * crop.height)
+        const scale = sourceWidth < minWidth ? minWidth / sourceWidth : sourceWidth > maxWidth ? maxWidth / sourceWidth : 1
         const canvas = document.createElement('canvas')
         canvas.width = Math.round(sourceWidth * scale)
         canvas.height = Math.round(sourceHeight * scale)
@@ -294,11 +297,16 @@ const createCnicOcrVariants = (file: File): Promise<CnicOcrVariant[]> => {
         variants.push({
           name: `${crop.name}${threshold ? '-threshold' : ''}`,
           source: canvas.toDataURL('image/png'),
+          singleLine: crop.name.startsWith('number-line-'),
         })
       }
 
       for (const crop of CNIC_OCR_CROPS) {
         renderVariant(crop, false)
+      }
+
+      for (const crop of CNIC_OCR_CROPS.filter(item => item.name.startsWith('number-line-'))) {
+        renderVariant(crop, true)
       }
 
       renderVariant(CNIC_OCR_CROPS[0], true)
@@ -312,45 +320,6 @@ const createCnicOcrVariants = (file: File): Promise<CnicOcrVariant[]> => {
       reject(err)
     }
   })
-}
-
-// Helper to calculate Longest Common Subsequence for robust fuzzy matching
-const getLCSLength = (s1: string, s2: string): number => {
-  const m = s1.length
-  const n = s2.length
-  const dp = Array(m + 1).fill(0).map(() => Array(n + 1).fill(0))
-  for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
-      if (s1[i - 1] === s2[j - 1]) {
-        dp[i][j] = dp[i - 1][j - 1] + 1
-      } else {
-        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1])
-      }
-    }
-  }
-  return dp[m][n]
-}
-
-const getEditDistance = (s1: string, s2: string): number => {
-  const m = s1.length
-  const n = s2.length
-  const dp = Array(m + 1).fill(0).map(() => Array(n + 1).fill(0))
-
-  for (let i = 0; i <= m; i++) dp[i][0] = i
-  for (let j = 0; j <= n; j++) dp[0][j] = j
-
-  for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
-      const cost = s1[i - 1] === s2[j - 1] ? 0 : 1
-      dp[i][j] = Math.min(
-        dp[i - 1][j] + 1,
-        dp[i][j - 1] + 1,
-        dp[i - 1][j - 1] + cost
-      )
-    }
-  }
-
-  return dp[m][n]
 }
 
 const normalizeCnic = (value: string) => value.replace(/\D/g, '').slice(0, CNIC_LENGTH)
@@ -383,15 +352,17 @@ const extractCnicCandidates = (ocrText: string): string[] => {
   const formattedCnicPattern = /(?:^|[^\d])(\d{5})[^\d]{0,6}(\d{7})[^\d]{0,6}(\d)(?=$|[^\d])/g
   const numericChunkPattern = /[0-9][0-9\s\-:./]{8,}[0-9]/g
 
-  for (const match of normalizedText.matchAll(formattedCnicPattern)) {
-    candidates.add(`${match[1]}${match[2]}${match[3]}`)
-  }
+  for (const line of normalizedText.split(/\r?\n/)) {
+    for (const match of line.matchAll(formattedCnicPattern)) {
+      candidates.add(`${match[1]}${match[2]}${match[3]}`)
+    }
 
-  for (const match of normalizedText.matchAll(numericChunkPattern)) {
-    addDigitWindows(match[0], candidates)
-  }
+    for (const match of line.matchAll(numericChunkPattern)) {
+      addDigitWindows(match[0], candidates)
+    }
 
-  addDigitWindows(normalizedText, candidates)
+    addDigitWindows(line, candidates)
+  }
 
   return Array.from(candidates)
 }
@@ -399,7 +370,7 @@ const extractCnicCandidates = (ocrText: string): string[] => {
 const hasFormattedCnicCandidate = (ocrText: string) => {
   const normalizedText = normalizeOcrTextForCnic(ocrText)
   const formattedCnicPattern = /(?:^|[^\d])(\d{5})[^\d]{0,6}(\d{7})[^\d]{0,6}(\d)(?=$|[^\d])/g
-  return formattedCnicPattern.test(normalizedText)
+  return normalizedText.split(/\r?\n/).some(line => formattedCnicPattern.test(line))
 }
 
 const getCnicOcrMatch = (expectedCnic: string, ocrText: string) => {
@@ -408,36 +379,14 @@ const getCnicOcrMatch = (expectedCnic: string, ocrText: string) => {
   const hasClearCnicShape = hasFormattedCnicCandidate(ocrText)
 
   if (expected.length !== CNIC_LENGTH) {
-    return { matched: false, inconclusive: false, shouldBlock: true, candidates, bestCandidate: '', bestScore: 0, bestDistance: CNIC_LENGTH }
+    return { matched: false, inconclusive: false, shouldBlock: true, candidates }
   }
 
-  let bestCandidate = ''
-  let bestScore = 0
-  let bestDistance = CNIC_LENGTH
-
-  for (const candidate of candidates) {
-    const score = getLCSLength(expected, candidate)
-    const distance = getEditDistance(expected, candidate)
-
-    if (candidate === expected) {
-      return { matched: true, inconclusive: false, shouldBlock: false, candidates, bestCandidate: candidate, bestScore: CNIC_LENGTH, bestDistance: 0 }
-    }
-
-    if (score > bestScore || (score === bestScore && distance < bestDistance)) {
-      bestCandidate = candidate
-      bestScore = score
-      bestDistance = distance
-    }
-  }
-
-  const prefixLikelyMatches = bestCandidate
-    ? getLCSLength(expected.slice(0, 5), bestCandidate.slice(0, 5)) >= 4
-    : false
-  const matched = bestDistance <= 1 || bestScore >= 12 || (bestScore >= 11 && prefixLikelyMatches)
-  const shouldBlock = !matched && hasClearCnicShape && bestScore <= 9
+  const matched = candidates.includes(expected)
+  const shouldBlock = !matched && hasClearCnicShape
   const inconclusive = !matched && !shouldBlock
 
-  return { matched, inconclusive, shouldBlock, candidates, bestCandidate, bestScore, bestDistance }
+  return { matched, inconclusive, shouldBlock, candidates }
 }
 
 const loadProfilePhotoFaceApi = async () => (await import('@/lib/face-models')).loadFaceModels()
@@ -662,30 +611,35 @@ export default function TutorCompleteProfilePage() {
     if (docType === 'cnic_front') {
       let worker: Awaited<ReturnType<typeof Tesseract.createWorker>> | null = null
       let cnicShouldBlock = false
+      let cnicInconclusive = false
       try {
-         setOcrLoading(true)
+        setOcrLoading(true)
         const ocrVariants = await createCnicOcrVariants(file)
         worker = await Tesseract.createWorker('eng')
-        await worker.setParameters({
-          tessedit_pageseg_mode: Tesseract.PSM.SPARSE_TEXT,
-          tessedit_char_whitelist: '0123456789- ',
-          preserve_interword_spaces: '1',
-          user_defined_dpi: '300',
-        })
-
-        let ocrText = ''
-        let match = getCnicOcrMatch(personalDetails.cnic, ocrText)
+        let cnicMatched = false
+        let sawClearMismatch = false
 
         for (const variant of ocrVariants) {
+          await worker.setParameters({
+            tessedit_pageseg_mode: variant.singleLine ? Tesseract.PSM.SINGLE_LINE : Tesseract.PSM.SPARSE_TEXT,
+            tessedit_char_whitelist: '0123456789- ',
+            preserve_interword_spaces: '1',
+            user_defined_dpi: '300',
+          })
           const ret = await worker.recognize(variant.source)
-          ocrText = `${ocrText}\n${ret.data.text}`
-          match = getCnicOcrMatch(personalDetails.cnic, ocrText)
-          if (match.matched) break
+          const match = getCnicOcrMatch(personalDetails.cnic, ret.data.text)
+          if (match.matched) {
+            cnicMatched = true
+            break
+          }
+          if (match.shouldBlock) sawClearMismatch = true
         }
 
-        cnicShouldBlock = match.shouldBlock
+        cnicShouldBlock = !cnicMatched && sawClearMismatch
+        cnicInconclusive = !cnicMatched && !sawClearMismatch
       } catch (err) {
         console.error('CNIC OCR error:', err)
+        cnicInconclusive = true
       } finally {
         if (worker) await worker.terminate()
         setOcrLoading(false)
@@ -694,6 +648,12 @@ export default function TutorCompleteProfilePage() {
       if (cnicShouldBlock) {
         setUploading(null)
         setError('CNIC image does not match the entered CNIC number. Upload blocked. Please upload the front-side CNIC image for the same number.')
+        return
+      }
+
+      if (cnicInconclusive) {
+        setUploading(null)
+        setError('We could not read the CNIC number clearly. Upload is blocked. Retake a clear, glare-free photo of the front side and make sure all digits are visible.')
         return
       }
 
@@ -1107,7 +1067,7 @@ export default function TutorCompleteProfilePage() {
                   CNIC match assisted by OCR
                 </div>
                 <p className="mt-1 text-xs leading-5 text-text-muted">
-                  Clear mismatches are blocked. If OCR is unclear, upload continues for admin review.
+                  The CNIC number must match exactly. Upload a clear, glare-free front-side image with all digits visible.
                 </p>
               </div>
             </div>
