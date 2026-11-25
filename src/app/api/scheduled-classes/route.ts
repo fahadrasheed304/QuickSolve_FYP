@@ -29,6 +29,26 @@ export async function GET(request: Request) {
       count=result.count || 0
       classes=(result.data || []).map(row=>publicClass(row as ScheduledClass))
     }
+    if (mode==='past') {
+      const graceCutoff=new Date(Date.now()-10*60000).toISOString()
+      let overdueQuery=supabaseAdmin.from('scheduled_classes').select('*')
+        .in('status',['scheduled','live']).is('tutor_joined_at',null).lt('starts_at',graceCutoff).limit(100)
+      if(account.role==='tutor') overdueQuery=overdueQuery.eq('tutor_email',account.email)
+      else {
+        const bookings=await supabaseAdmin.from('scheduled_class_bookings').select('class_id')
+          .eq('student_email',account.email).eq('status','booked').limit(500)
+        if(bookings.error)throw bookings.error
+        const classIds=[...new Set((bookings.data||[]).map(row=>row.class_id))]
+        if(!classIds.length) overdueQuery=overdueQuery.eq('id','00000000-0000-0000-0000-000000000000')
+        else overdueQuery=overdueQuery.in('id',classIds)
+      }
+      const overdue=await overdueQuery
+      if(overdue.error)throw overdue.error
+      const known=new Set(classes.map(c=>c.id))
+      const missing=(overdue.data||[]).filter(row=>!known.has(row.id)).map(row=>publicClass(row as ScheduledClass))
+      classes=[...classes,...missing]
+      count+=missing.length
+    }
     if (classes.length) {
       const ids=[...new Set(classes.map(c=>c.id))]
       const result = await supabaseAdmin.from('scheduled_class_bookings').select('class_id,amount').in('class_id',ids).eq('status','booked')
