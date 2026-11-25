@@ -15,7 +15,7 @@ export async function POST(request: Request,{params}:{params:Promise<{id:string}
     const access=await classAccess(id,account)
     if (!access || (account.role==='student' && (access.booking?.status!=='booked' || access.booking.payment_status!=='reserved'))) return Response.json({error:'A confirmed booking is required'},{status:403})
     const {c,booking}=access
-    if (!classJoinWindow(c,Date.now())) return Response.json({error:'Join from 10 minutes before start until the class ends'},{status:409})
+    if (!classJoinWindow(c,Date.now())) return Response.json({error:'Join when the class start time arrives, until the class ends'},{status:409})
     if (!c.tutor_joined_at && Date.now()>=Date.parse(c.starts_at)+10*60000) return Response.json({error:'Tutor grace period expired. Your payment remains reserved; report this class from Past classes for administrator review.'},{status:409})
     const {error}=await supabaseAdmin.rpc('assert_scheduled_join',{p_class:c.id,p_email:account.email,p_role:account.role})
     if(error)return classRpcError(error)

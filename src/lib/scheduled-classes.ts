@@ -1,5 +1,5 @@
 export const CLASS_POLICY = {
-  bookingClosesMinutes: 10, refundCutoffHours: 2, tutorGraceMinutes: 10,
+  bookingClosesMinutes: 5, refundCutoffMinutes: 5, tutorGraceMinutes: 10,
   disputeMinutes: 20, downloadMinutes: 15, maxSeats: 10,
 }
 export const isClassId = (value: unknown): value is string => typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)
@@ -16,7 +16,7 @@ export type ClassBooking = {
 }
 export type ClassRecording = { egress_id: string; state: string; ready_at: string | null; download_until: string | null }
 export function classJoinWindow(c: ScheduledClass, now: number) {
-  return ['scheduled', 'live'].includes(c.status) && now >= Date.parse(c.starts_at) - 10 * 60000 && now < Date.parse(c.ends_at)
+  return ['scheduled', 'live'].includes(c.status) && now >= Date.parse(c.starts_at) && now < Date.parse(c.ends_at)
 }
 
 export function publicClass(c: ScheduledClass) {
