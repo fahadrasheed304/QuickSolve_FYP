@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { CalendarDays, Users, Clock3, Download, ArrowLeft, Video, ShieldCheck, LoaderCircle } from 'lucide-react'
@@ -14,6 +15,7 @@ type Details={class:ScheduledClass;booking:ClassBooking|null;roster:ClassBooking
 
 export default function ScheduledClassDetails({id,role}:{id:string;role:'student'|'tutor'}) {
   const [data,setData]=useState<Details|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[consent,setConsent]=useState(false)
+  const [mounted,setMounted]=useState(false)
   const [room,setRoom]=useState<{token:string;serverUrl:string}|null>(null),[now,setNow]=useState(0),[offset,setOffset]=useState(0)
   const [reason,setReason]=useState(''),[decision,setDecision]=useState<'cancel_class'|'cancel_booking'|'dispute'|'finish'|null>(null),[notice,setNotice]=useState('')
   const [rosterPage,setRosterPage]=useState(0)
@@ -24,8 +26,15 @@ export default function ScheduledClassDetails({id,role}:{id:string;role:'student
     try {const result=await classFetch(`/api/scheduled-classes/${id}?rosterPage=${rosterPage}`);if(sequence===loadSequence.current){setData(result);setOffset(result.serverNow-Date.now());setNow(result.serverNow)}}
     catch(error){if(sequence===loadSequence.current)setError(error instanceof Error?error.message:'Could not load class')}
   },[id,rosterPage])
+  useEffect(()=>{setMounted(true)},[])
   useEffect(()=>{void Promise.resolve().then(load);const timer=setInterval(()=>{void load()},5000);return()=>{clearInterval(timer);loadSequence.current=null}},[load])
   useEffect(()=>{const timer=setInterval(()=>setNow(Date.now()+offset),1000);return()=>clearInterval(timer)},[offset])
+  useEffect(()=>{
+    if(!room)return
+    const previous=document.body.style.overflow
+    document.body.style.overflow='hidden'
+    return()=>{document.body.style.overflow=previous}
+  },[room])
   const c=data?.class,b=data?.booking
   const tutorNoShow=Boolean(c&&['scheduled','live'].includes(c.status)&&!c.tutor_joined_at&&now>=Date.parse(c.starts_at)+10*60000)
   async function act(action:string){
@@ -96,6 +105,6 @@ export default function ScheduledClassDetails({id,role}:{id:string;role:'student
     })}</section>}
     {decision&&<div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"><section role="dialog" aria-modal="true" aria-label="Confirm class action" className="w-full max-w-xl rounded-2xl border border-primary/30 bg-surface p-6"><h2 className="font-black">{decision==='dispute'?tutorNoShow?'Report that the class did not happen':'Report your payment issue':decision==='finish'?'End this class for everyone?':'Confirm cancellation'}</h2><p className="my-3 text-sm text-text-muted">{decision==='cancel_booking'?'Your booking will be cancelled and the reserved fee refunded to your wallet.':decision==='finish'?'All participants will be disconnected. Ending before the announced end holds payments for admin review.':decision==='cancel_class'?'All reserved seat fees will be refunded. Students will receive an email.':tutorNoShow?'Your payment will stay reserved while an administrator checks attendance and class records. If the class did not happen, the administrator can refund your seat fee.':'An administrator will review your report before resolving this payment.'}</p>
       {['cancel_class','dispute'].includes(decision)&&<textarea aria-label="Reason" value={reason} onChange={event=>setReason(event.target.value)} placeholder="Write the reason" maxLength={decision==='dispute'?1000:2000} rows={3} className="w-full rounded-xl border border-border bg-background p-3 text-sm"/>}{error&&<p role="alert" className="mt-3 text-sm text-red-600">{error}</p>}<div className="mt-4 flex gap-3"><button disabled={busy||(['cancel_class','dispute'].includes(decision)&&reason.trim().length<5)} onClick={()=>{void act(decision)}} className={primary}>{busy?'Saving…':'Confirm'}</button><button disabled={busy} onClick={()=>{setDecision(null);setReason('')}} className="px-4 text-sm font-bold">Go back</button></div></section></div>}
-    {room&&<div className="fixed inset-0 z-50 bg-[#08111f]"><ClassRoom token={room.token} serverUrl={room.serverUrl} classId={id} role={role} title={c.topic} endsAt={Date.parse(c.ends_at)} ended={['completed','cancelled'].includes(c.status)||now>=Date.parse(c.ends_at)} onLeave={()=>{setRoom(null);void load()}} onFinish={()=>setDecision(now<Date.parse(c.starts_at)?'cancel_class':'finish')}/></div>}
+    {room&&mounted&&createPortal(<div className="fixed inset-0 z-50 h-[100dvh] w-screen overflow-hidden bg-[#08111f]"><ClassRoom token={room.token} serverUrl={room.serverUrl} classId={id} role={role} title={c.topic} endsAt={Date.parse(c.ends_at)} ended={['completed','cancelled'].includes(c.status)||now>=Date.parse(c.ends_at)} onLeave={()=>{setRoom(null);void load()}} onFinish={()=>setDecision(now<Date.parse(c.starts_at)?'cancel_class':'finish')}/></div>,document.body)}
   </div>
 }
