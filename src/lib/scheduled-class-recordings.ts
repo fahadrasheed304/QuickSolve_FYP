@@ -61,8 +61,45 @@ export async function classRecordingUrl(key: string,id: string,seconds: number,d
   return getSignedUrl(recordingStorageClient(),new GetObjectCommand({Bucket:recordingStorage().bucket,Key:key,ResponseContentType:'video/mp4',
     ResponseContentDisposition:download?`attachment; filename="QuickSolve-Class-${id}-${key.split('/').pop()}"`:'inline'}),{expiresIn:Math.max(1,Math.min(300,seconds))})
 }
+
+async function enqueueScheduledClassReminders() {
+  const now = new Date()
+  const nowIso = now.toISOString()
+  const reminderDeadline = new Date(now.getTime() + 15 * 60 * 1000).toISOString()
+  const { data: classes, error: classError } = await supabaseAdmin.from('scheduled_classes')
+    .select('id,tutor_email,subject,topic,starts_at')
+    .eq('status', 'scheduled').gt('starts_at', nowIso).lte('starts_at', reminderDeadline).limit(100)
+  if (classError) throw new Error('Scheduled class reminders could not be loaded')
+
+  const alerts: Array<{event_key:string;recipient_email:string;subject:string;message:string;path:string;status:string;priority:number;available_at:string;expires_at:string}> = []
+  for (const scheduled of classes || []) {
+    const { data: bookings, error: bookingError } = await supabaseAdmin.from('scheduled_class_bookings')
+      .select('id,student_email').eq('class_id', scheduled.id).eq('status', 'booked').limit(100)
+    if (bookingError) throw new Error('Scheduled class attendees could not be loaded')
+
+    const startsAt = new Date(scheduled.starts_at).toLocaleString('en-PK', {
+      timeZone: 'Asia/Karachi', dateStyle: 'medium', timeStyle: 'short',
+    })
+    const subject = `Class reminder: ${scheduled.topic}`
+    const message = `${scheduled.subject}: ${scheduled.topic} starts at ${startsAt} (Pakistan time). Open the class page a few minutes before it begins to join.`
+    const common = { subject, message, status: 'pending', priority: 10, available_at: nowIso, expires_at: scheduled.starts_at }
+    alerts.push({ ...common, event_key: `scheduled-class-reminder-15m:${scheduled.id}:tutor`, recipient_email: scheduled.tutor_email,
+      path: `/tutor/scheduled-classes/${scheduled.id}` })
+    for (const booking of bookings || []) {
+      alerts.push({ ...common, event_key: `scheduled-class-reminder-15m:${scheduled.id}:booking:${booking.id}`, recipient_email: booking.student_email,
+        path: `/student/scheduled-classes/${scheduled.id}` })
+    }
+  }
+  if (!alerts.length) return 0
+
+  const { data, error } = await supabaseAdmin.from('email_alerts').upsert(alerts, { onConflict: 'event_key', ignoreDuplicates: true }).select('event_key')
+  if (error) throw new Error('Scheduled class reminders could not be queued')
+  return data?.length || 0
+}
+
 export async function maintainScheduledClasses() {
   const failures:string[]=[]
+  let remindersQueued=0
   // Database maintenance/reminders must run even if external recording services fail.
   let client:RoomServiceClient|undefined
   try {client=scheduledRoomClient()} catch {failures.push('livekit-config')}
@@ -97,6 +134,7 @@ export async function maintainScheduledClasses() {
       if(error)failures.push(`absence:${c.id}`)
     }
   }
+  try { remindersQueued=await enqueueScheduledClassReminders() } catch { failures.push('reminders') }
   const {error:tickError}=await supabaseAdmin.rpc('scheduled_class_tick')
   if (tickError) throw new Error('Scheduled class maintenance failed')
   for (const room of rooms) {
@@ -130,5 +168,5 @@ export async function maintainScheduledClasses() {
       if (doneError) throw doneError
     } catch {failures.push(`cleanup:${r.egress_id}`)}
   }
-  return {failures}
+  return {failures,remindersQueued}
 }
