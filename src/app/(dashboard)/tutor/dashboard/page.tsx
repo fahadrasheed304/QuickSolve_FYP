@@ -81,23 +81,12 @@ export default function TutorDashboard() {
   useEffect(() => {
     if (!previewImage) return
     const scrollY = window.scrollY
-    const previousStyles = {
-      position: document.body.style.position,
-      top: document.body.style.top,
-      width: document.body.style.width,
-      overflow: document.body.style.overflow,
-    }
-    document.body.style.position = 'fixed'
-    document.body.style.top = `-${scrollY}px`
-    document.body.style.width = '100%'
-    document.body.style.overflow = 'hidden'
+    const previousOverflow = document.documentElement.style.overflow
+    document.documentElement.style.overflow = 'hidden'
     const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') setPreviewImage(null) }
     window.addEventListener('keydown', closeOnEscape)
     return () => {
-      document.body.style.position = previousStyles.position
-      document.body.style.top = previousStyles.top
-      document.body.style.width = previousStyles.width
-      document.body.style.overflow = previousStyles.overflow
+      document.documentElement.style.overflow = previousOverflow
       window.scrollTo(0, scrollY)
       window.removeEventListener('keydown', closeOnEscape)
     }
