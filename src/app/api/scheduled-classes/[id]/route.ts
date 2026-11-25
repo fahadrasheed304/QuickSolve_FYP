@@ -62,8 +62,21 @@ export async function POST(request: Request, {params}: {params:Promise<{id:strin
     } else if (['cancel_booking','dispute'].includes(body.action) && account.role==='student') {
       if (!access.booking || body.bookingId!==access.booking.id) return Response.json({error:'Booking not found'},{status:404})
       if (body.action==='dispute') {
-        if (typeof body.reason!=='string' || body.reason.length>1000) return Response.json({error:'Describe the payment issue'},{status:400})
-        result=await supabaseAdmin.rpc('dispute_scheduled_booking',{p_booking:access.booking.id,p_student:account.email,p_reason:body.reason})
+        if (typeof body.reason!=='string' || body.reason.trim().length<5 || body.reason.length>1000) return Response.json({error:'Describe the payment issue'},{status:400})
+        if (access.booking.status!=='booked' || access.booking.dispute?.trim()) return Response.json({error:'This booking already has a report or is no longer active.'},{status:409})
+        const tutorNoShow=['scheduled','live'].includes(access.c.status)&&!access.c.tutor_joined_at
+          &&Date.now()>=Date.parse(access.c.starts_at)+10*60000
+        if (tutorNoShow) {
+          const held=await supabaseAdmin.from('scheduled_class_bookings').update({
+            payment_status:'held',dispute:body.reason.trim().slice(0,1000),
+          }).eq('id',access.booking.id).eq('student_email',account.email).eq('status','booked')
+            .in('payment_status',['reserved','pending','held']).is('dispute',null).select('id').maybeSingle()
+          if (held.error) return classRpcError(held.error)
+          if (!held.data) return Response.json({error:'This booking was updated already. Refresh and check its payment status.'},{status:409})
+          result={data:held.data,error:null}
+        } else {
+          result=await supabaseAdmin.rpc('dispute_scheduled_booking',{p_booking:access.booking.id,p_student:account.email,p_reason:body.reason.trim().slice(0,1000)})
+        }
       } else result=await supabaseAdmin.rpc('cancel_scheduled_booking',{p_booking:access.booking.id,p_student:account.email})
     } else if (account.role==='tutor' && ['cancel_class','finish'].includes(body.action)) {
       if (body.action==='cancel_class') {
