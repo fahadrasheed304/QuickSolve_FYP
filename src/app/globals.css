@@ -85,6 +85,14 @@ body {
   background-size: 48px 48px, 48px 48px, 100% 100%;
 }
 
+.auth-email-input,
+.auth-email-input:-webkit-autofill,
+.auth-email-input:-webkit-autofill:hover,
+.auth-email-input:-webkit-autofill:focus {
+  font-size: 16px !important;
+  line-height: 24px !important;
+}
+
 ::selection {
   background: rgba(0, 167, 165, 0.22);
   color: var(--color-text-main);

@@ -983,8 +983,27 @@ export default function TutorCompleteProfilePage() {
     { id: 5, label: 'Review', title: 'Final review', caption: 'Confirm and submit', icon: <ClipboardCheck className="h-4 w-4" /> },
   ]
   const currentStep = steps.find(item => item.id === step) || steps[0]
-  const progressPercent = Math.round((step / steps.length) * 100)
   const requiredUploadedCount = requiredDocs.filter(doc => getDocumentByType(doc.type)).length
+  const personalStepComplete = Boolean(personalDetails.city.trim()) && normalizeCnic(personalDetails.cnic).length === CNIC_LENGTH
+  const subjectsStepComplete = selectedSubjects.length > 0
+  const educationStepComplete = degrees.length > 0
+  const demosStepComplete = !demoRequired || selectedSubjects.every(subject => readyDemoSubjects.includes(subject))
+  const documentsStepComplete = requiredDocs.every(doc => getDocumentByType(doc.type))
+    && degreeCertificates.length > 0
+    && demosStepComplete
+  const reviewStepComplete = step === 5
+    && personalStepComplete
+    && subjectsStepComplete
+    && educationStepComplete
+    && documentsStepComplete
+  const completedSteps = [
+    personalStepComplete,
+    subjectsStepComplete,
+    educationStepComplete,
+    documentsStepComplete,
+    reviewStepComplete,
+  ].filter(Boolean).length
+  const progressPercent = Math.round((completedSteps / steps.length) * 100)
   const inputClass = 'qs-input w-full rounded-lg px-3 py-2.5 text-sm'
   const labelClass = 'mb-1.5 block text-sm font-semibold text-text-main'
 

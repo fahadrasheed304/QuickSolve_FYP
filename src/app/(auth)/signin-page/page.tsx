@@ -246,7 +246,8 @@ export default function SigninPage() {
                   autoCapitalize="none"
                   spellCheck={false}
                   maxLength={254}
-                  className="w-full h-12 px-4 bg-surface-hover border border-border focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none text-text-main rounded-xl"
+                  style={{ fontSize: '16px', fontFamily: 'inherit' }}
+                  className="auth-email-input w-full h-12 px-4 bg-surface-hover border border-border !text-[16px] focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none text-text-main rounded-xl"
                   name="quicksolve-signin-email"
                   autoComplete="off"
                   id="signin-email"

@@ -191,10 +191,11 @@ export default function TutorSigninPage() {
                   autoCapitalize="none"
                   spellCheck={false}
                   maxLength={254}
-                  className="w-full h-11 px-4 bg-surface-container-low border border-outline-variant/60 focus:border-[#006c4a] focus:bg-surface focus:ring-1 focus:ring-[#006c4a]/20 transition-all duration-200 outline-none text-on-surface rounded-lg text-sm"
+                  style={{ fontSize: '16px', lineHeight: '24px', fontFamily: 'Arial, Helvetica, sans-serif' }}
+                  className="auth-email-input w-full h-11 px-4 bg-surface-container-low border border-outline-variant/60 !text-[16px] focus:border-[#006c4a] focus:bg-surface focus:ring-1 focus:ring-[#006c4a]/20 transition-all duration-200 outline-none text-on-surface rounded-lg"
                   id="email"
-                  name="quicksolve-tutor-signin-email"
-                  autoComplete="off"
+                  name="username"
+                  autoComplete="username"
                   placeholder="Enter email"
                   type="email"
                 />
