@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Wallet, BookOpen, Users, Star, Zap, Shield, Clock, CheckCircle, AlertCircle, GraduationCap, FileText, Send, Loader2, MapPin, Award, Video } from 'lucide-react'
+import { Wallet, BookOpen, Users, Star, Zap, Shield, Clock, CheckCircle, AlertCircle, GraduationCap, FileText, Send, Loader2, MapPin, Award, Video, X } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -66,6 +66,7 @@ export default function TutorDashboard() {
   const [localAvailability, setLocalAvailability] = useState<boolean | null>(null)
   const [isUpdatingAvailability, setIsUpdatingAvailability] = useState(false)
   const [activeSessions, setActiveSessions] = useState<ActiveSession[]>([])
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
   const profile = user?.tutorProfile
   const verificationStatus = profile?.verificationStatus || 'not_started'
   const totalSessions = profile?.totalSessions || 0
@@ -76,6 +77,18 @@ export default function TutorDashboard() {
   const tutorRole = user?.role
   const tutorProfileReady = Boolean(user?.tutorProfile && !user.tutorProfile.requiresProfileCompletion)
   const displayName = (user?.fullname || user?.email || 'Tutor').split(' ')[0].split('@')[0]
+
+  useEffect(() => {
+    if (!previewImage) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') setPreviewImage(null) }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [previewImage])
 
   useEffect(() => {
     if (user?.role === 'tutor' && (!user.tutorProfile || user.tutorProfile.requiresProfileCompletion)) {
@@ -494,7 +507,7 @@ export default function TutorDashboard() {
                       <p className="text-sm font-bold text-text-main">Student: {problem.student_name || 'Student'}</p>
                       <p className="mt-1 flex items-center gap-2 text-sm font-semibold text-text-muted"><Star className="h-4 w-4 text-amber-500" />{problem.student_rating_available === false ? "Rating unavailable" : problem.student_rating != null ? `${Number(problem.student_rating).toFixed(2)}/5 (${problem.student_review_count} reviews)` : "New student · No ratings yet"}</p>
                       <h4 className="text-lg font-black text-text-main">Rs. {Number(problem.offer_price || 0).toLocaleString()} student offer</h4>
-                      {problem.image_url && <a href={problem.image_url} target="_blank" rel="noreferrer" className="mt-3 block overflow-hidden rounded-xl border border-border bg-surface-hover" aria-label="Open full problem image in a new tab"><img src={problem.image_url} alt="Student's problem" loading="lazy" className="max-h-80 w-full object-contain" /></a>}
+                      {problem.image_url && <button type="button" onClick={() => setPreviewImage(problem.image_url || null)} className="mt-3 block w-full overflow-hidden rounded-xl border border-border bg-surface-hover text-left" aria-label="View problem image larger"><img src={problem.image_url} alt="Student's problem" loading="lazy" className="max-h-80 w-full object-contain" /></button>}
                       <p className="mt-2 line-clamp-2 text-sm leading-6 text-text-muted">
                         {problem.details || 'Student uploaded a problem and is waiting for tutor bids.'}
                       </p>
@@ -565,6 +578,12 @@ export default function TutorDashboard() {
           </div>
         </aside>
       </div>
+      {previewImage && <div role="presentation" onClick={() => setPreviewImage(null)} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 sm:p-8">
+        <section role="dialog" aria-modal="true" aria-label="Problem image preview" onClick={event => event.stopPropagation()} className="relative flex max-h-full max-w-6xl items-center justify-center">
+          <button type="button" autoFocus onClick={() => setPreviewImage(null)} aria-label="Close image preview" className="absolute -right-2 -top-2 z-10 rounded-full bg-surface p-2 text-text-main shadow-lg sm:right-2 sm:top-2"><X size={22}/></button>
+          <img src={previewImage} alt="Full-size student problem" className="max-h-[88vh] max-w-[92vw] rounded-lg bg-white object-contain shadow-2xl" />
+        </section>
+      </div>}
     </div>
   )
 }
