@@ -58,7 +58,7 @@ export default function ScheduledClassDetails({id,role}:{id:string;role:'student
     </div>}
   </div>
   if (!c) return null
-  const canJoin=classJoinWindow(c,now)&&(role==='tutor'||b?.status==='booked')
+  const canJoin=classJoinWindow(c,now)&&!tutorNoShow&&(role==='tutor'||b?.status==='booked')
   return <div className="mx-auto max-w-6xl space-y-5 p-4 sm:p-8">
     <Link href={`/${role}/scheduled-classes`} className="inline-flex items-center gap-2 text-sm font-bold text-primary"><ArrowLeft size={16}/>Scheduled classes</Link>
     <header className="rounded-2xl bg-hero-gradient p-6 text-white sm:p-8"><span className="text-xs font-bold uppercase tracking-wide">{c.subject} · {c.class_level} · {tutorNoShow?'Needs review':c.status}</span><h1 className="mt-3 text-3xl font-black">{c.topic}</h1><p className="mt-2 text-white/80">With {c.tutor_name}</p><p className="mt-4 max-w-3xl text-sm leading-6 text-white/85">{c.description}</p></header>
