@@ -1,0 +1,41 @@
+QuickSolve FYP — Architecture and Development Notes
+
+This document records key development work across the application, including session communication, feedback, scheduling, user interface, wallet, moderation, and authentication flows.
+
+Development notes:
+- August 6, 2026: Live call support was added to let users connect during a session.
+- August 8, 2026: Fixed an error in messaging during live calls so participants can communicate reliably.
+- August 10, 2026: Added a feedback flow for users to share their experience after a session.
+- August 12, 2026: Added database tables to store submitted feedback and its session association.
+- August 14, 2026: Added the frontend design for submitting and viewing feedback.
+- August 16, 2026: Refined the frontend layout and fixed visual issues across the user interface.
+- August 18, 2026: Added the class scheduling flow to support arranging sessions.
+- August 20, 2026: Fixed capacity validation to prevent bookings beyond the available class seats.
+- August 22, 2026: Improved session and wallet flows for a smoother user experience.
+- August 24, 2026: Improved moderation and authentication input validation.
+- September 2, 2026: Added audio device selection toggle for live session calls.
+- September 2, 2026: Fixed microphone permission fallback on mobile browsers.
+- September 5, 2026: Created tutor profile edit page and bio update endpoints.
+- September 9, 2026: Added subject tags and search filtering for tutors.
+- September 13, 2026: Integrated session reminder email notifications.
+- September 17, 2026: Added database schema for user wallet transactions.
+- September 21, 2026: Fixed payment callback timeout and retry logic.
+- September 26, 2026: Improved dashboard UI responsiveness for tablet screens.
+- October 2, 2026: Added interactive whiteboard canvas to active call rooms.
+- October 2, 2026: Fixed whiteboard stroke synchronization latency.
+- October 6, 2026: Implemented student rating and review submission modal.
+- October 10, 2026: Added file attachment support in session chat window.
+- October 14, 2026: Optimized chat message loading with infinite scroll pagination.
+- October 18, 2026: Added user report and session flagging moderation tools.
+- October 22, 2026: Fixed timezone conversion bug in scheduled class calendar.
+- October 27, 2026: Enhanced password reset flow with secure token expiry.
+- October 31, 2026: Added session duration counter and overtime alert.
+- November 4, 2026: Added dark mode toggle and theme persistence in settings.
+- November 4, 2026: Fixed high-contrast styling issues in dark mode tables.
+- November 8, 2026: Implemented in-app notification center for booking updates.
+- November 12, 2026: Added instant refund handling for cancelled tutor sessions.
+- November 16, 2026: Fixed WebRTC echo cancellation and noise suppression.
+- November 19, 2026: Added export session summary as PDF feature.
+- November 21, 2026: Update session status badges and empty state illustrations.
+- November 21, 2026: Fixed booking concurrency race condition on last seat.
+- November 23, 2026: Added performance logging for video call handshakes.
