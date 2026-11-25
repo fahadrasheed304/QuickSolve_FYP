@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
-import { CalendarDays, Users, Clock3, Download, ArrowLeft, Video, ShieldCheck } from 'lucide-react'
+import { CalendarDays, Users, Clock3, Download, ArrowLeft, Video, ShieldCheck, LoaderCircle } from 'lucide-react'
 import { classFetch, classTime, money } from '@/components/scheduled-classes'
 import { classJoinWindow, type ScheduledClass, type ClassBooking, type ClassRecording } from '@/lib/scheduled-classes'
 import { useWalletStore } from '@/stores/wallet-store'
@@ -48,7 +48,14 @@ export default function ScheduledClassDetails({id,role}:{id:string;role:'student
     catch(error){setError(error instanceof Error?error.message:'Could not download recording')}
     finally{setBusy(false)}
   }
-  if (!data) return <div className="p-8">{error?<p role="alert" className="text-red-600">{error}<button onClick={()=>{void load()}} className="ml-4 text-primary">Retry</button></p>:'Loading class…'}</div>
+  if (!data) return <div className="mx-auto max-w-6xl space-y-5 p-4 sm:p-8">
+    <Link href={`/${role}/scheduled-classes`} className="inline-flex items-center gap-2 text-sm font-bold text-primary"><ArrowLeft size={16}/>Scheduled classes</Link>
+    {error ? <div role="alert" className="rounded-2xl border border-red-200 bg-surface p-6 text-sm text-red-700 shadow-sm"><p className="font-bold">We couldn’t load this class.</p><p className="mt-1">{error}</p><button onClick={()=>{void load()}} className="mt-4 rounded-lg bg-primary px-4 py-2 font-bold text-white">Try again</button></div> : <div role="status" aria-label="Loading class details" className="space-y-5">
+      <section className="rounded-2xl bg-hero-gradient p-6 text-white shadow-sm sm:p-8"><div className="h-4 w-48 animate-pulse rounded bg-white/25"/><div className="mt-4 h-9 w-2/3 max-w-md animate-pulse rounded-lg bg-white/30"/><div className="mt-3 h-4 w-40 animate-pulse rounded bg-white/20"/><div className="mt-6 h-4 max-w-3xl animate-pulse rounded bg-white/20"/><p className="mt-6 flex items-center gap-2 text-sm font-semibold text-white/90"><LoaderCircle size={17} className="animate-spin"/>Loading class details…</p></section>
+      <div className="grid gap-4 sm:grid-cols-3">{[1,2,3].map(item=><div key={item} className="rounded-xl border border-border bg-surface p-5"><div className="h-5 w-5 animate-pulse rounded bg-primary/15"/><div className="mt-4 h-3 w-28 animate-pulse rounded bg-surface-hover"/><div className="mt-2 h-5 w-40 max-w-full animate-pulse rounded bg-surface-hover"/></div>)}</div>
+      <section className="rounded-2xl border border-border bg-surface p-6"><div className="h-5 w-52 animate-pulse rounded bg-surface-hover"/><div className="mt-4 h-4 w-full animate-pulse rounded bg-surface-hover"/><div className="mt-2 h-4 w-4/5 animate-pulse rounded bg-surface-hover"/></section>
+    </div>}
+  </div>
   if (!c) return null
   const canJoin=classJoinWindow(c,now)&&(role==='tutor'||b?.status==='booked')
   return <div className="mx-auto max-w-6xl space-y-5 p-4 sm:p-8">

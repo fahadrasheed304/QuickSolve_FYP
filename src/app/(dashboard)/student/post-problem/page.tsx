@@ -29,11 +29,21 @@ export default function PostProblemPage() {
   const [imageFile, setImageFile] = useState<File | null>(null)
 
   const subjects = getStudentSubjects(activeClass)
+  const suggestedPrice = selectedDuration / 15 * 200
+  const minimumOfferPrice = Math.max(200, suggestedPrice - 50)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!imageFile && !details.trim()) {
+      notifyError('Please add problem details or upload an image before posting.')
+      return
+    }
     if (!selectedSubject) {
       notifyError('Please select a subject before posting your problem.')
+      return
+    }
+    if (!Number.isSafeInteger(Number(offerPrice)) || Number(offerPrice) < minimumOfferPrice || Number(offerPrice) > 2000) {
+      notifyError(`Offer price must be between Rs. ${minimumOfferPrice} and Rs. 2,000. You can go at most Rs. 50 below the suggested price.`)
       return
     }
 
@@ -108,7 +118,7 @@ export default function PostProblemPage() {
                 </div>
               </div>
                             <div className="space-y-3">
-                <label className="text-sm font-bold text-text-main">Problem Image</label>
+                <label className="text-sm font-bold text-text-main">Problem Image <span className="text-text-muted">(optional if you add details)</span></label>
                 <label
                   htmlFor="problem-image"
                   className={cn(
@@ -196,7 +206,7 @@ export default function PostProblemPage() {
               <div className="space-y-3">
                 <div className="flex items-end justify-between gap-4">
                   <label className="text-sm font-bold text-text-main">Offer Price</label>
-                  <span className="text-sm font-bold text-primary">Suggested: Rs. {DURATIONS.find(d => d.value === selectedDuration)?.price}</span>
+                  <span className="text-sm font-bold text-primary">Suggested: Rs. {suggestedPrice}</span>
                 </div>
                 <div>
                   <div className="flex rounded-lg shadow-sm">
@@ -205,16 +215,17 @@ export default function PostProblemPage() {
                     </span>
                     <Input
                       type="number"
-                      min={200}
+                      min={minimumOfferPrice}
                       max={2000}
+                      step={1}
                       value={offerPrice}
                       onChange={(e) => setOfferPrice(e.target.value)}
                       className="rounded-l-none text-lg font-black"
                     />
                   </div>
                   <div className="mt-2 flex justify-between text-xs font-semibold text-text-muted">
-                    <p>Tutors may bid higher or lower</p>
-                    <p>Min: 200 / Max: 2000</p>
+                    <p>You can offer up to Rs. 50 below the suggested price</p>
+                    <p>Min: {minimumOfferPrice} / Max: 2000</p>
                   </div>
                 </div>
               </div>

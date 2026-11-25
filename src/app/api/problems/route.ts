@@ -50,6 +50,10 @@ export async function POST(request: Request) {
     if (!(SESSION_DURATIONS as readonly number[]).includes(duration)) {
       return NextResponse.json({ error: 'Choose a session duration of 15, 30, 45, or 60 minutes.' }, { status: 400 })
     }
+    const minimumOfferPrice = Math.max(200, duration / 15 * 200 - 50)
+    if (!Number.isSafeInteger(amount) || amount < minimumOfferPrice || amount > 2000) {
+      return NextResponse.json({ error: `Offer price must be between Rs. ${minimumOfferPrice} and Rs. 2,000. It can be at most Rs. 50 below the suggested price.` }, { status: 400 })
+    }
     if (!details.trim() && !image) {
       return NextResponse.json({ error: 'Enter problem details or attach an image.' }, { status: 400 })
     }
