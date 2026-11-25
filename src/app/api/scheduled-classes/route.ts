@@ -66,6 +66,9 @@ export async function POST(request: Request) {
   if (!body || !isClassId(body.requestId) || typeof body.subject!=='string' || typeof body.topic!=='string' || typeof body.classLevel!=='string'
     || typeof body.description!=='string' || typeof body.startsAt!=='string' || !Number.isFinite(Date.parse(body.startsAt))
     || !Number.isInteger(body.durationMin) || !Number.isInteger(body.capacity) || typeof body.fee!=='number' || !Number.isSafeInteger(body.fee)) return Response.json({error:'Complete the class details using a whole-rupee fee'},{status:400})
+  const startsAt=Date.parse(body.startsAt),now=Date.now()
+  if(startsAt<now+10*60000)return Response.json({error:'Choose a class start time at least 10 minutes from now.'},{status:400})
+  if(startsAt>now+90*24*60*60000)return Response.json({error:'Class start time must be within the next 90 days.'},{status:400})
   if (body.capacity < 1 || body.capacity > 20) return Response.json({error:'Maximum seats must be between 1 and 20.'},{status:400})
   if (body.durationMin < 15 || body.durationMin > 300) return Response.json({error:'Duration must be between 15 and 300 minutes (maximum 5 hours).'},{status:400})
   if (body.fee < 200 || body.fee > 2000) return Response.json({error:'Fee per student must be between Rs. 200 and Rs. 2,000 in whole rupees.'},{status:400})

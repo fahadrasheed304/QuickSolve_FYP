@@ -8,6 +8,7 @@ import type { ScheduledClass } from '@/lib/scheduled-classes'
 
 const input='w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-text-main focus:outline-none focus:ring-2 focus:ring-primary'
 const button='inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white hover:opacity-90 disabled:opacity-50'
+const localDateTime=(date:Date)=>{date.setSeconds(0,0);date.setMinutes(date.getMinutes()+1);const pad=(value:number)=>String(value).padStart(2,'0');return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`}
 export async function classFetch(url:string,body?:unknown) {
   const response=await fetch(url,{cache:'no-store',...(body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{})})
   const data=await response.json()
@@ -23,6 +24,7 @@ export default function ScheduledClasses({role,archive=false}:{role:'student'|'t
   const [page,setPage]=useState(0),[count,setCount]=useState(0)
   const [classes,setClasses]=useState<ScheduledClass[]>([])
   const [loading,setLoading]=useState(true),[error,setError]=useState(''),[showCreate,setShowCreate]=useState(false),[saving,setSaving]=useState(false)
+  const [startTimeMin,setStartTimeMin]=useState('')
   const requestId=useRef<string|null>(null)
   const loadSequence=useRef<symbol|null>(null)
   const load=useCallback(async()=>{
@@ -37,6 +39,11 @@ export default function ScheduledClasses({role,archive=false}:{role:'student'|'t
     const interval=setInterval(()=>{void load()},60000)
     return()=>clearInterval(interval)
   },[load])
+  useEffect(()=>{
+    const update=()=>setStartTimeMin(localDateTime(new Date(Date.now()+10*60000)))
+    update();const interval=setInterval(update,15000)
+    return()=>clearInterval(interval)
+  },[])
   async function create(event:React.FormEvent<HTMLFormElement>){
     event.preventDefault();setSaving(true);setError('')
     const form=new FormData(event.currentTarget)
@@ -58,12 +65,12 @@ export default function ScheduledClasses({role,archive=false}:{role:'student'|'t
     {!archive&&<div className="rounded-xl border border-border bg-surface p-4 text-sm text-text-muted"><strong className="text-text-main">Recorded group classes.</strong> Your seat fee is reserved at booking. Cancel at least 2 hours before start for a full refund. Download recordings within 15 minutes after they become available. Times below use your device timezone.</div>}
     {error&&<p role="alert" className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700">{error}</p>}
     {showCreate&&role==='tutor'&&<form onSubmit={create} onChange={()=>{requestId.current=null}} className="rounded-2xl border border-border bg-surface p-6">
-      <h2 className="text-lg font-black">Create your next class</h2><p className="mt-1 text-sm text-text-muted">30 minutes to 90 days ahead. Published details stay fixed; cancel and recreate to change them.</p>
+      <h2 className="text-lg font-black">Create your next class</h2><p className="mt-1 text-sm text-text-muted">At least 10 minutes and up to 90 days ahead. Published details stay fixed; cancel and recreate to change them.</p>
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
         <label className="space-y-2 text-sm font-bold">Subject<select name="subject" required className={input}><option value="">Choose your subject</option>{user?.tutorProfile?.subjects.map(subject=><option key={subject}>{subject}</option>)}</select></label>
         <label className="space-y-2 text-sm font-bold">Topic<input name="topic" required minLength={3} maxLength={120} placeholder="Newton's laws with worked examples" className={input}/></label>
         <label className="space-y-2 text-sm font-bold">Class level<input name="classLevel" required maxLength={60} placeholder="Grade 10" className={input}/></label>
-        <label className="space-y-2 text-sm font-bold">Start time (your timezone)<input name="startsAt" type="datetime-local" required className={input}/></label>
+        <label className="space-y-2 text-sm font-bold">Start time (your timezone)<input name="startsAt" type="datetime-local" min={startTimeMin} required className={input}/></label>
       <label className="space-y-2 text-sm font-bold">Duration (minutes)<input name="durationMin" type="number" defaultValue={60} min={15} max={300} step={1} required aria-describedby="class-duration-help" className={input}/><span id="class-duration-help" className="block text-xs font-normal text-text-muted">Enter 15–300 minutes (maximum 5 hours).</span></label>
         <label className="space-y-2 text-sm font-bold">Fee per student (Rs.)<input name="fee" type="number" defaultValue={500} min={200} max={2000} step={10} required aria-describedby="class-fee-help" onChange={event=>{if(Number(event.currentTarget.value)>2000)event.currentTarget.value='2000'}} className={input}/><span id="class-fee-help" className="block text-xs font-normal text-text-muted">Set a whole-rupee fee from Rs. 200 to Rs. 2,000. The arrows change it by Rs. 10.</span></label>
         <label className="space-y-2 text-sm font-bold">Maximum seats<input name="capacity" type="number" defaultValue={1} min={1} max={20} required className={input}/><span className="block text-xs font-normal text-text-muted">Set at least one seat, up to 20.</span></label>
