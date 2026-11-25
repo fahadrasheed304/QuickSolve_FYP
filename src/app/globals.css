@@ -563,3 +563,6 @@ input:disabled {
 .scheduled-class-conference > .lk-video-conference { min-height: 0; height: 100%; flex: 1 1 0%; }
 .scheduled-class-conference .lk-video-conference-inner { min-height: 0; flex: 1 1 0%; }
 .scheduled-class-conference .lk-grid-layout-wrapper, .scheduled-class-conference .lk-focus-layout-wrapper { min-height: 0; }
+@media (min-width: 700px) {
+  .scheduled-class-conference .lk-grid-layout { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; grid-auto-rows: minmax(0, 1fr); }
+}
