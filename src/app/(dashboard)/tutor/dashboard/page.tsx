@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { Wallet, BookOpen, Users, Star, Zap, Shield, Clock, CheckCircle, AlertCircle, GraduationCap, FileText, Send, Loader2, MapPin, Award, Video, X } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -580,12 +581,12 @@ export default function TutorDashboard() {
           </div>
         </aside>
       </div>
-      {previewImage && <div role="presentation" onClick={() => setPreviewImage(null)} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 sm:p-8">
+      {previewImage && typeof document !== 'undefined' && createPortal(<div role="presentation" onClick={() => setPreviewImage(null)} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 sm:p-8">
         <section role="dialog" aria-modal="true" aria-label="Problem image preview" onClick={event => event.stopPropagation()} className="relative flex max-h-full max-w-6xl items-center justify-center">
           <button type="button" onClick={() => setPreviewImage(null)} aria-label="Close image preview" className="absolute -right-2 -top-2 z-10 rounded-full bg-surface p-2 text-text-main shadow-lg sm:right-2 sm:top-2"><X size={22}/></button>
           <img src={previewImage} alt="Full-size student problem" className="max-h-[88vh] max-w-[92vw] rounded-lg bg-white object-contain shadow-2xl" />
         </section>
-      </div>}
+      </div>, document.body)}
     </div>
   )
 }
