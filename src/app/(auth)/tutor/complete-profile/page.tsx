@@ -988,14 +988,17 @@ export default function TutorCompleteProfilePage() {
     && subjectsStepComplete
     && educationStepComplete
     && documentsStepComplete
-  const completedSteps = [
+  const stepCompletion = [
     personalStepComplete,
     subjectsStepComplete,
     educationStepComplete,
     documentsStepComplete,
     reviewStepComplete,
-  ].filter(Boolean).length
+  ]
+  const completedSteps = stepCompletion.filter(Boolean).length
   const progressPercent = Math.round((completedSteps / steps.length) * 100)
+  const canNavigateToStep = (targetStep: number) => targetStep <= step
+    || stepCompletion.slice(0, targetStep - 1).every(Boolean)
   const inputClass = 'qs-input w-full rounded-lg px-3 py-2.5 text-sm'
   const labelClass = 'mb-1.5 block text-sm font-semibold text-text-main'
 
@@ -1062,13 +1065,18 @@ export default function TutorCompleteProfilePage() {
               <div className="space-y-2">
                 {steps.map(item => {
                   const isActive = item.id === step
-                  const isDone = item.id < step
+                  const isDone = !isActive && stepCompletion[item.id - 1]
+                  const canNavigate = canNavigateToStep(item.id)
                   return (
                     <button
                       key={item.id}
                       type="button"
-                      disabled={item.id > step}
-                      onClick={() => item.id <= step && setStep(item.id)}
+                      disabled={!canNavigate}
+                      onClick={() => {
+                        if (!canNavigate) return
+                        setError('')
+                        setStep(item.id)
+                      }}
                       className={`w-full rounded-lg border px-3 py-3 text-left transition-all ${
                         isActive
                           ? 'border-primary bg-primary text-white shadow-md shadow-primary/15'
