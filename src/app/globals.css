@@ -558,3 +558,8 @@ input:disabled {
 .recording-template--class .recording-content { grid-template-columns: minmax(0, 1fr); }
 .recording-template--class.recording-template--chat .recording-content { grid-template-columns: minmax(0, 1fr) minmax(240px, 25%); }
 .recording-template-error { display: grid; position: fixed; inset: 0; place-items: center; background: #08111f; color: white; font: 16px Arial, sans-serif; }
+.scheduled-class-livekit, .scheduled-class-livekit .lk-room-container { min-height: 0; height: 100%; }
+.scheduled-class-livekit .lk-room-container { display: flex; flex-direction: column; }
+.scheduled-class-conference > .lk-video-conference { min-height: 0; height: 100%; flex: 1 1 0%; }
+.scheduled-class-conference .lk-video-conference-inner { min-height: 0; flex: 1 1 0%; }
+.scheduled-class-conference .lk-grid-layout-wrapper, .scheduled-class-conference .lk-focus-layout-wrapper { min-height: 0; }
