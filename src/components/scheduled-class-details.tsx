@@ -58,7 +58,10 @@ export default function ScheduledClassDetails({id,role}:{id:string;role:'student
     </div>}
   </div>
   if (!c) return null
+  const canBook=role==='student'&&c.status==='scheduled'&&b?.status!=='booked'
+    &&now<Date.parse(c.starts_at)-5*60000&&(c.booked_count||0)<c.capacity
   const canJoin=classJoinWindow(c,now)&&!tutorNoShow&&(role==='tutor'||b?.status==='booked')
+  const showConsent=canBook||canJoin
   return <div className="mx-auto max-w-6xl space-y-5 p-4 sm:p-8">
     <Link href={`/${role}/scheduled-classes`} className="inline-flex items-center gap-2 text-sm font-bold text-primary"><ArrowLeft size={16}/>Scheduled classes</Link>
     <header className="rounded-2xl bg-hero-gradient p-6 text-white sm:p-8"><span className="text-xs font-bold uppercase tracking-wide">{c.subject} · {c.class_level} · {tutorNoShow?'Needs review':c.status}</span><h1 className="mt-3 text-3xl font-black">{c.topic}</h1><p className="mt-2 text-white/80">With {c.tutor_name}</p><p className="mt-4 max-w-3xl text-sm leading-6 text-white/85">{c.description}</p></header>
@@ -71,9 +74,9 @@ export default function ScheduledClassDetails({id,role}:{id:string;role:'student
     ].map(([Icon,label,value],index)=>{const InfoIcon=Icon as typeof CalendarDays;return <div key={index} className="rounded-xl border border-border bg-surface p-5"><InfoIcon size={20} className="text-primary"/><p className="mt-3 text-xs font-bold text-text-muted">{String(label)}</p><p className="mt-1 font-bold">{String(value)}</p></div>})}</div>
     {c.cancellation_reason&&<p className="rounded-xl border border-border bg-surface p-4 text-sm">Class cancelled: {c.cancellation_reason}</p>}
     <section className="rounded-2xl border border-border bg-surface p-6"><h2 className="flex items-center gap-2 font-black"><ShieldCheck size={19} className="text-primary"/>Booking & recording policy</h2><p className="mt-3 text-sm leading-6 text-text-muted">Your wallet fee is reserved when you book. Cancel at least 5 minutes before start for a full refund. Cancellation is unavailable during the final 5 minutes before class. Tutor cancellation or no-show gets a full refund. Audio, video and shared screens are recorded and may be downloaded by booked students. Each recording has a 15-minute download window once available after class. Report payment issues within 20 minutes after class ends. If the tutor does not join, report after the 10-minute grace period.</p>
-      {canJoin&&<label className="mt-4 flex items-start gap-3 text-sm"><input type="checkbox" checked={consent} onChange={event=>setConsent(event.target.checked)} className="mt-1"/><span>I agree to these policies and consent to this recorded group class.</span></label>}
+      {showConsent&&<label className="mt-4 flex items-start gap-3 text-sm"><input type="checkbox" checked={consent} onChange={event=>setConsent(event.target.checked)} className="mt-1"/><span>I agree to these policies and consent to this recorded group class.</span></label>}
       <div className="mt-5 flex flex-wrap gap-3">
-        {role==='student'&&c.status==='scheduled'&&b?.status!=='booked'&&<button disabled={busy||!consent||now>=Date.parse(c.starts_at)-5*60000||(c.booked_count||0)>=c.capacity} onClick={()=>{void act('book')}} className={primary}>Book seat · {money(c.fee)}</button>}
+        {canBook&&<button disabled={busy||!consent} onClick={()=>{void act('book')}} className={primary}>Book seat · {money(c.fee)}</button>}
         {canJoin&&<button disabled={busy||!consent} onClick={()=>{void join()}} className={primary}><Video size={17}/>{role==='tutor'?'Join & teach':'Join class'}</button>}
         {role==='student'&&b?.status==='booked'&&['scheduled','live'].includes(c.status)&&now<=Date.parse(c.starts_at)-5*60000&&<button disabled={busy} onClick={()=>setDecision('cancel_booking')} className="rounded-xl border border-border px-4 py-3 text-sm font-bold">Cancel booking · full refund</button>}
         {role==='tutor'&&!tutorNoShow&&now<Date.parse(c.starts_at)&&['scheduled','live'].includes(c.status)&&<button disabled={busy} onClick={()=>setDecision('cancel_class')} className="rounded-xl border border-red-200 px-4 py-3 text-sm font-bold text-red-600">Cancel class & refund seats</button>}
