@@ -12,10 +12,7 @@ import { useAuthStore } from '@/stores/auth-store'
 import { getApiMessage, notifyError, notifySuccess } from '@/lib/toast'
 import Tesseract from 'tesseract.js'
 import { TutorTeachingDemos } from '@/components/tutor-teaching-demos'
-import { DEMO_SUBJECTS } from '@/lib/teaching-demos'
-
-// Available subjects
-const SUBJECTS = DEMO_SUBJECTS
+import { getStudentSubjects, STUDENT_CLASS_LEVELS, type StudentClassLevel } from '@/lib/student-problem-options'
 
 // Degree categories
 const SCHOOL_DEGREES = [
@@ -571,8 +568,10 @@ export default function TutorCompleteProfilePage() {
   
   // Step 2: Subjects
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([])
+  const [activeClass, setActiveClass] = useState<StudentClassLevel>('10th')
   const [readyDemoSubjects, setReadyDemoSubjects] = useState<string[]>([])
   const [demoRequired, setDemoRequired] = useState(true)
+  const availableSubjects = getStudentSubjects(activeClass)
   
   // Step 3: Degrees
   const [degrees, setDegrees] = useState<Degree[]>([])
@@ -1218,24 +1217,47 @@ export default function TutorCompleteProfilePage() {
 
               {step === 2 && (
                 <div className="space-y-5">
-                  <div className="flex flex-wrap gap-2">
-                    {SUBJECTS.map((sub) => {
-                      const selected = selectedSubjects.includes(sub)
-                      return (
+                  <div className="space-y-3">
+                    <label className="text-sm font-bold text-text-main">Your Class</label>
+                    <div className="grid grid-cols-2 gap-2 rounded-lg bg-surface-hover p-1 sm:grid-cols-4">
+                      {STUDENT_CLASS_LEVELS.map((classLevel) => (
                         <button
-                          key={sub}
+                          key={classLevel}
                           type="button"
-                          onClick={() => toggleSubject(sub)}
-                          className={`rounded-lg border px-3 py-2 text-sm font-semibold transition-all ${
-                            selected
-                              ? 'border-primary bg-primary text-white shadow-md shadow-primary/15'
-                              : 'border-border bg-surface text-text-muted hover:border-primary/50 hover:bg-primary-subtle/35 hover:text-text-main'
+                          onClick={() => setActiveClass(classLevel)}
+                          className={`rounded-lg px-3 py-2 text-sm font-bold transition-all ${
+                            activeClass === classLevel
+                              ? 'bg-surface text-primary shadow-sm'
+                              : 'text-text-muted hover:text-text-main'
                           }`}
                         >
-                          {sub}
+                          {classLevel}
                         </button>
-                      )
-                    })}
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="text-sm font-bold text-text-main">Select subjects you can teach</label>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      {availableSubjects.map((sub) => {
+                        const selected = selectedSubjects.includes(sub)
+                        return (
+                          <button
+                            key={sub}
+                            type="button"
+                            onClick={() => toggleSubject(sub)}
+                            className={`rounded-lg border p-3 text-left text-sm font-bold transition-all ${
+                              selected
+                                ? 'border-primary bg-primary-subtle text-primary shadow-sm'
+                                : 'border-border bg-surface text-text-main hover:border-primary/40 hover:bg-surface-hover'
+                            }`}
+                          >
+                            {sub}
+                          </button>
+                        )
+                      })}
+                    </div>
                   </div>
 
                   <div className="rounded-lg border border-secondary/20 bg-secondary-subtle/45 px-4 py-3 text-sm font-semibold text-secondary-dark">
