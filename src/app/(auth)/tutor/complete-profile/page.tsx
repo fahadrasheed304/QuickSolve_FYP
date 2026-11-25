@@ -250,6 +250,43 @@ const CNIC_OCR_CROPS: CnicCrop[] = [
   { name: 'number-line-tight', x: 0.32, y: 0.30, width: 0.48, height: 0.15 },
 ]
 
+const getOtsuThreshold = (data: Uint8ClampedArray) => {
+  const histogram = new Array<number>(256).fill(0)
+  const pixelCount = data.length / 4
+  let totalIntensity = 0
+
+  for (let i = 0; i < data.length; i += 4) {
+    const intensity = data[i]
+    histogram[intensity] += 1
+    totalIntensity += intensity
+  }
+
+  let backgroundWeight = 0
+  let backgroundIntensity = 0
+  let bestVariance = -1
+  let threshold = 150
+
+  for (let intensity = 0; intensity < 256; intensity += 1) {
+    backgroundWeight += histogram[intensity]
+    if (backgroundWeight === 0) continue
+
+    const foregroundWeight = pixelCount - backgroundWeight
+    if (foregroundWeight === 0) break
+
+    backgroundIntensity += intensity * histogram[intensity]
+    const backgroundMean = backgroundIntensity / backgroundWeight
+    const foregroundMean = (totalIntensity - backgroundIntensity) / foregroundWeight
+    const variance = backgroundWeight * foregroundWeight * (backgroundMean - foregroundMean) ** 2
+
+    if (variance > bestVariance) {
+      bestVariance = variance
+      threshold = intensity
+    }
+  }
+
+  return threshold
+}
+
 // Build several OCR-friendly versions because CNIC photos vary a lot in glare,
 // rotation, contrast, and where the identity number appears.
 const createCnicOcrVariants = (file: File): Promise<CnicOcrVariant[]> => {
@@ -262,7 +299,7 @@ const createCnicOcrVariants = (file: File): Promise<CnicOcrVariant[]> => {
       const minWidth = 1400
       const maxWidth = 2200
 
-      const renderVariant = (crop: CnicCrop, threshold: number | null) => {
+      const renderVariant = (crop: CnicCrop, threshold: number | 'otsu' | null) => {
         const sourceX = Math.round(img.width * crop.x)
         const sourceY = Math.round(img.height * crop.y)
         const sourceWidth = Math.round(img.width * crop.width)
@@ -285,13 +322,20 @@ const createCnicOcrVariants = (file: File): Promise<CnicOcrVariant[]> => {
           let gray = 0.299 * r + 0.587 * g + 0.114 * b
           gray = (gray - 128) * 2.55 + 145
           gray = Math.max(0, Math.min(255, gray))
-          if (threshold !== null) {
-            gray = gray > threshold ? 255 : 0
-          }
 
           data[i] = gray
           data[i + 1] = gray
           data[i + 2] = gray
+        }
+
+        const thresholdLevel = threshold === 'otsu' ? getOtsuThreshold(data) : threshold
+        if (thresholdLevel !== null) {
+          for (let i = 0; i < data.length; i += 4) {
+            const binaryValue = data[i] > thresholdLevel ? 255 : 0
+            data[i] = binaryValue
+            data[i + 1] = binaryValue
+            data[i + 2] = binaryValue
+          }
         }
 
         ctx.putImageData(imageData, 0, 0)
@@ -314,6 +358,7 @@ const createCnicOcrVariants = (file: File): Promise<CnicOcrVariant[]> => {
       for (const crop of CNIC_OCR_CROPS.filter(item => item.name === 'number-line-tight' || item.name === 'number-line-center')) {
         renderVariant(crop, 120)
         renderVariant(crop, 180)
+        renderVariant(crop, 'otsu')
       }
 
       renderVariant(CNIC_OCR_CROPS[0], 150)
