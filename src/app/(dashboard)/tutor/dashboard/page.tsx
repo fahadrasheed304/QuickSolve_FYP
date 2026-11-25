@@ -80,12 +80,25 @@ export default function TutorDashboard() {
 
   useEffect(() => {
     if (!previewImage) return
-    const previousOverflow = document.body.style.overflow
+    const scrollY = window.scrollY
+    const previousStyles = {
+      position: document.body.style.position,
+      top: document.body.style.top,
+      width: document.body.style.width,
+      overflow: document.body.style.overflow,
+    }
+    document.body.style.position = 'fixed'
+    document.body.style.top = `-${scrollY}px`
+    document.body.style.width = '100%'
     document.body.style.overflow = 'hidden'
     const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') setPreviewImage(null) }
     window.addEventListener('keydown', closeOnEscape)
     return () => {
-      document.body.style.overflow = previousOverflow
+      document.body.style.position = previousStyles.position
+      document.body.style.top = previousStyles.top
+      document.body.style.width = previousStyles.width
+      document.body.style.overflow = previousStyles.overflow
+      window.scrollTo(0, scrollY)
       window.removeEventListener('keydown', closeOnEscape)
     }
   }, [previewImage])
@@ -580,7 +593,7 @@ export default function TutorDashboard() {
       </div>
       {previewImage && <div role="presentation" onClick={() => setPreviewImage(null)} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 sm:p-8">
         <section role="dialog" aria-modal="true" aria-label="Problem image preview" onClick={event => event.stopPropagation()} className="relative flex max-h-full max-w-6xl items-center justify-center">
-          <button type="button" autoFocus onClick={() => setPreviewImage(null)} aria-label="Close image preview" className="absolute -right-2 -top-2 z-10 rounded-full bg-surface p-2 text-text-main shadow-lg sm:right-2 sm:top-2"><X size={22}/></button>
+          <button type="button" onClick={() => setPreviewImage(null)} aria-label="Close image preview" className="absolute -right-2 -top-2 z-10 rounded-full bg-surface p-2 text-text-main shadow-lg sm:right-2 sm:top-2"><X size={22}/></button>
           <img src={previewImage} alt="Full-size student problem" className="max-h-[88vh] max-w-[92vw] rounded-lg bg-white object-contain shadow-2xl" />
         </section>
       </div>}
