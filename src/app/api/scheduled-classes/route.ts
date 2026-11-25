@@ -45,9 +45,10 @@ export async function POST(request: Request) {
   const body = await request.json().catch(()=>null)
   if (!body || !isClassId(body.requestId) || typeof body.subject!=='string' || typeof body.topic!=='string' || typeof body.classLevel!=='string'
     || typeof body.description!=='string' || typeof body.startsAt!=='string' || !Number.isFinite(Date.parse(body.startsAt))
-    || !Number.isInteger(body.durationMin) || !Number.isInteger(body.capacity) || typeof body.fee!=='number' || !Number.isFinite(body.fee)) return Response.json({error:'Complete the class details'},{status:400})
+    || !Number.isInteger(body.durationMin) || !Number.isInteger(body.capacity) || typeof body.fee!=='number' || !Number.isSafeInteger(body.fee)) return Response.json({error:'Complete the class details using a whole-rupee fee'},{status:400})
   if (body.capacity < 1 || body.capacity > 20) return Response.json({error:'Maximum seats must be between 1 and 20.'},{status:400})
   if (body.durationMin < 15 || body.durationMin > 300) return Response.json({error:'Duration must be between 15 and 300 minutes (maximum 5 hours).'},{status:400})
+  if (body.fee < 200 || body.fee > 2000) return Response.json({error:'Fee per student must be between Rs. 200 and Rs. 2,000 in whole rupees.'},{status:400})
   try { assertScheduledRecordingConfig() } catch { return Response.json({error:'Scheduled classes require configured LiveKit recording and storage. Contact the administrator.'},{status:503}) }
   const {data,error} = await supabaseAdmin.rpc('create_scheduled_class',{
     p_id:body.requestId,p_tutor:account.email,p_subject:body.subject,p_topic:body.topic,p_level:body.classLevel,p_description:body.description,
