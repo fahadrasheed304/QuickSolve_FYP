@@ -65,10 +65,13 @@ export async function classRecordingUrl(key: string,id: string,seconds: number,d
 async function enqueueScheduledClassReminders() {
   const now = new Date()
   const nowIso = now.toISOString()
-  const reminderDeadline = new Date(now.getTime() + 15 * 60 * 1000).toISOString()
+  // The worker runs once per minute; a two-minute target with a one-minute
+  // window on either side keeps the reminder close to the class start.
+  const reminderStart = new Date(now.getTime() + 60 * 1000).toISOString()
+  const reminderDeadline = new Date(now.getTime() + 180 * 1000).toISOString()
   const { data: classes, error: classError } = await supabaseAdmin.from('scheduled_classes')
     .select('id,tutor_email,subject,topic,starts_at')
-    .eq('status', 'scheduled').gt('starts_at', nowIso).lte('starts_at', reminderDeadline).limit(100)
+    .eq('status', 'scheduled').gte('starts_at', reminderStart).lte('starts_at', reminderDeadline).limit(100)
   if (classError) throw new Error('Scheduled class reminders could not be loaded')
 
   const alerts: Array<{event_key:string;recipient_email:string;subject:string;message:string;path:string;status:string;priority:number;available_at:string;expires_at:string}> = []
@@ -81,12 +84,12 @@ async function enqueueScheduledClassReminders() {
       timeZone: 'Asia/Karachi', dateStyle: 'medium', timeStyle: 'short',
     })
     const subject = `Class reminder: ${scheduled.topic}`
-    const message = `${scheduled.subject}: ${scheduled.topic} starts at ${startsAt} (Pakistan time). Open the class page a few minutes before it begins to join.`
+    const message = `${scheduled.subject}: ${scheduled.topic} starts at ${startsAt} (Pakistan time). Open the class page at the scheduled start time to join.`
     const common = { subject, message, status: 'pending', priority: 10, available_at: nowIso, expires_at: scheduled.starts_at }
-    alerts.push({ ...common, event_key: `scheduled-class-reminder-15m:${scheduled.id}:tutor`, recipient_email: scheduled.tutor_email,
+    alerts.push({ ...common, event_key: `scheduled-class-reminder-2m:${scheduled.id}:tutor`, recipient_email: scheduled.tutor_email,
       path: `/tutor/scheduled-classes/${scheduled.id}` })
     for (const booking of bookings || []) {
-      alerts.push({ ...common, event_key: `scheduled-class-reminder-15m:${scheduled.id}:booking:${booking.id}`, recipient_email: booking.student_email,
+      alerts.push({ ...common, event_key: `scheduled-class-reminder-2m:${scheduled.id}:booking:${booking.id}`, recipient_email: booking.student_email,
         path: `/student/scheduled-classes/${scheduled.id}` })
     }
   }
