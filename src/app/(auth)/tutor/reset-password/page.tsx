@@ -132,7 +132,7 @@ function TutorResetPasswordForm() {
                   maxLength={128}
                   placeholder="Enter new password"
                 />
-                <p className="mt-2 text-xs text-on-surface-variant">8 to 128 characters, with at least one letter and one number or symbol.</p>
+                <p className="mt-2 text-xs text-on-surface-variant">8 characters or more, with at least one letter and one number or symbol.</p>
                 {password.length > 0 && (
                   <div className="h-1 w-full bg-surface-container-high rounded-full overflow-hidden mt-2">
                     <div className={`h-full transition-all duration-300 ${strength === 0 ? 'w-0' : strength === 1 ? 'w-1/3 bg-red-400' : strength === 2 ? 'w-2/3 bg-amber-400' : 'w-full bg-[#006c4a]'}`}></div>

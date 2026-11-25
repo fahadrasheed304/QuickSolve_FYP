@@ -34,5 +34,5 @@ export function isValidSignupPhone(value: unknown): value is string {
   })
 }
 
-export const PASSWORD_REQUIREMENTS = 'Password must be 8 to 128 characters long and include at least one letter and one number or symbol.'
+export const PASSWORD_REQUIREMENTS = 'Password must be 8 characters or more and include at least one letter and one number or symbol.'
 

@@ -288,7 +288,7 @@ export default function SignupPagePage() {
                   maxLength={128}
                   placeholder="Enter password"
                 />
-                <p className="text-xs text-text-muted">8 to 128 characters, with at least one letter and one number or symbol.</p>
+                <p className="text-xs text-text-muted">8 characters or more, with at least one letter and one number or symbol.</p>
                 
                 {/* Password Strength Meter */}
                 <div className="h-1.5 w-full bg-border rounded-full overflow-hidden">
