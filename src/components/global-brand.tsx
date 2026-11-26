@@ -6,7 +6,6 @@ const hiddenBrandRoutes = new Set([
   '/signin-page',
   '/signup-page',
   '/admin/signin',
-  '/tutor/signin-page',
   '/tutor/signup',
 ])
 
